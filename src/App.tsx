@@ -3,97 +3,160 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { generate } from 'random-words';
 import { Moon, Sun, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-// Generate colors that contrast well based on the current theme
-const getRandomColor = (isDark: boolean) => 
+type WordEntry = { text: string; x: number; y: number; id: number; color: string };
+
+const getRandomColor = (isDark: boolean) =>
   `hsl(${Math.floor(Math.random() * 360)}, 70%, ${isDark ? 75 : 40}%)`;
 
-// Initialize AudioContext lazily to comply with browser autoplay policies
 let audioCtx: AudioContext | null = null;
 
 const playPopSound = () => {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 
   const osc = audioCtx.createOscillator();
   const gainNode = audioCtx.createGain();
-
-  // Pentatonic scale (C5, D5, E5, G5, A5) for a pleasant, musical feel
   const frequencies = [523.25, 587.33, 659.25, 783.99, 880.00];
   const freq = frequencies[Math.floor(Math.random() * frequencies.length)];
 
   osc.type = 'sine';
   osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-  // Envelope: quick attack, smooth exponential decay
   gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
   gainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.02);
   gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-
   osc.connect(gainNode);
   gainNode.connect(audioCtx.destination);
-
   osc.start();
   osc.stop(audioCtx.currentTime + 0.4);
 };
 
+// ─── WordItem ─────────────────────────────────────────────────────────────────
+// Corrects position after mount so the word never overflows the viewport.
+function WordItem({ word, fontSize }: { word: WordEntry; fontSize: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: word.x, y: word.y });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const pad = 16;
+    let x = word.x;
+    let y = word.y;
+    if (rect.right  > window.innerWidth  - pad) x -= rect.right  - (window.innerWidth  - pad);
+    if (rect.left   < pad)                       x += pad - rect.left;
+    if (rect.bottom > window.innerHeight - pad)  y -= rect.bottom - (window.innerHeight - pad);
+    if (rect.top    < pad)                       y += pad - rect.top;
+    if (x !== word.x || y !== word.y) setPos({ x, y });
+  }, []);
+
+  return (
+    <motion.div
+      ref={ref}
+      className="absolute pointer-events-none"
+      style={{ left: pos.x, top: pos.y }}
+      initial={{ opacity: 0, filter: 'blur(16px)', scale: 0.85, x: '-50%', y: '-50%' }}
+      animate={{ opacity: 1, filter: 'blur(0px)',  scale: 1,    x: '-50%', y: '-50%' }}
+      exit={{    opacity: 0, filter: 'blur(16px)', scale: 1.05, x: '-50%', y: '-50%' }}
+      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <h1
+        className="leading-none font-medium tracking-tight text-center select-none capitalize whitespace-nowrap drop-shadow-sm"
+        style={{ color: word.color, fontSize: `${fontSize}px` }}
+      >
+        {word.text}
+      </h1>
+    </motion.div>
+  );
+}
+
+// ─── NumInput ─────────────────────────────────────────────────────────────────
+// A bare number input that looks like plain text until focused.
+function NumInput({
+  value, min, max, title, width,
+  onCommit,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  title: string;
+  width: string;
+  onCommit: (n: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => { setDraft(String(value)); }, [value]);
+
+  const commit = () => {
+    const n = parseInt(draft, 10);
+    if (!isNaN(n) && n >= min && n <= max) onCommit(n);
+    else setDraft(String(value));
+  };
+
+  return (
+    <input
+      type="number"
+      min={min}
+      max={max}
+      value={draft}
+      title={title}
+      style={{ width }}
+      onChange={e => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={e => {
+        e.stopPropagation();
+        if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+        if (e.key === 'Escape') { setDraft(String(value)); (e.target as HTMLInputElement).blur(); }
+      }}
+      onClick={e => e.stopPropagation()}
+      className="bg-transparent border-none outline-none text-center text-sm font-mono
+        text-zinc-400/30 hover:text-zinc-500/40 focus:text-zinc-900
+        dark:focus:text-zinc-50 transition-colors duration-300 cursor-pointer
+        focus:cursor-text p-3 rounded-full"
+    />
+  );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [wordData, setWordData] = useState({ text: '', x: 0, y: 0, id: 0, color: '' });
+  const [words, setWords] = useState<WordEntry[]>([]);
+  const [maxWords, setMaxWords] = useState(1);
+  const [fontSize, setFontSize] = useState(80);
   const [isDark, setIsDark] = useState(false);
   const [hasClicked, setHasClicked] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
 
   useEffect(() => {
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setIsDark(prefersDark);
-    
-    // Generate initial word in the center
-    setWordData({
+    setWords([{
       text: generate() as string,
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
       id: Date.now(),
-      color: getRandomColor(prefersDark)
-    });
+      color: getRandomColor(prefersDark),
+    }]);
   }, []);
 
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
   const handleScreenClick = (e: React.MouseEvent) => {
     if (!hasClicked) setHasClicked(true);
     if (isSoundEnabled) playPopSound();
-    
-    setWordData({
-      text: generate() as string,
-      x: e.clientX,
-      y: e.clientY,
-      id: Date.now(),
-      color: getRandomColor(isDark)
-    });
-  };
 
-  const toggleTheme = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsDark(!isDark);
-  };
-
-  const toggleSound = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsSoundEnabled(!isSoundEnabled);
+    setWords(prev => [
+      ...prev,
+      { text: generate() as string, x: e.clientX, y: e.clientY, id: Date.now(), color: getRandomColor(isDark) },
+    ].slice(-maxWords));
   };
 
   return (
@@ -101,17 +164,33 @@ export default function App() {
       className="relative h-screen w-screen cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700"
       onClick={handleScreenClick}
     >
-      {/* Controls - Ultra subtle */}
-      <div className="absolute right-6 top-6 z-10 flex gap-2">
+      {/* Controls */}
+      <div className="absolute right-6 top-6 z-10 flex items-center">
+        <NumInput
+          value={fontSize}
+          min={12}
+          max={200}
+          title="Font size (px)"
+          width="3rem"
+          onCommit={setFontSize}
+        />
+        <NumInput
+          value={maxWords}
+          min={1}
+          max={10}
+          title="Words on screen"
+          width="2.5rem"
+          onCommit={n => { setMaxWords(n); setWords(prev => prev.slice(-n)); }}
+        />
         <button
-          onClick={toggleSound}
+          onClick={e => { e.stopPropagation(); setIsSoundEnabled(v => !v); }}
           className="rounded-full p-3 text-zinc-400/30 hover:text-zinc-900 dark:hover:text-zinc-50 transition-all duration-500"
-          aria-label={isSoundEnabled ? "Mute sound" : "Enable sound"}
+          aria-label={isSoundEnabled ? 'Mute sound' : 'Enable sound'}
         >
           {isSoundEnabled ? <Volume2 size={20} strokeWidth={1.5} /> : <VolumeX size={20} strokeWidth={1.5} />}
         </button>
         <button
-          onClick={toggleTheme}
+          onClick={e => { e.stopPropagation(); setIsDark(v => !v); }}
           className="rounded-full p-3 text-zinc-400/30 hover:text-zinc-900 dark:hover:text-zinc-50 transition-all duration-500"
           aria-label="Toggle theme"
         >
@@ -119,32 +198,17 @@ export default function App() {
         </button>
       </div>
 
-      {/* Word Display */}
+      {/* Words */}
       <AnimatePresence>
-        {wordData.text && (
-          <motion.div
-            key={wordData.id}
-            className="absolute pointer-events-none"
-            style={{ left: wordData.x, top: wordData.y }}
-            initial={{ opacity: 0, filter: 'blur(16px)', scale: 0.85, x: "-50%", y: "-50%" }}
-            animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, x: "-50%", y: "-50%" }}
-            exit={{ opacity: 0, filter: 'blur(16px)', scale: 1.05, x: "-50%", y: "-50%" }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <h1 
-              className="text-[clamp(3rem,8vw,8rem)] leading-none font-medium tracking-tight text-center select-none capitalize whitespace-nowrap drop-shadow-sm"
-              style={{ color: wordData.color }}
-            >
-              {wordData.text}
-            </h1>
-          </motion.div>
-        )}
+        {words.map(word => (
+          <WordItem key={word.id} word={word} fontSize={fontSize} />
+        ))}
       </AnimatePresence>
 
       {/* Hint */}
       <AnimatePresence>
         {!hasClicked && (
-          <motion.div 
+          <motion.div
             exit={{ opacity: 0, y: 10, filter: 'blur(5px)' }}
             transition={{ duration: 0.5 }}
             className="absolute bottom-8 left-1/2 -translate-x-1/2 text-xs md:text-sm text-zinc-400/50 dark:text-zinc-600/50 tracking-[0.5em] uppercase select-none pointer-events-none"
