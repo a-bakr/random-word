@@ -527,7 +527,7 @@ export default function App() {
 
   return (
     <div
-      className="relative h-screen w-screen cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700"
+      className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700"
       onClick={handleScreenClick}
     >
       {/* Top bar */}
@@ -562,7 +562,7 @@ export default function App() {
             min={12}
             max={200}
             title="Font size (px)"
-            width="3rem"
+            width="4rem"
             onCommit={n => { localStorage.setItem('fontSize', String(n)); setFontSize(n); }}
           />
           <NumInput
