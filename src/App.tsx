@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { generate } from 'random-words';
-import { Moon, Sun, Volume2, VolumeX } from 'lucide-react';
+import { Moon, Sun, Volume2, VolumeX, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 type WordEntry = { text: string; x: number; y: number; id: number; color: string };
@@ -37,6 +37,106 @@ const playPopSound = () => {
   osc.stop(audioCtx.currentTime + 0.4);
 };
 
+const playBeepSound = () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  // Two-tone beep: 440Hz then 554Hz, distinct from pop sounds
+  [440, 554].forEach((freq, i) => {
+    const osc = audioCtx!.createOscillator();
+    const gainNode = audioCtx!.createGain();
+    const start = audioCtx!.currentTime + i * 0.22;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, start);
+    gainNode.gain.setValueAtTime(0, start);
+    gainNode.gain.linearRampToValueAtTime(0.2, start + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, start + 0.6);
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx!.destination);
+    osc.start(start);
+    osc.stop(start + 0.6);
+  });
+};
+
+// ─── Timer ────────────────────────────────────────────────────────────────────
+const DURATION = 60; // seconds
+
+function Timer({ isRunning, onReset }: { isRunning: boolean; onReset: () => void }) {
+  const [elapsed, setElapsed] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevElapsedRef = useRef(0);
+
+  useEffect(() => {
+    if (isRunning) {
+      intervalRef.current = setInterval(() => {
+        setElapsed(e => e + 1);
+      }, 1000);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setElapsed(0);
+      prevElapsedRef.current = 0;
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [isRunning]);
+
+  // Beep at 60s, then every 30s after
+  useEffect(() => {
+    if (!isRunning) return;
+    const prev = prevElapsedRef.current;
+    prevElapsedRef.current = elapsed;
+    if (elapsed === DURATION) {
+      playBeepSound();
+    } else if (elapsed > DURATION && (elapsed - DURATION) % 30 === 0 && elapsed !== prev) {
+      playBeepSound();
+    }
+  }, [elapsed, isRunning]);
+
+  const remaining = DURATION - elapsed;
+  const isOvertime = elapsed >= DURATION;
+
+  const display = () => {
+    const secs = isOvertime ? elapsed - DURATION : Math.abs(remaining);
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    const formatted = `${m}:${String(s).padStart(2, '0')}`;
+    return isOvertime ? `+${formatted}` : formatted;
+  };
+
+  if (!isRunning && elapsed === 0) {
+    return (
+      <div className="absolute top-6 left-6 z-10 text-2xl font-black font-mono tabular-nums text-zinc-400/15 dark:text-zinc-600/15 select-none pointer-events-none tracking-tight">
+        1:00
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="absolute top-6 left-6 z-10 flex items-center gap-2"
+      onClick={e => { e.stopPropagation(); onReset(); }}
+    >
+      <motion.span
+        key={isOvertime ? 'over' : 'count'}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className={`text-2xl font-black font-mono tabular-nums tracking-tight cursor-pointer transition-colors duration-500 ${isOvertime
+            ? 'text-amber-400/80 dark:text-amber-300/80'
+            : 'text-zinc-400/70 dark:text-zinc-500/70'
+          }`}
+      >
+        {display()}
+      </motion.span>
+      <RotateCcw
+        size={16}
+        strokeWidth={2}
+        className="text-zinc-400/30 dark:text-zinc-600/30 cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+      />
+    </div>
+  );
+}
+
 // ─── WordItem ─────────────────────────────────────────────────────────────────
 // Corrects position after mount so the word never overflows the viewport.
 function WordItem({ word, fontSize }: { word: WordEntry; fontSize: number }) {
@@ -50,10 +150,10 @@ function WordItem({ word, fontSize }: { word: WordEntry; fontSize: number }) {
     const pad = 16;
     let x = word.x;
     let y = word.y;
-    if (rect.right  > window.innerWidth  - pad) x -= rect.right  - (window.innerWidth  - pad);
-    if (rect.left   < pad)                       x += pad - rect.left;
-    if (rect.bottom > window.innerHeight - pad)  y -= rect.bottom - (window.innerHeight - pad);
-    if (rect.top    < pad)                       y += pad - rect.top;
+    if (rect.right > window.innerWidth - pad) x -= rect.right - (window.innerWidth - pad);
+    if (rect.left < pad) x += pad - rect.left;
+    if (rect.bottom > window.innerHeight - pad) y -= rect.bottom - (window.innerHeight - pad);
+    if (rect.top < pad) y += pad - rect.top;
     if (x !== word.x || y !== word.y) setPos({ x, y });
   }, []);
 
@@ -63,8 +163,8 @@ function WordItem({ word, fontSize }: { word: WordEntry; fontSize: number }) {
       className="absolute pointer-events-none"
       style={{ left: pos.x, top: pos.y }}
       initial={{ opacity: 0, filter: 'blur(16px)', scale: 0.85, x: '-50%', y: '-50%' }}
-      animate={{ opacity: 1, filter: 'blur(0px)',  scale: 1,    x: '-50%', y: '-50%' }}
-      exit={{    opacity: 0, filter: 'blur(16px)', scale: 1.05, x: '-50%', y: '-50%' }}
+      animate={{ opacity: 1, filter: 'blur(0px)', scale: 1, x: '-50%', y: '-50%' }}
+      exit={{ opacity: 0, filter: 'blur(16px)', scale: 1.05, x: '-50%', y: '-50%' }}
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
     >
       <h1
@@ -132,6 +232,7 @@ export default function App() {
   const [isDark, setIsDark] = useState(false);
   const [hasClicked, setHasClicked] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   useEffect(() => {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -152,6 +253,7 @@ export default function App() {
   const handleScreenClick = (e: React.MouseEvent) => {
     if (!hasClicked) setHasClicked(true);
     if (isSoundEnabled) playPopSound();
+    if (!isTimerRunning) setIsTimerRunning(true);
 
     setWords(prev => [
       ...prev,
@@ -204,6 +306,9 @@ export default function App() {
           <WordItem key={word.id} word={word} fontSize={fontSize} />
         ))}
       </AnimatePresence>
+
+      {/* Timer */}
+      <Timer isRunning={isTimerRunning} onReset={() => setIsTimerRunning(false)} />
 
       {/* Hint */}
       <AnimatePresence>
