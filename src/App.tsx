@@ -82,19 +82,19 @@ export default function App() {
     mediaRecorder.onstop = () => {
       const mimeType = mediaRecorder.mimeType || 'audio/webm';
       const blob = new Blob(audioChunksRef.current, { type: mimeType });
-      const transcript = voice.transcript;
+      const transcript = voice.transcriptRef.current;
       rec.addRecording(blob, transcript);
       stream.getTracks().forEach(t => t.stop());
     };
 
     mediaRecorder.start();
-    voice.start();
+    voice.start(stream);
     setIsRecording(true);
   };
 
-  const stopRecording = (e: React.MouseEvent) => {
+  const stopRecording = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    voice.stop();
+    await voice.stop();
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
   };
