@@ -6,6 +6,7 @@ import { AnimatePresence } from 'motion/react';
 
 import type { WordEntry } from './types';
 import { playPopSound, getRandomColor } from './lib/sounds';
+import { track } from './lib/track';
 import { useLocalStorage, useLocalStorageBool } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
@@ -35,9 +36,11 @@ export default function App() {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingStartRef = useRef<number>(0);
 
   useEffect(() => {
     setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    track('pageview');
   }, []);
 
   useEffect(() => {
@@ -45,13 +48,18 @@ export default function App() {
   }, [isDark]);
 
   const handleScreenClick = (e: React.MouseEvent) => {
-    if (!hasClicked) setHasClicked(true);
+    if (!hasClicked) {
+      setHasClicked(true);
+      track('hint_dismissed');
+    }
     if (isSoundEnabled) playPopSound();
     if (timerEnabled && !isTimerRunning) setIsTimerRunning(true);
 
+    const word = generate() as string;
+    track('word_generated', { word });
     setWords(prev => [
       ...prev,
-      { text: generate() as string, x: e.clientX, y: e.clientY, id: Date.now(), color: getRandomColor(isDark) },
+      { text: word, x: e.clientX, y: e.clientY, id: Date.now(), color: getRandomColor(isDark) },
     ].slice(-maxWords));
   };
 
@@ -89,11 +97,15 @@ export default function App() {
 
     mediaRecorder.start();
     voice.start(stream);
+    recordingStartRef.current = Date.now();
+    track('recording_started');
     setIsRecording(true);
   };
 
   const stopRecording = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    const duration_ms = Date.now() - recordingStartRef.current;
+    track('recording_stopped', { duration_ms });
     await voice.stop();
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
