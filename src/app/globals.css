@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Hidden scrollbar utility */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Thin dark scrollbar for transcript card */
+.scrollbar-thin-dark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(113, 113, 122, 0.4) transparent;
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar {
+  width: 3px;
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar-thumb {
+  background: rgba(113, 113, 122, 0.4);
+  border-radius: 9999px;
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 113, 122, 0.7);
+}

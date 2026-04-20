@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -411,7 +413,7 @@ export default function App() {
 
       // On mobile: send audio to Groq Whisper for transcript
       if (isMobile) {
-        const groqKey = import.meta.env.VITE_GROQ_API_KEY;
+        const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;
         if (groqKey && blob.size > 0) {
           setTranscribingId(id);
           const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
@@ -440,7 +442,7 @@ export default function App() {
 
     // Mobile: live transcription by sending growing audio blob to Groq every 3 s
     if (isMobile) {
-      const groqKey = import.meta.env.VITE_GROQ_API_KEY;
+      const groqKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;
       if (groqKey) {
         mobileGroqIntervalRef.current = setInterval(async () => {
           if (!isRecordingRef.current || audioChunksRef.current.length === 0) return;
