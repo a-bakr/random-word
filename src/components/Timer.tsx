@@ -94,7 +94,7 @@ export function Timer({
       <div
         onClick={e => { e.stopPropagation(); setIsEditing(true); }}
         className="text-2xl font-black font-mono tabular-nums tracking-tight cursor-pointer select-none
-          text-zinc-400/15 dark:text-zinc-600/15 hover:text-zinc-400/40 dark:hover:text-zinc-500/40 transition-colors duration-500"
+          text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-500"
       >
         {fmtDuration(duration)}
       </div>
