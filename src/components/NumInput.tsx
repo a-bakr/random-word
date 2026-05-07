@@ -40,7 +40,7 @@ export function NumInput({
       }}
       onClick={e => e.stopPropagation()}
       className="bg-transparent border-none outline-none text-center text-2xl font-black font-mono tabular-nums tracking-tight
-        text-zinc-400/15 hover:text-zinc-900 dark:hover:text-zinc-50 focus:text-zinc-900
+        text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 focus:text-zinc-900
         dark:focus:text-zinc-50 transition-all duration-500 cursor-pointer
         focus:cursor-text px-2 py-1 rounded-full"
     />
