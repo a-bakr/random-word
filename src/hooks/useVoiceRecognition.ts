@@ -26,9 +26,6 @@ export function useVoiceRecognition() {
   const accumulatedFinalRef = useRef('');
   const transcriptRef = useRef('');
 
-  const mobileRecorderRef = useRef<MediaRecorder | null>(null);
-  const mobileChunksRef = useRef<Blob[]>([]);
-  const mobileAbortRef = useRef<AbortController | null>(null);
   const isListeningRef = useRef(false);
 
   const setTranscript = useCallback((t: string) => {
@@ -36,41 +33,8 @@ export function useVoiceRecognition() {
     setState(s => ({ ...s, transcript: t }));
   }, []);
 
-  const transcribeBlob = useCallback(
-    async (blob: Blob, mimeType: string, signal: AbortSignal) => {
-      const ext = mimeType.includes('ogg')
-        ? 'ogg'
-        : mimeType.includes('mp4')
-          ? 'mp4'
-          : 'webm';
-      const file = new File([blob], `live.${ext}`, { type: mimeType });
-      const formData = new FormData();
-      formData.append('file', file);
-      try {
-        const res = await fetch('/api/transcribe', {
-          method: 'POST',
-          body: formData,
-          signal,
-        });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return typeof data.text === 'string' ? data.text.trim() : null;
-      } catch {
-        return null;
-      }
-    },
-    []
-  );
-
   const startMobile = useCallback(
-    (stream: MediaStream) => {
-      mobileChunksRef.current = [];
-      const mr = new MediaRecorder(stream);
-      mobileRecorderRef.current = mr;
-      mr.ondataavailable = e => {
-        if (e.data.size > 0) mobileChunksRef.current.push(e.data);
-      };
-      mr.start();
+    (_stream: MediaStream) => {
       isListeningRef.current = true;
     },
     []
@@ -78,33 +42,7 @@ export function useVoiceRecognition() {
 
   const stopMobile = useCallback(async () => {
     isListeningRef.current = false;
-    mobileAbortRef.current?.abort();
-    const mr = mobileRecorderRef.current;
-    if (!mr) return;
-
-    await new Promise<void>(resolve => {
-      if (mr.state === 'inactive') {
-        resolve();
-        return;
-      }
-      mr.addEventListener('stop', () => resolve(), { once: true });
-      try { mr.stop(); } catch { resolve(); }
-    });
-
-    if (mobileChunksRef.current.length > 0) {
-      const mimeType = mr.mimeType || 'audio/webm';
-      const blob = new Blob([...mobileChunksRef.current], { type: mimeType });
-      if (blob.size > 1000) {
-        const controller = new AbortController();
-        mobileAbortRef.current = controller;
-        const text = await transcribeBlob(blob, mimeType, controller.signal);
-        if (text) setTranscript(text);
-      }
-    }
-
-    mobileRecorderRef.current = null;
-    mobileChunksRef.current = [];
-  }, [transcribeBlob, setTranscript]);
+  }, []);
 
   const start = useCallback(
     (stream?: MediaStream) => {
@@ -166,7 +104,7 @@ export function useVoiceRecognition() {
   );
 
   const stop = useCallback(async () => {
-    if (mobileRecorderRef.current) {
+    if (isMobileDevice()) {
       await stopMobile();
     } else {
       const rec = recognitionRef.current;
