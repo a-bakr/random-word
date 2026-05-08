@@ -1,17 +1,10 @@
 'use client';
 
 import { Volume2, VolumeX, Moon, Sun, Play } from 'lucide-react';
-import { Timer } from './Timer';
 import { NumInput } from './NumInput';
+import { ModeSwitch } from './ModeSwitch';
 
 export function TopBar({
-  timerEnabled,
-  toggleTimerEnabled,
-  timerKey,
-  duration,
-  isTimerRunning,
-  onTimerStop,
-  onDurationChange,
   fontSize,
   onFontSizeChange,
   maxWords,
@@ -21,15 +14,9 @@ export function TopBar({
   isDark,
   onThemeToggle,
   mode,
+  onModeToggle,
   onReplay,
 }: {
-  timerEnabled: boolean;
-  toggleTimerEnabled: (e: React.MouseEvent) => void;
-  timerKey: number;
-  duration: number;
-  isTimerRunning: boolean;
-  onTimerStop: () => void;
-  onDurationChange: (secs: number) => void;
   fontSize: number;
   onFontSizeChange: (n: number) => void;
   maxWords: number;
@@ -39,30 +26,13 @@ export function TopBar({
   isDark: boolean;
   onThemeToggle: (e: React.MouseEvent) => void;
   mode: 'words' | 'twisters';
+  onModeToggle: (e: React.MouseEvent) => void;
   onReplay: (e: React.MouseEvent) => void;
 }) {
   return (
     <div className="absolute top-6 inset-x-6 z-10 flex items-center justify-between pointer-events-none">
-      <div className="pointer-events-auto flex items-center gap-2">
-        <button
-          onClick={toggleTimerEnabled}
-          className="p-1.5 group"
-          aria-label={timerEnabled ? 'Disable timer' : 'Enable timer'}
-        >
-          <div
-            className={`w-2 h-2 rounded-full transition-all duration-500 ${timerEnabled
-              ? 'bg-zinc-400/50 dark:bg-zinc-500/50 group-hover:bg-zinc-600 dark:group-hover:bg-zinc-300'
-              : 'bg-zinc-400/10 dark:bg-zinc-600/10 group-hover:bg-zinc-400/30 dark:group-hover:bg-zinc-500/30'
-              }`}
-          />
-        </button>
-        <Timer
-          key={timerKey}
-          duration={duration}
-          isRunning={isTimerRunning}
-          onStop={onTimerStop}
-          onDurationChange={onDurationChange}
-        />
+      <div className="pointer-events-auto">
+        <ModeSwitch mode={mode} onToggle={onModeToggle} />
       </div>
       <div className="flex items-center pointer-events-auto">
         <NumInput
