@@ -7,6 +7,7 @@ import { NumInput } from './NumInput';
 export function TopBar({
   timerEnabled,
   toggleTimerEnabled,
+  timerKey,
   duration,
   isTimerRunning,
   onTimerStop,
@@ -22,6 +23,7 @@ export function TopBar({
 }: {
   timerEnabled: boolean;
   toggleTimerEnabled: (e: React.MouseEvent) => void;
+  timerKey: number;
   duration: number;
   isTimerRunning: boolean;
   onTimerStop: () => void;
@@ -51,6 +53,7 @@ export function TopBar({
           />
         </button>
         <Timer
+          key={timerKey}
           duration={duration}
           isRunning={isTimerRunning}
           onStop={onTimerStop}
