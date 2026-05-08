@@ -14,7 +14,7 @@ const ROOT = resolve(__dirname, '..');
 const OUT_DIR = resolve(ROOT, 'public/twisters');
 const TWISTERS_FILE = resolve(ROOT, 'src/lib/twisters.ts');
 
-const MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts';
+const MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-3.1-flash-tts-preview';
 const VOICE = process.env.GEMINI_TTS_VOICE || 'Kore';
 const STYLE = 'Say slowly and clearly, articulating every consonant, for an English-learner practicing pronunciation:';
 const SAMPLE_RATE = 24000;
