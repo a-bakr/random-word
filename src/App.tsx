@@ -20,7 +20,7 @@ import { RecordingArea } from './components/RecordingArea';
 import { TranscriptOverlay } from './components/TranscriptOverlay';
 import { TranscriptCard } from './components/TranscriptCard';
 import { HintOverlay } from './components/HintOverlay';
-import { ModeSwitch } from './components/ModeSwitch';
+import { TimerBar } from './components/TimerBar';
 
 export default function App() {
   const [words, setWords] = useState<WordEntry[]>([]);
@@ -150,13 +150,6 @@ export default function App() {
       onClick={handleScreenClick}
     >
       <TopBar
-        timerEnabled={timerEnabled}
-        toggleTimerEnabled={toggleTimerEnabled}
-        timerKey={timerKey}
-        duration={duration}
-        isTimerRunning={isTimerRunning}
-        onTimerStop={() => setIsTimerRunning(false)}
-        onDurationChange={setDuration}
         fontSize={fontSize}
         onFontSizeChange={setFontSize}
         maxWords={maxWords}
@@ -166,6 +159,7 @@ export default function App() {
         isDark={isDark}
         onThemeToggle={e => { e.stopPropagation(); setIsDark(v => !v); }}
         mode={mode}
+        onModeToggle={toggleMode}
         onReplay={replayTwister}
       />
 
@@ -201,7 +195,15 @@ export default function App() {
 
       <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} />
 
-      <ModeSwitch mode={mode} onToggle={toggleMode} />
+      <TimerBar
+        timerEnabled={timerEnabled}
+        toggleTimerEnabled={toggleTimerEnabled}
+        timerKey={timerKey}
+        duration={duration}
+        isTimerRunning={isTimerRunning}
+        onTimerStop={() => setIsTimerRunning(false)}
+        onDurationChange={setDuration}
+      />
     </div>
   );
 }
