@@ -20,6 +20,7 @@ import { RecordingArea } from './components/RecordingArea';
 import { TranscriptOverlay } from './components/TranscriptOverlay';
 import { TranscriptCard } from './components/TranscriptCard';
 import { HintOverlay } from './components/HintOverlay';
+import { ModeSwitch } from './components/ModeSwitch';
 
 export default function App() {
   const [words, setWords] = useState<WordEntry[]>([]);
@@ -165,7 +166,6 @@ export default function App() {
         isDark={isDark}
         onThemeToggle={e => { e.stopPropagation(); setIsDark(v => !v); }}
         mode={mode}
-        onModeToggle={toggleMode}
         onReplay={replayTwister}
       />
 
@@ -200,6 +200,8 @@ export default function App() {
       <TranscriptCard recording={rec.selectedRecording} onClose={rec.clearSelection} />
 
       <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} />
+
+      <ModeSwitch mode={mode} onToggle={toggleMode} />
     </div>
   );
 }
