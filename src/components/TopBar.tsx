@@ -1,6 +1,6 @@
 'use client';
 
-import { Volume2, VolumeX, Moon, Sun, Play } from 'lucide-react';
+import { Volume2, VolumeX, Moon, Sun, Play, Square } from 'lucide-react';
 import { NumInput } from './NumInput';
 import { ModeSwitch } from './ModeSwitch';
 
@@ -16,6 +16,7 @@ export function TopBar({
   mode,
   onModeToggle,
   onReplay,
+  isTwisterPlaying,
 }: {
   fontSize: number;
   onFontSizeChange: (n: number) => void;
@@ -28,6 +29,7 @@ export function TopBar({
   mode: 'words' | 'twisters';
   onModeToggle: (e: React.MouseEvent) => void;
   onReplay: (e: React.MouseEvent) => void;
+  isTwisterPlaying: boolean;
 }) {
   return (
     <div className="absolute top-6 inset-x-6 z-10 flex items-center justify-between pointer-events-none">
@@ -56,10 +58,13 @@ export function TopBar({
         {mode === 'twisters' && (
           <button
             onClick={onReplay}
-            className="rounded-full p-3 text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-all duration-500"
-            aria-label="Replay audio"
+            className={`rounded-full p-3 transition-all duration-500 ${isTwisterPlaying
+              ? 'text-zinc-900 dark:text-zinc-50'
+              : 'text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
+              }`}
+            aria-label={isTwisterPlaying ? 'Stop audio' : 'Replay audio'}
           >
-            <Play size={20} strokeWidth={1.5} />
+            {isTwisterPlaying ? <Square size={20} strokeWidth={1.5} /> : <Play size={20} strokeWidth={1.5} />}
           </button>
         )}
         <button
