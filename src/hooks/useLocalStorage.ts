@@ -19,6 +19,24 @@ export function useLocalStorage(key: string, defaultValue: number): [number, (v:
   return [value, set];
 }
 
+export function useLocalStorageStr(key: string, defaultValue: string): [string, (v: string) => void] {
+  const [value, setValue] = useState(() => {
+    if (typeof window === 'undefined') return defaultValue;
+    const stored = localStorage.getItem(key);
+    return stored ?? defaultValue;
+  });
+
+  const set = useCallback(
+    (v: string) => {
+      setValue(v);
+      localStorage.setItem(key, v);
+    },
+    [key],
+  );
+
+  return [value, set];
+}
+
 export function useLocalStorageBool(key: string, defaultValue: boolean): [boolean, (v: boolean) => void] {
   const [value, setValue] = useState(() => {
     const stored = localStorage.getItem(key);

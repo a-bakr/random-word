@@ -5,13 +5,36 @@ export interface Twister {
   difficulty: 'easy' | 'medium' | 'hard' | 'very-hard';
 }
 
-export function getRandomTwister(exclude?: string): Twister {
-  if (twisters.length <= 1) return twisters[0];
-  let pick: Twister;
-  do {
-    pick = twisters[Math.floor(Math.random() * twisters.length)];
-  } while (pick.id === exclude);
-  return pick;
+// One representative twister per phonetic category — drilled in order, looped.
+export const practiceCycle: string[] = [
+  '001', // /s/      she sells seashells
+  '023', // /ʃ/      irish wristwatch
+  '025', // /p/      peter piper
+  '037', // /t/+/θ/  tom threw tim three thumbtacks
+  '049', // /r/      rugged rocks ragged rascals
+  '056', // /l/      lesser leather never weathered
+  '051', // /r/+/l/  truly rural
+  '066', // /θ/      sixth sick sheikh's sixth sheep's sick
+  '073', // /w/      how much wood would a woodchuck
+  '080', // /v/      vincent vowed vengeance
+  '082', // /f/      four fine fresh fish
+  '088', // /k/      how can a clam cram
+  '020', // /tʃ/     cheap ship trip
+  '102', // /dʒ/     judge liked fudge
+  '107', // /z/      fuzzy wuzzy
+  '109', // vowel    unique new york
+  '116', // mixed    proper cup of coffee
+];
+
+export function getTwisterById(id: string): Twister | undefined {
+  return twisters.find(t => t.id === id);
+}
+
+export function getNextPracticeId(currentId: string | null): string {
+  if (!currentId) return practiceCycle[0];
+  const idx = practiceCycle.indexOf(currentId);
+  if (idx === -1) return practiceCycle[0];
+  return practiceCycle[(idx + 1) % practiceCycle.length];
 }
 
 export const twisters: Twister[] = [

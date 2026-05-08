@@ -7,10 +7,10 @@ import { AnimatePresence } from 'motion/react';
 import type { WordEntry } from './types';
 import { playPopSound, getRandomColor } from './lib/sounds';
 import { track } from './lib/track';
-import { useLocalStorage, useLocalStorageBool } from './hooks/useLocalStorage';
+import { useLocalStorage, useLocalStorageBool, useLocalStorageStr } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
-import { getRandomTwister, type Twister } from './lib/twisters';
+import { getNextPracticeId, getTwisterById, type Twister } from './lib/twisters';
 import { playTwister, stopTwister, subscribeTwisterPlaying } from './lib/twisterAudio';
 
 import { TopBar } from './components/TopBar';
@@ -30,6 +30,7 @@ export default function App() {
   const [duration, setDuration] = useLocalStorage('timerDuration', 60);
   const [timerEnabled, setTimerEnabled] = useLocalStorageBool('timerEnabled', true);
   const [isTwisterMode, setIsTwisterMode] = useLocalStorageBool('twisterMode', false);
+  const [lastTwisterId, setLastTwisterId] = useLocalStorageStr('lastTwisterId', '');
   const mode: 'words' | 'twisters' = isTwisterMode ? 'twisters' : 'words';
 
   const [isDark, setIsDark] = useState(false);
@@ -91,9 +92,12 @@ export default function App() {
     }
 
     if (mode === 'twisters') {
-      const next = getRandomTwister(twister?.entry.id);
+      const nextId = getNextPracticeId(twister?.entry.id ?? lastTwisterId ?? null);
+      const next = getTwisterById(nextId);
+      if (!next) return;
       track('twister_generated', { id: next.id });
       countersRef.current.twisters++;
+      setLastTwisterId(next.id);
       setTwister({ entry: next, key: Date.now() });
       playTwister(next.id);
       return;
