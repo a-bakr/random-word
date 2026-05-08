@@ -11,7 +11,7 @@ import { useLocalStorage, useLocalStorageBool } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
 import { getRandomTwister, type Twister } from './lib/twisters';
-import { playTwister, stopTwister } from './lib/twisterAudio';
+import { playTwister, stopTwister, subscribeTwisterPlaying } from './lib/twisterAudio';
 
 import { TopBar } from './components/TopBar';
 import { WordItem } from './components/WordItem';
@@ -38,6 +38,7 @@ export default function App() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerKey, setTimerKey] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTwisterPlaying, setIsTwisterPlaying] = useState(false);
 
   const voice = useVoiceRecognition();
   const rec = useRecordings();
@@ -75,6 +76,8 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
+
+  useEffect(() => subscribeTwisterPlaying(setIsTwisterPlaying), []);
 
   const handleScreenClick = (e: React.MouseEvent) => {
     if (!hasClicked) {
@@ -119,6 +122,11 @@ export default function App() {
 
   const replayTwister = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isTwisterPlaying) {
+      stopTwister();
+      track('twister_stopped');
+      return;
+    }
     if (twister) {
       playTwister(twister.entry.id);
       track('twister_replayed', { id: twister.entry.id });
@@ -226,6 +234,7 @@ export default function App() {
         mode={mode}
         onModeToggle={toggleMode}
         onReplay={replayTwister}
+        isTwisterPlaying={isTwisterPlaying}
       />
 
       <AnimatePresence>
