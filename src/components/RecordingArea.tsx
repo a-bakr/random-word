@@ -3,7 +3,10 @@
 import { Mic, Play, Square, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Recording } from '../types';
-import { NumInput } from './NumInput';
+import { CyclingPill } from './CyclingPill';
+
+const FONT_SIZES = [24, 36, 50, 72, 100, 140];
+const MAX_WORDS = [1, 2, 3, 5, 10];
 
 function threeWords(text: string) {
   if (!text) return '';
@@ -89,22 +92,20 @@ export function RecordingArea({
       </AnimatePresence>
 
       <div className="flex items-center">
-        <NumInput
+        <CyclingPill
           value={fontSize}
-          min={12}
-          max={200}
-          title="Font size (px)"
-          width="4rem"
-          onCommit={onFontSizeChange}
+          options={FONT_SIZES}
+          onChange={onFontSizeChange}
+          label="Aa"
+          title="Font size"
         />
         {mode === 'words' && (
-          <NumInput
+          <CyclingPill
             value={maxWords}
-            min={1}
-            max={10}
+            options={MAX_WORDS}
+            onChange={onMaxWordsChange}
+            label="#"
             title="Words on screen"
-            width="2.5rem"
-            onCommit={onMaxWordsChange}
           />
         )}
         {mode === 'twisters' && (

@@ -25,8 +25,8 @@ export function TimerBar({
       <button
         onClick={toggleTimerEnabled}
         className={`flex items-center justify-center rounded-full p-3 bg-zinc-100/80 dark:bg-zinc-900/80 backdrop-blur transition-all duration-300 ${timerEnabled
-          ? 'text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-200/80 dark:hover:bg-zinc-800/80'
-          : 'text-zinc-400/60 dark:text-zinc-500/60 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'
+          ? 'text-zinc-800 dark:text-zinc-100 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-200/80 dark:hover:bg-zinc-800/80'
+          : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'
           }`}
         aria-label={timerEnabled ? 'Disable timer' : 'Enable timer'}
         title={timerEnabled ? 'Disable timer' : 'Enable timer'}

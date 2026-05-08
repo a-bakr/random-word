@@ -26,7 +26,7 @@ export default function App() {
   const [words, setWords] = useState<WordEntry[]>([]);
   const [twister, setTwister] = useState<{ entry: Twister; key: number } | null>(null);
   const [maxWords, setMaxWords] = useLocalStorage('maxWords', 1);
-  const [fontSize, setFontSize] = useLocalStorage('fontSize', 80);
+  const [fontSize, setFontSize] = useLocalStorage('fontSize', 50);
   const [duration, setDuration] = useLocalStorage('timerDuration', 60);
   const [timerEnabled, setTimerEnabled] = useLocalStorageBool('timerEnabled', true);
   const [isTwisterMode, setIsTwisterMode] = useLocalStorageBool('twisterMode', false);
