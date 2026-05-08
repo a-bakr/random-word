@@ -1,6 +1,7 @@
 'use client';
 
 let _sid: string | null = null;
+let _uid: string | null = null;
 
 function sid(): string {
   if (_sid) return _sid;
@@ -11,6 +12,20 @@ function sid(): string {
     _sid = crypto.randomUUID();
   }
   return _sid;
+}
+
+function uid(): string {
+  if (_uid) return _uid;
+  try {
+    _uid = localStorage.getItem('_uid');
+    if (!_uid) {
+      _uid = crypto.randomUUID();
+      localStorage.setItem('_uid', _uid);
+    }
+  } catch {
+    _uid = crypto.randomUUID();
+  }
+  return _uid;
 }
 
 function utmProps() {
@@ -38,6 +53,7 @@ export function track(name: string, props: Record<string, unknown> = {}): void {
     body: JSON.stringify({
       name,
       session_id: sid(),
+      user_id: uid(),
       path: window.location.pathname,
       referrer: referrerDomain(),
       props,

@@ -46,9 +46,30 @@ export default function App() {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartRef = useRef<number>(0);
 
+  const sessionStartRef = useRef<number>(Date.now());
+  const countersRef = useRef({ words: 0, twisters: 0, recordings: 0, mode_toggles: 0 });
+  const sessionEndedRef = useRef(false);
+
   useEffect(() => {
     setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
     track('pageview');
+    track('session_start');
+
+    const sendEnd = () => {
+      if (sessionEndedRef.current) return;
+      sessionEndedRef.current = true;
+      track('session_end', {
+        duration_ms: Date.now() - sessionStartRef.current,
+        ...countersRef.current,
+      });
+    };
+    const onVis = () => { if (document.visibilityState === 'hidden') sendEnd(); };
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('pagehide', sendEnd);
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('pagehide', sendEnd);
+    };
   }, []);
 
   useEffect(() => {
@@ -69,6 +90,7 @@ export default function App() {
     if (mode === 'twisters') {
       const next = getRandomTwister(twister?.entry.id);
       track('twister_generated', { id: next.id });
+      countersRef.current.twisters++;
       setTwister({ entry: next, key: Date.now() });
       playTwister(next.id);
       return;
@@ -76,6 +98,7 @@ export default function App() {
 
     const word = generate() as string;
     track('word_generated', { word });
+    countersRef.current.words++;
     setWords(prev => [
       ...prev,
       { text: word, x: e.clientX, y: e.clientY, id: Date.now(), color: getRandomColor(isDark) },
@@ -85,15 +108,21 @@ export default function App() {
   const toggleMode = (e: React.MouseEvent) => {
     e.stopPropagation();
     stopTwister();
+    const next = isTwisterMode ? 'words' : 'twisters';
     setIsTwisterMode(!isTwisterMode);
     setWords([]);
     setTwister(null);
-    track('mode_toggled', { mode: isTwisterMode ? 'words' : 'twisters' });
+    countersRef.current.mode_toggles++;
+    track('mode_toggled', { mode: next });
+    track('setting_changed', { key: 'mode', value: next });
   };
 
   const replayTwister = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (twister) playTwister(twister.entry.id);
+    if (twister) {
+      playTwister(twister.entry.id);
+      track('twister_replayed', { id: twister.entry.id });
+    }
   };
 
   const toggleTimerEnabled = (e: React.MouseEvent) => {
@@ -101,6 +130,41 @@ export default function App() {
     const next = !timerEnabled;
     setTimerEnabled(next);
     if (!next && isTimerRunning) setIsTimerRunning(false);
+    track('setting_changed', { key: 'timerEnabled', value: next });
+  };
+
+  const onFontSizeChange = (n: number) => {
+    setFontSize(n);
+    track('setting_changed', { key: 'fontSize', value: n });
+  };
+
+  const onMaxWordsChange = (n: number) => {
+    setMaxWords(n);
+    setWords(prev => prev.slice(-n));
+    track('setting_changed', { key: 'maxWords', value: n });
+  };
+
+  const onDurationChange = (secs: number) => {
+    setDuration(secs);
+    track('setting_changed', { key: 'timerDuration', value: secs });
+  };
+
+  const onSoundToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsSoundEnabled(v => {
+      const next = !v;
+      track('setting_changed', { key: 'soundEnabled', value: next });
+      return next;
+    });
+  };
+
+  const onThemeToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsDark(v => {
+      const next = !v;
+      track('setting_changed', { key: 'theme', value: next ? 'dark' : 'light' });
+      return next;
+    });
   };
 
   const startRecording = async (e: React.MouseEvent) => {
@@ -139,6 +203,7 @@ export default function App() {
     e.stopPropagation();
     const duration_ms = Date.now() - recordingStartRef.current;
     track('recording_stopped', { duration_ms });
+    countersRef.current.recordings++;
     await voice.stop();
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
@@ -151,13 +216,13 @@ export default function App() {
     >
       <TopBar
         fontSize={fontSize}
-        onFontSizeChange={setFontSize}
+        onFontSizeChange={onFontSizeChange}
         maxWords={maxWords}
-        onMaxWordsChange={n => { setMaxWords(n); setWords(prev => prev.slice(-n)); }}
+        onMaxWordsChange={onMaxWordsChange}
         isSoundEnabled={isSoundEnabled}
-        onSoundToggle={e => { e.stopPropagation(); setIsSoundEnabled(v => !v); }}
+        onSoundToggle={onSoundToggle}
         isDark={isDark}
-        onThemeToggle={e => { e.stopPropagation(); setIsDark(v => !v); }}
+        onThemeToggle={onThemeToggle}
         mode={mode}
         onModeToggle={toggleMode}
         onReplay={replayTwister}
@@ -202,7 +267,7 @@ export default function App() {
         duration={duration}
         isTimerRunning={isTimerRunning}
         onTimerStop={() => setIsTimerRunning(false)}
-        onDurationChange={setDuration}
+        onDurationChange={onDurationChange}
       />
     </div>
   );

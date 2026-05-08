@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Recording } from '../types';
+import { track } from '../lib/track';
 
 export function useRecordings() {
   const [recordings, setRecordings] = useState<Recording[]>([]);
@@ -32,6 +33,7 @@ export function useRecordings() {
 
   const removeRecording = useCallback((id: number) => (e: React.MouseEvent) => {
     e.stopPropagation();
+    track('recording_removed');
     const audio = playbacksRef.current.get(id);
     if (audio) { audio.pause(); audio.onended = null; }
     playbacksRef.current.delete(id);
@@ -57,12 +59,14 @@ export function useRecordings() {
         const cur = playbacksRef.current.get(current);
         if (cur) { cur.pause(); cur.currentTime = 0; }
       }
+      track('recording_played');
       audio.play();
       return id;
     });
   }, []);
 
   const selectRecording = useCallback((id: number) => {
+    track('recording_selected');
     setSelectedRecordingId(id);
   }, []);
 
