@@ -7,10 +7,10 @@ import { AnimatePresence } from 'motion/react';
 import type { WordEntry } from './types';
 import { playPopSound, getRandomColor } from './lib/sounds';
 import { track } from './lib/track';
-import { useLocalStorage, useLocalStorageBool } from './hooks/useLocalStorage';
+import { useLocalStorage, useLocalStorageBool, useLocalStorageStr } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
-import { getRandomTwister, type Twister } from './lib/twisters';
+import { allTwisterIds, getNextIdInOrder, getTwisterById, shuffleAllIds, type Twister } from './lib/twisters';
 import { playTwister, stopTwister, subscribeTwisterPlaying } from './lib/twisterAudio';
 
 import { TopBar } from './components/TopBar';
@@ -30,6 +30,8 @@ export default function App() {
   const [duration, setDuration] = useLocalStorage('timerDuration', 60);
   const [timerEnabled, setTimerEnabled] = useLocalStorageBool('timerEnabled', true);
   const [isTwisterMode, setIsTwisterMode] = useLocalStorageBool('twisterMode', false);
+  const [lastTwisterId, setLastTwisterId] = useLocalStorageStr('lastTwisterId', '');
+  const [twisterOrder, setTwisterOrder] = useState<string[]>([]);
   const mode: 'words' | 'twisters' = isTwisterMode ? 'twisters' : 'words';
 
   const [isDark, setIsDark] = useState(false);
@@ -79,6 +81,26 @@ export default function App() {
 
   useEffect(() => subscribeTwisterPlaying(setIsTwisterPlaying), []);
 
+  useEffect(() => {
+    const all = allTwisterIds();
+    const allSet = new Set(all);
+    let order: string[] | null = null;
+    try {
+      const stored = localStorage.getItem('twisterOrder');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length === all.length && parsed.every(id => typeof id === 'string' && allSet.has(id))) {
+          order = parsed;
+        }
+      }
+    } catch {}
+    if (!order) {
+      order = shuffleAllIds();
+      try { localStorage.setItem('twisterOrder', JSON.stringify(order)); } catch {}
+    }
+    setTwisterOrder(order);
+  }, []);
+
   const handleScreenClick = (e: React.MouseEvent) => {
     if (!hasClicked) {
       setHasClicked(true);
@@ -91,9 +113,13 @@ export default function App() {
     }
 
     if (mode === 'twisters') {
-      const next = getRandomTwister(twister?.entry.id);
+      if (!twisterOrder.length) return;
+      const nextId = getNextIdInOrder(twisterOrder, twister?.entry.id ?? lastTwisterId ?? null);
+      const next = getTwisterById(nextId);
+      if (!next) return;
       track('twister_generated', { id: next.id });
       countersRef.current.twisters++;
+      setLastTwisterId(next.id);
       setTwister({ entry: next, key: Date.now() });
       playTwister(next.id);
       return;
