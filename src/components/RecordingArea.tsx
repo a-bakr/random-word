@@ -38,7 +38,7 @@ export function RecordingArea({
       {recordings.length > 0 && (
         <div
           className="flex gap-2 overflow-x-auto scrollbar-none"
-          style={{ maxWidth: 'calc(100vw - 5rem)' }}
+          style={{ maxWidth: 'calc(100vw - 14rem)' }}
         >
           <AnimatePresence>
             {recordings.map(rec => (
