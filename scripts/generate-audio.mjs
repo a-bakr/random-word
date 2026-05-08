@@ -18,6 +18,8 @@ const MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-3.1-flash-tts-preview';
 const VOICE = process.env.GEMINI_TTS_VOICE || 'Kore';
 const STYLE = 'Say slowly and clearly, articulating every consonant, for an English-learner practicing pronunciation:';
 const SAMPLE_RATE = 24000;
+const MIN_INTERVAL_MS = Number(process.env.GEMINI_TTS_INTERVAL_MS ?? 62000); // free tier: 3 RPM, 62s is conservative
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const args = process.argv.slice(2);
 const onlyId = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
@@ -75,6 +77,42 @@ function wrapWav(pcm, sampleRate) {
 let totalChars = 0;
 let generated = 0;
 let skipped = 0;
+let lastRequestAt = 0;
+
+async function callTTS(prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const wait = Math.max(0, MIN_INTERVAL_MS - (Date.now() - lastRequestAt));
+    if (wait > 0) await sleep(wait);
+    lastRequestAt = Date.now();
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ['AUDIO'],
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } } },
+        },
+      }),
+    });
+
+    if (res.ok) return res.json();
+
+    const body = await res.text();
+    if (res.status === 429) {
+      const m = body.match(/"retryDelay":\s*"(\d+)s"/);
+      const delay = m ? Number(m[1]) * 1000 + 2000 : 30000;
+      console.log(`  429 — retrying in ${(delay / 1000).toFixed(0)}s (attempt ${attempt + 1})`);
+      await sleep(delay);
+      continue;
+    }
+
+    throw new Error(`HTTP ${res.status}: ${body}`);
+  }
+  throw new Error('Exhausted retries on 429');
+}
 
 for (const t of targets) {
   const out = resolve(OUT_DIR, `${t.id}.wav`);
@@ -86,27 +124,14 @@ for (const t of targets) {
 
   const prompt = `${STYLE} ${t.text}`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } },
-        },
-      },
-    }),
-  });
-
-  if (!res.ok) {
-    console.error(`fail ${t.id}: ${res.status} ${await res.text()}`);
+  let json;
+  try {
+    json = await callTTS(prompt);
+  } catch (e) {
+    console.error(`fail ${t.id}: ${e.message}`);
     process.exit(1);
   }
 
-  const json = await res.json();
   const part = json?.candidates?.[0]?.content?.parts?.find(p => p.inlineData?.data);
   if (!part) {
     console.error(`fail ${t.id}: no audio in response`, JSON.stringify(json).slice(0, 500));
