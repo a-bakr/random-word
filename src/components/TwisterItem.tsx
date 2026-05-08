@@ -13,7 +13,8 @@ export function TwisterItem({
   fontSize: number;
   isDark: boolean;
 }) {
-  const cap = Math.min(fontSize, 44);
+  // auto-fit by length: roomier for short phrases, shrinks for long ones, never below 18
+  const cap = Math.min(fontSize, Math.max(18, Math.floor(2200 / Math.max(text.length, 20))));
   return (
     <motion.div
       key={id}
