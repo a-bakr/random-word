@@ -5,6 +5,15 @@ export interface Twister {
   difficulty: 'easy' | 'medium' | 'hard' | 'very-hard';
 }
 
+export function getRandomTwister(exclude?: string): Twister {
+  if (twisters.length <= 1) return twisters[0];
+  let pick: Twister;
+  do {
+    pick = twisters[Math.floor(Math.random() * twisters.length)];
+  } while (pick.id === exclude);
+  return pick;
+}
+
 export const twisters: Twister[] = [
   { id: '001', text: 'She sells seashells by the seashore. The shells she sells are seashells, I\'m sure. So if she sells shells on the seashore, I\'m sure she sells seashore shells.', sound: '/s/', difficulty: 'medium' },
   { id: '002', text: 'Sally sells seashells by the seashore.', sound: '/s/', difficulty: 'easy' },
