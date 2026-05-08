@@ -249,18 +249,12 @@ export default function App() {
       onClick={handleScreenClick}
     >
       <TopBar
-        fontSize={fontSize}
-        onFontSizeChange={onFontSizeChange}
-        maxWords={maxWords}
-        onMaxWordsChange={onMaxWordsChange}
         isSoundEnabled={isSoundEnabled}
         onSoundToggle={onSoundToggle}
         isDark={isDark}
         onThemeToggle={onThemeToggle}
         mode={mode}
         onModeToggle={toggleMode}
-        onReplay={replayTwister}
-        isTwisterPlaying={isTwisterPlaying}
       />
 
       <AnimatePresence>
@@ -289,6 +283,13 @@ export default function App() {
         onTogglePlayback={rec.togglePlayback}
         onRemove={rec.removeRecording}
         onSelect={rec.selectRecording}
+        fontSize={fontSize}
+        onFontSizeChange={onFontSizeChange}
+        maxWords={maxWords}
+        onMaxWordsChange={onMaxWordsChange}
+        mode={mode}
+        onReplay={replayTwister}
+        isTwisterPlaying={isTwisterPlaying}
       />
 
       <TranscriptCard recording={rec.selectedRecording} onClose={rec.clearSelection} />
