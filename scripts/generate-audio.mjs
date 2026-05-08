@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Generate MP3s for tongue twisters using OpenAI TTS.
+// Generate WAVs for tongue twisters using Gemini Flash TTS.
 // Usage:
-//   OPENAI_API_KEY=sk-... node scripts/generate-audio.mjs              # all
-//   OPENAI_API_KEY=sk-... node scripts/generate-audio.mjs --only 01    # one
-//   OPENAI_API_KEY=sk-... node scripts/generate-audio.mjs --force      # overwrite
+//   GEMINI_API_KEY=... node scripts/generate-audio.mjs              # all
+//   GEMINI_API_KEY=... node scripts/generate-audio.mjs --only 01    # one
+//   GEMINI_API_KEY=... node scripts/generate-audio.mjs --force      # overwrite
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -14,16 +14,17 @@ const ROOT = resolve(__dirname, '..');
 const OUT_DIR = resolve(ROOT, 'public/twisters');
 const TWISTERS_FILE = resolve(ROOT, 'src/lib/twisters.ts');
 
-const MODEL = 'tts-1-hd';
-const VOICE = 'nova';
-const PRICE_PER_1M = 30;
+const MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts';
+const VOICE = process.env.GEMINI_TTS_VOICE || 'Kore';
+const STYLE = 'Say slowly and clearly, articulating every consonant, for an English-learner practicing pronunciation:';
+const SAMPLE_RATE = 24000;
 
 const args = process.argv.slice(2);
 const onlyId = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 const force = args.includes('--force');
 
-if (!process.env.OPENAI_API_KEY) {
-  console.error('OPENAI_API_KEY not set');
+if (!process.env.GEMINI_API_KEY) {
+  console.error('GEMINI_API_KEY not set');
   process.exit(1);
 }
 
@@ -34,9 +35,8 @@ let m;
 while ((m = re.exec(src))) {
   twisters.push({ id: m[1], text: m[2].replace(/\\'/g, "'") });
 }
-
 if (!twisters.length) {
-  console.error('No twisters parsed from', TWISTERS_FILE);
+  console.error('No twisters parsed');
   process.exit(1);
 }
 
@@ -48,30 +48,56 @@ if (!targets.length) {
   process.exit(1);
 }
 
+function wrapWav(pcm, sampleRate) {
+  const numChannels = 1;
+  const bitsPerSample = 16;
+  const byteRate = (sampleRate * numChannels * bitsPerSample) / 8;
+  const blockAlign = (numChannels * bitsPerSample) / 8;
+  const dataSize = pcm.length;
+  const buf = Buffer.alloc(44 + dataSize);
+  buf.write('RIFF', 0);
+  buf.writeUInt32LE(36 + dataSize, 4);
+  buf.write('WAVE', 8);
+  buf.write('fmt ', 12);
+  buf.writeUInt32LE(16, 16);
+  buf.writeUInt16LE(1, 20);
+  buf.writeUInt16LE(numChannels, 22);
+  buf.writeUInt32LE(sampleRate, 24);
+  buf.writeUInt32LE(byteRate, 28);
+  buf.writeUInt16LE(blockAlign, 32);
+  buf.writeUInt16LE(bitsPerSample, 34);
+  buf.write('data', 36);
+  buf.writeUInt32LE(dataSize, 40);
+  pcm.copy(buf, 44);
+  return buf;
+}
+
 let totalChars = 0;
 let generated = 0;
 let skipped = 0;
 
 for (const t of targets) {
-  const out = resolve(OUT_DIR, `${t.id}.mp3`);
+  const out = resolve(OUT_DIR, `${t.id}.wav`);
   if (existsSync(out) && !force) {
     skipped++;
     console.log(`skip ${t.id} (exists)`);
     continue;
   }
 
-  const res = await fetch('https://api.openai.com/v1/audio/speech', {
+  const prompt = `${STYLE} ${t.text}`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: MODEL,
-      voice: VOICE,
-      input: t.text,
-      response_format: 'mp3',
-      speed: 0.95,
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } },
+        },
+      },
     }),
   });
 
@@ -80,17 +106,23 @@ for (const t of targets) {
     process.exit(1);
   }
 
-  const buf = Buffer.from(await res.arrayBuffer());
-  writeFileSync(out, buf);
+  const json = await res.json();
+  const part = json?.candidates?.[0]?.content?.parts?.find(p => p.inlineData?.data);
+  if (!part) {
+    console.error(`fail ${t.id}: no audio in response`, JSON.stringify(json).slice(0, 500));
+    process.exit(1);
+  }
+
+  const pcm = Buffer.from(part.inlineData.data, 'base64');
+  const wav = wrapWav(pcm, SAMPLE_RATE);
+  writeFileSync(out, wav);
   totalChars += t.text.length;
   generated++;
   const size = statSync(out).size;
   console.log(`ok   ${t.id}  ${t.text.length} chars  ${(size / 1024).toFixed(1)} KB  "${t.text.slice(0, 60)}${t.text.length > 60 ? '…' : ''}"`);
 }
 
-const cost = (totalChars / 1_000_000) * PRICE_PER_1M;
 console.log('');
 console.log(`generated: ${generated}, skipped: ${skipped}`);
 console.log(`chars:     ${totalChars}`);
-console.log(`model:     ${MODEL} ($${PRICE_PER_1M}/1M chars)`);
-console.log(`cost:      $${cost.toFixed(4)}`);
+console.log(`model:     ${MODEL}, voice: ${VOICE}`);
