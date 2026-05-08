@@ -1,6 +1,6 @@
 'use client';
 
-import { Volume2, VolumeX, Moon, Sun } from 'lucide-react';
+import { Volume2, VolumeX, Moon, Sun, Type, Quote, Play } from 'lucide-react';
 import { Timer } from './Timer';
 import { NumInput } from './NumInput';
 
@@ -20,6 +20,9 @@ export function TopBar({
   onSoundToggle,
   isDark,
   onThemeToggle,
+  mode,
+  onModeToggle,
+  onReplay,
 }: {
   timerEnabled: boolean;
   toggleTimerEnabled: (e: React.MouseEvent) => void;
@@ -36,6 +39,9 @@ export function TopBar({
   onSoundToggle: (e: React.MouseEvent) => void;
   isDark: boolean;
   onThemeToggle: (e: React.MouseEvent) => void;
+  mode: 'words' | 'twisters';
+  onModeToggle: (e: React.MouseEvent) => void;
+  onReplay: (e: React.MouseEvent) => void;
 }) {
   return (
     <div className="absolute top-6 inset-x-6 z-10 flex items-center justify-between pointer-events-none">
@@ -69,14 +75,33 @@ export function TopBar({
           width="4rem"
           onCommit={onFontSizeChange}
         />
-        <NumInput
-          value={maxWords}
-          min={1}
-          max={10}
-          title="Words on screen"
-          width="2.5rem"
-          onCommit={onMaxWordsChange}
-        />
+        {mode === 'words' && (
+          <NumInput
+            value={maxWords}
+            min={1}
+            max={10}
+            title="Words on screen"
+            width="2.5rem"
+            onCommit={onMaxWordsChange}
+          />
+        )}
+        {mode === 'twisters' && (
+          <button
+            onClick={onReplay}
+            className="rounded-full p-3 text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-all duration-500"
+            aria-label="Replay audio"
+          >
+            <Play size={20} strokeWidth={1.5} />
+          </button>
+        )}
+        <button
+          onClick={onModeToggle}
+          className="rounded-full p-3 text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-all duration-500"
+          aria-label={mode === 'words' ? 'Switch to tongue twisters' : 'Switch to random words'}
+          title={mode === 'words' ? 'Switch to tongue twisters' : 'Switch to random words'}
+        >
+          {mode === 'words' ? <Type size={20} strokeWidth={1.5} /> : <Quote size={20} strokeWidth={1.5} />}
+        </button>
         <button
           onClick={onSoundToggle}
           className="rounded-full p-3 text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-all duration-500"

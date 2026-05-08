@@ -10,9 +10,12 @@ import { track } from './lib/track';
 import { useLocalStorage, useLocalStorageBool } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
+import { getRandomTwister, type Twister } from './lib/twisters';
+import { playTwister, stopTwister } from './lib/twisterAudio';
 
 import { TopBar } from './components/TopBar';
 import { WordItem } from './components/WordItem';
+import { TwisterItem } from './components/TwisterItem';
 import { RecordingArea } from './components/RecordingArea';
 import { TranscriptOverlay } from './components/TranscriptOverlay';
 import { TranscriptCard } from './components/TranscriptCard';
@@ -20,10 +23,13 @@ import { HintOverlay } from './components/HintOverlay';
 
 export default function App() {
   const [words, setWords] = useState<WordEntry[]>([]);
+  const [twister, setTwister] = useState<{ entry: Twister; key: number } | null>(null);
   const [maxWords, setMaxWords] = useLocalStorage('maxWords', 1);
   const [fontSize, setFontSize] = useLocalStorage('fontSize', 80);
   const [duration, setDuration] = useLocalStorage('timerDuration', 60);
   const [timerEnabled, setTimerEnabled] = useLocalStorageBool('timerEnabled', true);
+  const [isTwisterMode, setIsTwisterMode] = useLocalStorageBool('twisterMode', false);
+  const mode: 'words' | 'twisters' = isTwisterMode ? 'twisters' : 'words';
 
   const [isDark, setIsDark] = useState(false);
   const [hasClicked, setHasClicked] = useState(false);
@@ -59,12 +65,34 @@ export default function App() {
       else setIsTimerRunning(true);
     }
 
+    if (mode === 'twisters') {
+      const next = getRandomTwister(twister?.entry.id);
+      track('twister_generated', { id: next.id });
+      setTwister({ entry: next, key: Date.now() });
+      playTwister(next.id);
+      return;
+    }
+
     const word = generate() as string;
     track('word_generated', { word });
     setWords(prev => [
       ...prev,
       { text: word, x: e.clientX, y: e.clientY, id: Date.now(), color: getRandomColor(isDark) },
     ].slice(-maxWords));
+  };
+
+  const toggleMode = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    stopTwister();
+    setIsTwisterMode(!isTwisterMode);
+    setWords([]);
+    setTwister(null);
+    track('mode_toggled', { mode: isTwisterMode ? 'words' : 'twisters' });
+  };
+
+  const replayTwister = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (twister) playTwister(twister.entry.id);
   };
 
   const toggleTimerEnabled = (e: React.MouseEvent) => {
@@ -136,12 +164,24 @@ export default function App() {
         onSoundToggle={e => { e.stopPropagation(); setIsSoundEnabled(v => !v); }}
         isDark={isDark}
         onThemeToggle={e => { e.stopPropagation(); setIsDark(v => !v); }}
+        mode={mode}
+        onModeToggle={toggleMode}
+        onReplay={replayTwister}
       />
 
       <AnimatePresence>
-        {words.map(word => (
+        {mode === 'words' && words.map(word => (
           <WordItem key={word.id} word={word} fontSize={fontSize} />
         ))}
+        {mode === 'twisters' && twister && (
+          <TwisterItem
+            key={twister.key}
+            id={String(twister.key)}
+            text={twister.entry.text}
+            fontSize={fontSize}
+            isDark={isDark}
+          />
+        )}
       </AnimatePresence>
 
       <TranscriptOverlay text={voice.transcript} onDismiss={voice.clearTranscript} />

@@ -18,13 +18,22 @@ const MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-3.1-flash-tts-preview';
 const VOICE = process.env.GEMINI_TTS_VOICE || 'Kore';
 const STYLE = 'Say slowly and clearly, articulating every consonant, for an English-learner practicing pronunciation:';
 const SAMPLE_RATE = 24000;
+const MIN_INTERVAL_MS = Number(process.env.GEMINI_TTS_INTERVAL_MS ?? 22000); // per-key throttle
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+const KEYS = (process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '')
+  .split(',')
+  .map(k => k.trim())
+  .filter(Boolean);
+const lastUsedAt = new Map(KEYS.map(k => [k, 0]));
+let keyCursor = 0;
 
 const args = process.argv.slice(2);
 const onlyId = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 const force = args.includes('--force');
 
-if (!process.env.GEMINI_API_KEY) {
-  console.error('GEMINI_API_KEY not set');
+if (!KEYS.length) {
+  console.error('GEMINI_API_KEY (or GEMINI_API_KEYS, comma-separated) not set');
   process.exit(1);
 }
 
@@ -76,6 +85,58 @@ let totalChars = 0;
 let generated = 0;
 let skipped = 0;
 
+async function pickKey() {
+  // Pick the key whose per-key cooldown is smallest; sleep until ready.
+  while (true) {
+    let bestKey = null;
+    let bestWait = Infinity;
+    for (const k of KEYS) {
+      const wait = Math.max(0, MIN_INTERVAL_MS - (Date.now() - (lastUsedAt.get(k) || 0)));
+      if (wait < bestWait) {
+        bestWait = wait;
+        bestKey = k;
+      }
+    }
+    if (bestWait === 0) return bestKey;
+    await sleep(bestWait);
+  }
+}
+
+async function callTTS(prompt) {
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const key = await pickKey();
+    lastUsedAt.set(key, Date.now());
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ['AUDIO'],
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } } },
+        },
+      }),
+    });
+
+    if (res.ok) return res.json();
+
+    const body = await res.text();
+    if (res.status === 429) {
+      // Park this key for ~retryDelay so the rotator picks a different one.
+      const m = body.match(/"retryDelay":\s*"(\d+)s"/);
+      const parkMs = (m ? Number(m[1]) * 1000 : 30000) + 1000;
+      lastUsedAt.set(key, Date.now() + parkMs - MIN_INTERVAL_MS);
+      console.log(`  429 on key …${key.slice(-6)} — parking ${(parkMs / 1000).toFixed(0)}s, trying another (attempt ${attempt + 1})`);
+      continue;
+    }
+
+    throw new Error(`HTTP ${res.status}: ${body}`);
+  }
+  throw new Error('Exhausted retries on 429');
+}
+
 for (const t of targets) {
   const out = resolve(OUT_DIR, `${t.id}.wav`);
   if (existsSync(out) && !force) {
@@ -86,27 +147,14 @@ for (const t of targets) {
 
   const prompt = `${STYLE} ${t.text}`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } },
-        },
-      },
-    }),
-  });
-
-  if (!res.ok) {
-    console.error(`fail ${t.id}: ${res.status} ${await res.text()}`);
+  let json;
+  try {
+    json = await callTTS(prompt);
+  } catch (e) {
+    console.error(`fail ${t.id}: ${e.message}`);
     process.exit(1);
   }
 
-  const json = await res.json();
   const part = json?.candidates?.[0]?.content?.parts?.find(p => p.inlineData?.data);
   if (!part) {
     console.error(`fail ${t.id}: no audio in response`, JSON.stringify(json).slice(0, 500));
