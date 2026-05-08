@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (!pathname.startsWith('/zen') && !pathname.startsWith('/api/zen')) {
+  if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/admin')) {
     return NextResponse.next();
   }
 
@@ -10,7 +10,7 @@ export function proxy(request: NextRequest) {
   if (!auth.startsWith('Basic ')) {
     return new NextResponse('Unauthorized', {
       status: 401,
-      headers: { 'WWW-Authenticate': 'Basic realm="Zen"' },
+      headers: { 'WWW-Authenticate': 'Basic realm="Admin"' },
     });
   }
 
@@ -22,7 +22,7 @@ export function proxy(request: NextRequest) {
   if (user !== process.env.ZEN_USER || pass !== process.env.ZEN_PASS) {
     return new NextResponse('Unauthorized', {
       status: 401,
-      headers: { 'WWW-Authenticate': 'Basic realm="Zen"' },
+      headers: { 'WWW-Authenticate': 'Basic realm="Admin"' },
     });
   }
 
@@ -30,5 +30,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/zen/:path*', '/api/zen/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 };

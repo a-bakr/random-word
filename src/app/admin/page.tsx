@@ -88,9 +88,9 @@ export default function ZenPage() {
 
   const load = useCallback(async (w: Win) => {
     const [s, ts, f] = await Promise.all([
-      fetch(`/api/zen/summary?window=${w}`).then(r => r.json()),
-      fetch(`/api/zen/timeseries?window=${w}`).then(r => r.json()),
-      fetch('/api/zen/feed').then(r => r.json()),
+      fetch(`/api/admin/summary?window=${w}`).then(r => r.json()),
+      fetch(`/api/admin/timeseries?window=${w}`).then(r => r.json()),
+      fetch('/api/admin/feed').then(r => r.json()),
     ]);
     setSummary(s);
     setSeries(ts);
