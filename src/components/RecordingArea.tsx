@@ -3,12 +3,13 @@
 import { Mic, Play, Square, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Recording } from '../types';
+import { NumInput } from './NumInput';
 
 function threeWords(text: string) {
   if (!text) return '';
   const ws = text.trim().split(/\s+/).filter(Boolean);
   if (ws.length <= 3) return text;
-  return ws.slice(0, 3).join(' ') + '\u2026';
+  return ws.slice(0, 3).join(' ') + '…';
 }
 
 export function RecordingArea({
@@ -20,6 +21,13 @@ export function RecordingArea({
   onTogglePlayback,
   onRemove,
   onSelect,
+  fontSize,
+  onFontSizeChange,
+  maxWords,
+  onMaxWordsChange,
+  mode,
+  onReplay,
+  isTwisterPlaying,
 }: {
   recordings: Recording[];
   isRecording: boolean;
@@ -29,6 +37,13 @@ export function RecordingArea({
   onTogglePlayback: (id: number) => (e: React.MouseEvent) => void;
   onRemove: (id: number) => (e: React.MouseEvent) => void;
   onSelect: (id: number) => void;
+  fontSize: number;
+  onFontSizeChange: (n: number) => void;
+  maxWords: number;
+  onMaxWordsChange: (n: number) => void;
+  mode: 'words' | 'twisters';
+  onReplay: (e: React.MouseEvent) => void;
+  isTwisterPlaying: boolean;
 }) {
   return (
     <div
@@ -73,21 +88,53 @@ export function RecordingArea({
         ))}
       </AnimatePresence>
 
-      <button
-        onClick={onToggleRecord}
-        className={`rounded-full p-3 transition-all duration-500 ${isRecording
-          ? 'text-zinc-900 dark:text-zinc-50'
-          : 'text-zinc-400/30 hover:text-zinc-900 dark:hover:text-zinc-50'
-          }`}
-        aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-      >
-        <span className="relative flex">
-          {isRecording && (
-            <span className="absolute inset-0 rounded-full bg-red-400/40 dark:bg-red-400/30 animate-ping" />
-          )}
-          {isRecording ? <Square size={20} strokeWidth={1.5} /> : <Mic size={20} strokeWidth={1.5} />}
-        </span>
-      </button>
+      <div className="flex items-center">
+        <NumInput
+          value={fontSize}
+          min={12}
+          max={200}
+          title="Font size (px)"
+          width="4rem"
+          onCommit={onFontSizeChange}
+        />
+        {mode === 'words' && (
+          <NumInput
+            value={maxWords}
+            min={1}
+            max={10}
+            title="Words on screen"
+            width="2.5rem"
+            onCommit={onMaxWordsChange}
+          />
+        )}
+        {mode === 'twisters' && (
+          <button
+            onClick={onReplay}
+            className={`rounded-full p-3 transition-all duration-500 ${isTwisterPlaying
+              ? 'text-zinc-900 dark:text-zinc-50'
+              : 'text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
+              }`}
+            aria-label={isTwisterPlaying ? 'Stop audio' : 'Replay audio'}
+          >
+            {isTwisterPlaying ? <Square size={20} strokeWidth={1.5} /> : <Play size={20} strokeWidth={1.5} />}
+          </button>
+        )}
+        <button
+          onClick={onToggleRecord}
+          className={`rounded-full p-3 transition-all duration-500 ${isRecording
+            ? 'text-zinc-900 dark:text-zinc-50'
+            : 'text-zinc-400/30 hover:text-zinc-900 dark:hover:text-zinc-50'
+            }`}
+          aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+        >
+          <span className="relative flex">
+            {isRecording && (
+              <span className="absolute inset-0 rounded-full bg-red-400/40 dark:bg-red-400/30 animate-ping" />
+            )}
+            {isRecording ? <Square size={20} strokeWidth={1.5} /> : <Mic size={20} strokeWidth={1.5} />}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
