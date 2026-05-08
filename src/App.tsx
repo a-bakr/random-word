@@ -29,6 +29,7 @@ export default function App() {
   const [hasClicked, setHasClicked] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timerKey, setTimerKey] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
 
   const voice = useVoiceRecognition();
@@ -53,7 +54,10 @@ export default function App() {
       track('hint_dismissed');
     }
     if (isSoundEnabled) playPopSound();
-    if (timerEnabled && !isTimerRunning) setIsTimerRunning(true);
+    if (timerEnabled) {
+      if (isTimerRunning) setTimerKey(k => k + 1);
+      else setIsTimerRunning(true);
+    }
 
     const word = generate() as string;
     track('word_generated', { word });
@@ -119,6 +123,7 @@ export default function App() {
       <TopBar
         timerEnabled={timerEnabled}
         toggleTimerEnabled={toggleTimerEnabled}
+        timerKey={timerKey}
         duration={duration}
         isTimerRunning={isTimerRunning}
         onTimerStop={() => setIsTimerRunning(false)}
