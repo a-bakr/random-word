@@ -24,7 +24,7 @@ export function CyclingPill({
     <button
       onClick={e => { e.stopPropagation(); onChange(nextIn(value, options)); }}
       title={title}
-      className="rounded-full px-3 py-2 text-xs font-mono tabular-nums text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+      className="rounded-full px-3 py-1 text-2xl font-black font-mono tabular-nums tracking-tight text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
     >
       {label}
       <span className="ml-1">{value}</span>

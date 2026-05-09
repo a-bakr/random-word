@@ -13,8 +13,6 @@ export function TwisterItem({
   fontSize: number;
   isDark: boolean;
 }) {
-  // auto-fit by length: roomier for short phrases, shrinks for long ones, never below 18
-  const cap = Math.min(fontSize, Math.max(18, Math.floor(2200 / Math.max(text.length, 20))));
   return (
     <motion.div
       key={id}
@@ -26,7 +24,7 @@ export function TwisterItem({
     >
       <p
         className="leading-snug font-medium tracking-tight text-center select-none max-w-4xl"
-        style={{ fontSize: `${cap}px`, color: isDark ? '#e4e4e7' : '#18181b' }}
+        style={{ fontSize: `${fontSize}px`, color: isDark ? '#e4e4e7' : '#18181b' }}
       >
         {text}
       </p>
