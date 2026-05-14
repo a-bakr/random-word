@@ -23,11 +23,10 @@ import { HintOverlay } from './components/HintOverlay';
 import { TimerBar } from './components/TimerBar';
 import { CoachingTips } from './components/CoachingTips';
 import { TipOverlay } from './components/TipOverlay';
-import { ControlWheel } from './components/ControlWheel';
+import { MenuButton } from './components/MenuButton';
 import { AboutOverlay } from './components/AboutOverlay';
 import { SettingsOverlay } from './components/SettingsOverlay';
 import { useTips } from './hooks/useTips';
-import { useLongPress } from './hooks/useLongPress';
 import type { Tip } from './lib/tips';
 
 export default function App() {
@@ -51,33 +50,11 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isTwisterPlaying, setIsTwisterPlaying] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
-  const [wheelOpen, setWheelOpen] = useState(false);
-  const [wheelHoveredId, setWheelHoveredId] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const [wheelPos, setWheelPos] = useState({ x: 0, y: 0 });
-
   const { activeTips, rotateTips } = useTips();
-  const { start: lpStart, cancel: lpCancel, firedRef: lpFiredRef } = useLongPress((x, y) => {
-    setWheelPos({ x, y });
-    setWheelOpen(true);
-  });
-
-  // Clamp wheel center so the 340px donut stays fully on screen
-  const wheelCX = Math.max(170, Math.min(window.innerWidth - 170, wheelPos.x));
-  const wheelCY = Math.max(170, Math.min(window.innerHeight - 170, wheelPos.y));
-
-  const getWheelSector = (clientX: number, clientY: number): string | null => {
-    const dx = clientX - wheelCX;
-    const dy = clientY - wheelCY;
-    if (Math.sqrt(dx * dx + dy * dy) < 58) return null;
-    const a = Math.atan2(dy, dx) * 180 / Math.PI;
-    if (a >= -180 && a < -90) return 'twisters';
-    if (a >= -90 && a < 0) return 'settings';
-    if (a >= 0 && a < 90) return 'about';
-    return 'words';
-  };
 
   const voice = useVoiceRecognition();
   const rec = useRecordings();
@@ -139,8 +116,7 @@ export default function App() {
   }, []);
 
   const handleScreenClick = (e: React.MouseEvent) => {
-    if (lpFiredRef.current) { lpFiredRef.current = false; return; }
-    if (wheelOpen) { setWheelOpen(false); return; }
+    if (menuOpen) { setMenuOpen(false); return; }
     if (openTip) { setOpenTip(null); return; }
     if (!hasClicked) {
       setHasClicked(true);
@@ -231,8 +207,8 @@ export default function App() {
     });
   };
 
-  const handleWheelSelect = (id: string) => {
-    setWheelOpen(false);
+  const handleMenuSelect = (id: string) => {
+    setMenuOpen(false);
     if (id === 'words') { stopTwister(); setIsTwisterMode(false); setWords([]); setTwister(null); }
     else if (id === 'twisters') { stopTwister(); setIsTwisterMode(true); setWords([]); setTwister(null); }
     else if (id === 'settings') setSettingsOpen(true);
@@ -289,18 +265,6 @@ export default function App() {
     <div
       className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700 select-none touch-none"
       onClick={handleScreenClick}
-      onPointerDown={lpStart}
-      onPointerMove={(e) => { if (wheelOpen) setWheelHoveredId(getWheelSector(e.clientX, e.clientY)); }}
-      onPointerUp={(e) => {
-        lpCancel();
-        if (!wheelOpen) return;
-        const sector = getWheelSector(e.clientX, e.clientY);
-        setWheelOpen(false);
-        setWheelHoveredId(null);
-        if (sector) handleWheelSelect(sector);
-      }}
-      onPointerLeave={() => { lpCancel(); if (wheelOpen) { setWheelOpen(false); setWheelHoveredId(null); } }}
-      onPointerCancel={() => { lpCancel(); setWheelOpen(false); setWheelHoveredId(null); }}
     >
       <TopBar
         isDark={isDark}
@@ -368,12 +332,11 @@ export default function App() {
         onDurationChange={onDurationChange}
       />
 
-      <ControlWheel
-        visible={wheelOpen}
-        hoveredId={wheelHoveredId}
-        x={wheelCX}
-        y={wheelCY}
-        isDark={isDark}
+      <MenuButton
+        open={menuOpen}
+        onToggle={() => setMenuOpen(v => !v)}
+        onSelect={handleMenuSelect}
+        mode={mode}
       />
 
       <AboutOverlay
