@@ -3,10 +3,6 @@
 import { Mic, Play, Square, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Recording } from '../types';
-import { CyclingPill } from './CyclingPill';
-
-const FONT_SIZES = [24, 36, 50, 72, 100, 140];
-const MAX_WORDS = [1, 2, 3, 5, 10];
 
 function threeWords(text: string) {
   if (!text) return '';
@@ -24,10 +20,6 @@ export function RecordingArea({
   onTogglePlayback,
   onRemove,
   onSelect,
-  fontSize,
-  onFontSizeChange,
-  maxWords,
-  onMaxWordsChange,
   mode,
   onReplay,
   isTwisterPlaying,
@@ -40,10 +32,6 @@ export function RecordingArea({
   onTogglePlayback: (id: number) => (e: React.MouseEvent) => void;
   onRemove: (id: number) => (e: React.MouseEvent) => void;
   onSelect: (id: number) => void;
-  fontSize: number;
-  onFontSizeChange: (n: number) => void;
-  maxWords: number;
-  onMaxWordsChange: (n: number) => void;
   mode: 'words' | 'twisters';
   onReplay: (e: React.MouseEvent) => void;
   isTwisterPlaying: boolean;
@@ -92,22 +80,6 @@ export function RecordingArea({
       </AnimatePresence>
 
       <div className="flex items-center">
-        <CyclingPill
-          value={fontSize}
-          options={FONT_SIZES}
-          onChange={onFontSizeChange}
-          label="Aa"
-          title="Font size"
-        />
-        {mode === 'words' && (
-          <CyclingPill
-            value={maxWords}
-            options={MAX_WORDS}
-            onChange={onMaxWordsChange}
-            label="#"
-            title="Words on screen"
-          />
-        )}
         {mode === 'twisters' && (
           <button
             onClick={onReplay}
