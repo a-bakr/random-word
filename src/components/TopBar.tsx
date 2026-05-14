@@ -1,28 +1,20 @@
 'use client';
 
 import { Volume2, VolumeX, Moon, Sun } from 'lucide-react';
-import { ModeSwitch } from './ModeSwitch';
 
 export function TopBar({
   isSoundEnabled,
   onSoundToggle,
   isDark,
   onThemeToggle,
-  mode,
-  onModeToggle,
 }: {
   isSoundEnabled: boolean;
   onSoundToggle: (e: React.MouseEvent) => void;
   isDark: boolean;
   onThemeToggle: (e: React.MouseEvent) => void;
-  mode: 'words' | 'twisters';
-  onModeToggle: (e: React.MouseEvent) => void;
 }) {
   return (
-    <div className="absolute top-6 inset-x-6 z-10 flex items-center justify-between pointer-events-none">
-      <div className="pointer-events-auto">
-        <ModeSwitch mode={mode} onToggle={onModeToggle} />
-      </div>
+    <div className="absolute top-6 inset-x-6 z-10 flex items-center justify-end pointer-events-none">
       <div className="flex items-center pointer-events-auto">
         <button
           onClick={onSoundToggle}

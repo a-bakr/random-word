@@ -1,134 +1,161 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Type, Mic2, SlidersHorizontal, Info } from 'lucide-react';
 
-const RADIUS = 118;
+const CX = 160, CY = 160, R = 140, ICON_R = 78;
+
+function deg2rad(d: number) { return (d * Math.PI) / 180; }
+
+function pt(deg: number, r: number): [number, number] {
+  return [CX + r * Math.cos(deg2rad(deg)), CY + r * Math.sin(deg2rad(deg))];
+}
+
+function sectorPath(a1: number, a2: number) {
+  const [x1, y1] = pt(a1, R);
+  const [x2, y2] = pt(a2, R);
+  return `M ${CX} ${CY} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
+}
 
 const SEGMENTS = [
-  { id: 'words',    label: 'Words',    Icon: Type,               angle: -135 },
-  { id: 'twisters', label: 'Twisters', Icon: Mic2,               angle: -45  },
-  { id: 'settings', label: 'Settings', Icon: SlidersHorizontal,  angle: 45   },
-  { id: 'about',    label: 'About',    Icon: Info,               angle: 135  },
+  {
+    id: 'twisters',
+    label: 'Twisters',
+    Icon: Mic2,
+    path: sectorPath(225, 315),
+    ix: 0,
+    iy: -ICON_R,
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    Icon: SlidersHorizontal,
+    path: sectorPath(315, 45),
+    ix: ICON_R,
+    iy: 0,
+  },
+  {
+    id: 'about',
+    label: 'About',
+    Icon: Info,
+    path: sectorPath(45, 135),
+    ix: 0,
+    iy: ICON_R,
+  },
+  {
+    id: 'words',
+    label: 'Words',
+    Icon: Type,
+    path: sectorPath(135, 225),
+    ix: -ICON_R,
+    iy: 0,
+  },
 ];
 
-function angleDiff(a: number, b: number): number {
-  let d = ((a - b) % 360 + 360) % 360;
-  if (d > 180) d = 360 - d;
-  return d;
-}
-
-function segmentPos(angle: number) {
-  const rad = (angle * Math.PI) / 180;
-  return { x: Math.cos(rad) * RADIUS, y: Math.sin(rad) * RADIUS };
-}
+const DIVIDERS = [45, 135, 225, 315].map(deg => {
+  const [x2, y2] = pt(deg, R);
+  return { x1: CX, y1: CY, x2, y2 };
+});
 
 export function ControlWheel({
   visible,
-  onSelect,
-  onDismiss,
+  hoveredId,
 }: {
   visible: boolean;
-  onSelect: (id: string) => void;
-  onDismiss: () => void;
+  hoveredId: string | null;
 }) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const centerRef = useRef({ x: 0, y: 0 });
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (visible) {
-      setHoveredId(null);
-      centerRef.current = {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-      };
-    }
-  }, [visible]);
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    const dx = e.clientX - centerRef.current.x;
-    const dy = e.clientY - centerRef.current.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 36) { setHoveredId(null); return; }
-    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-    const nearest = SEGMENTS.reduce((prev, curr) =>
-      angleDiff(curr.angle, angle) < angleDiff(prev.angle, angle) ? curr : prev
-    );
-    setHoveredId(nearest.id);
-  };
-
-  const handlePointerUp = () => {
-    if (hoveredId) onSelect(hoveredId);
-    else onDismiss();
-  };
-
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
-          ref={overlayRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
-          className="absolute inset-0 z-50 flex items-center justify-center"
-          style={{ touchAction: 'none' }}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
+          transition={{ duration: 0.15 }}
+          className="absolute inset-0 z-50 pointer-events-none"
         >
           {/* backdrop */}
-          <div className="absolute inset-0 bg-zinc-950/30 dark:bg-zinc-950/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-zinc-950/50 backdrop-blur-sm" />
 
-          {/* segments */}
+          {/* SVG pie */}
+          <motion.svg
+            viewBox="0 0 320 320"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px]"
+            initial={{ scale: 0.4, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.4, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {/* sectors */}
+            {SEGMENTS.map(seg => (
+              <path
+                key={seg.id}
+                d={seg.path}
+                fill={
+                  hoveredId === seg.id
+                    ? 'rgba(63,63,70,0.96)'
+                    : 'rgba(9,9,11,0.88)'
+                }
+                style={{ transition: 'fill 0.12s ease' }}
+              />
+            ))}
+
+            {/* outer ring */}
+            <circle
+              cx={CX} cy={CY} r={R}
+              fill="none"
+              stroke="rgba(82,82,91,0.5)"
+              strokeWidth="1"
+            />
+
+            {/* dividers */}
+            {DIVIDERS.map((d, i) => (
+              <line
+                key={i}
+                x1={d.x1} y1={d.y1}
+                x2={d.x2} y2={d.y2}
+                stroke="rgba(82,82,91,0.5)"
+                strokeWidth="1"
+              />
+            ))}
+
+            {/* center dot */}
+            <circle cx={CX} cy={CY} r={14} fill="rgba(82,82,91,0.4)" />
+          </motion.svg>
+
+          {/* icon + label overlays */}
           {SEGMENTS.map((seg, i) => {
-            const { x, y } = segmentPos(seg.angle);
-            const isHovered = hoveredId === seg.id;
+            const active = hoveredId === seg.id;
             return (
               <motion.div
                 key={seg.id}
-                initial={{ opacity: 0, x: 0, y: 0, scale: 0.4 }}
-                animate={{
-                  opacity: 1,
-                  x,
-                  y,
-                  scale: isHovered ? 1.15 : 1,
-                }}
-                exit={{ opacity: 0, x: 0, y: 0, scale: 0.4 }}
-                transition={{
-                  opacity:  { duration: 0.22, delay: i * 0.04 },
-                  x:        { duration: 0.35, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] },
-                  y:        { duration: 0.35, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] },
-                  scale:    { duration: 0.2 },
-                }}
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.7 }}
+                transition={{ duration: 0.25, delay: i * 0.03, ease: [0.16, 1, 0.3, 1] }}
                 className="absolute flex flex-col items-center gap-1.5 pointer-events-none select-none"
+                style={{
+                  top: `calc(50% + ${seg.iy}px)`,
+                  left: `calc(50% + ${seg.ix}px)`,
+                  transform: 'translate(-50%, -50%)',
+                  transition: 'opacity 0.12s ease',
+                  opacity: active ? 1 : 0.55,
+                }}
               >
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors duration-150
-                  ${isHovered
-                    ? 'bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50'
-                    : 'bg-zinc-100/70 dark:bg-zinc-800/70 text-zinc-500 dark:text-zinc-400'
-                  }`}
-                >
-                  <seg.Icon size={22} strokeWidth={1.5} />
-                </div>
-                <span className={`text-[11px] font-medium tracking-wide transition-colors duration-150
-                  ${isHovered ? 'text-zinc-50' : 'text-zinc-300 dark:text-zinc-500'}`}
+                <seg.Icon
+                  size={20}
+                  strokeWidth={1.5}
+                  color={active ? '#ffffff' : 'rgba(255,255,255,0.8)'}
+                />
+                <span
+                  className="text-[11px] font-medium tracking-wide"
+                  style={{ color: active ? '#ffffff' : 'rgba(255,255,255,0.6)' }}
                 >
                   {seg.label}
                 </span>
               </motion.div>
             );
           })}
-
-          {/* center dot */}
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-3 h-3 rounded-full bg-zinc-400/60 dark:bg-zinc-500/60"
-          />
         </motion.div>
       )}
     </AnimatePresence>
