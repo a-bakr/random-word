@@ -23,7 +23,11 @@ import { HintOverlay } from './components/HintOverlay';
 import { TimerBar } from './components/TimerBar';
 import { CoachingTips } from './components/CoachingTips';
 import { TipOverlay } from './components/TipOverlay';
+import { ControlWheel } from './components/ControlWheel';
+import { AboutOverlay } from './components/AboutOverlay';
+import { SettingsOverlay } from './components/SettingsOverlay';
 import { useTips } from './hooks/useTips';
+import { useLongPress } from './hooks/useLongPress';
 import type { Tip } from './lib/tips';
 
 export default function App() {
@@ -46,8 +50,12 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isTwisterPlaying, setIsTwisterPlaying] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
+  const [wheelOpen, setWheelOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const { activeTips, rotateTips } = useTips();
+  const { start: lpStart, cancel: lpCancel, firedRef: lpFiredRef } = useLongPress(() => setWheelOpen(true));
 
   const voice = useVoiceRecognition();
   const rec = useRecordings();
@@ -109,10 +117,9 @@ export default function App() {
   }, []);
 
   const handleScreenClick = (e: React.MouseEvent) => {
-    if (openTip) {
-      setOpenTip(null);
-      return;
-    }
+    if (lpFiredRef.current) { lpFiredRef.current = false; return; }
+    if (wheelOpen) { setWheelOpen(false); return; }
+    if (openTip) { setOpenTip(null); return; }
     if (!hasClicked) {
       setHasClicked(true);
       track('hint_dismissed');
@@ -214,6 +221,14 @@ export default function App() {
     });
   };
 
+  const handleWheelSelect = (id: string) => {
+    setWheelOpen(false);
+    if (id === 'words') { stopTwister(); setIsTwisterMode(false); setWords([]); setTwister(null); }
+    else if (id === 'twisters') { stopTwister(); setIsTwisterMode(true); setWords([]); setTwister(null); }
+    else if (id === 'settings') setSettingsOpen(true);
+    else if (id === 'about') setAboutOpen(true);
+  };
+
   const doStartRecording = async () => {
     let stream: MediaStream;
     try {
@@ -264,6 +279,10 @@ export default function App() {
     <div
       className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700"
       onClick={handleScreenClick}
+      onPointerDown={lpStart}
+      onPointerUp={lpCancel}
+      onPointerLeave={lpCancel}
+      onPointerCancel={lpCancel}
     >
       <TopBar
         isSoundEnabled={isSoundEnabled}
@@ -333,6 +352,30 @@ export default function App() {
         isTimerRunning={isTimerRunning}
         onTimerStop={() => setIsTimerRunning(false)}
         onDurationChange={onDurationChange}
+      />
+
+      <ControlWheel
+        visible={wheelOpen}
+        onSelect={handleWheelSelect}
+        onDismiss={() => setWheelOpen(false)}
+      />
+
+      <AboutOverlay
+        visible={aboutOpen}
+        onClose={() => setAboutOpen(false)}
+      />
+
+      <SettingsOverlay
+        visible={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        isDark={isDark}
+        onThemeToggle={() => setIsDark(v => !v)}
+        isSoundEnabled={isSoundEnabled}
+        onSoundToggle={() => setIsSoundEnabled(v => !v)}
+        fontSize={fontSize}
+        onFontSizeChange={onFontSizeChange}
+        timerEnabled={timerEnabled}
+        onTimerToggle={() => setTimerEnabled(!timerEnabled)}
       />
     </div>
   );
