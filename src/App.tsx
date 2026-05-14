@@ -38,6 +38,7 @@ export default function App() {
   const [duration, setDuration] = useLocalStorage('timerDuration', 60);
   const [timerEnabled, setTimerEnabled] = useLocalStorageBool('timerEnabled', true);
   const [isTwisterMode, setIsTwisterMode] = useLocalStorageBool('twisterMode', false);
+  const [centeredWord, setCenteredWord] = useLocalStorageBool('centeredWord', false);
   const [lastTwisterId, setLastTwisterId] = useLocalStorageStr('lastTwisterId', '');
   const [twisterOrder, setTwisterOrder] = useState<string[]>([]);
   const mode: 'words' | 'twisters' = isTwisterMode ? 'twisters' : 'words';
@@ -63,9 +64,9 @@ export default function App() {
     const dy = clientY - window.innerHeight / 2;
     if (Math.sqrt(dx * dx + dy * dy) < 30) return null;
     const a = Math.atan2(dy, dx) * 180 / Math.PI;
-    if (a >= -135 && a < -45) return 'twisters';
-    if (a >= -45 && a < 45) return 'settings';
-    if (a >= 45 && a < 135) return 'about';
+    if (a >= -180 && a < -90) return 'twisters';
+    if (a >= -90 && a < 0) return 'settings';
+    if (a >= 0 && a < 90) return 'about';
     return 'words';
   };
 
@@ -277,7 +278,7 @@ export default function App() {
 
   return (
     <div
-      className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700"
+      className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700 select-none touch-none"
       onClick={handleScreenClick}
       onPointerDown={lpStart}
       onPointerMove={(e) => { if (wheelOpen) setWheelHoveredId(getWheelSector(e.clientX, e.clientY)); }}
@@ -301,7 +302,7 @@ export default function App() {
 
       <AnimatePresence>
         {!openTip && mode === 'words' && words.map(word => (
-          <WordItem key={word.id} word={word} fontSize={fontSize} />
+          <WordItem key={word.id} word={word} fontSize={fontSize} centered={centeredWord} />
         ))}
         {!openTip && mode === 'twisters' && twister && (
           <TwisterItem
@@ -381,6 +382,8 @@ export default function App() {
         onFontSizeChange={onFontSizeChange}
         timerEnabled={timerEnabled}
         onTimerToggle={() => setTimerEnabled(!timerEnabled)}
+        centeredWord={centeredWord}
+        onCenteredWordToggle={() => setCenteredWord(!centeredWord)}
       />
     </div>
   );

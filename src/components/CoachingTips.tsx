@@ -26,7 +26,7 @@ export function CoachingTips({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute top-6 left-6 flex flex-row items-center gap-2 z-10 pointer-events-none"
+          className="absolute top-6 left-6 flex flex-col items-start gap-2 z-10 pointer-events-none"
         >
           {tips.map((tip, i) => (
             <motion.button
