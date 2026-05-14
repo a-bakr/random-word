@@ -21,6 +21,10 @@ import { TranscriptOverlay } from './components/TranscriptOverlay';
 import { TranscriptCard } from './components/TranscriptCard';
 import { HintOverlay } from './components/HintOverlay';
 import { TimerBar } from './components/TimerBar';
+import { CoachingTips } from './components/CoachingTips';
+import { TipOverlay } from './components/TipOverlay';
+import { useTips } from './hooks/useTips';
+import type { Tip } from './lib/tips';
 
 export default function App() {
   const [words, setWords] = useState<WordEntry[]>([]);
@@ -41,6 +45,9 @@ export default function App() {
   const [timerKey, setTimerKey] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [isTwisterPlaying, setIsTwisterPlaying] = useState(false);
+  const [openTip, setOpenTip] = useState<Tip | null>(null);
+
+  const { activeTips, rotateTips } = useTips();
 
   const voice = useVoiceRecognition();
   const rec = useRecordings();
@@ -122,12 +129,14 @@ export default function App() {
       setLastTwisterId(next.id);
       setTwister({ entry: next, key: Date.now() });
       playTwister(next.id);
+      rotateTips();
       return;
     }
 
     const word = generate() as string;
     track('word_generated', { word });
     countersRef.current.words++;
+    rotateTips();
     setWords(prev => [
       ...prev,
       { text: word, x: e.clientX, y: e.clientY, id: Date.now(), color: getRandomColor(isDark) },
@@ -201,8 +210,7 @@ export default function App() {
     });
   };
 
-  const startRecording = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const doStartRecording = async () => {
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -231,6 +239,11 @@ export default function App() {
     recordingStartRef.current = Date.now();
     track('recording_started');
     setIsRecording(true);
+  };
+
+  const startRecording = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await doStartRecording();
   };
 
   const stopRecording = async (e: React.MouseEvent) => {
@@ -295,6 +308,18 @@ export default function App() {
       <TranscriptCard recording={rec.selectedRecording} onClose={rec.clearSelection} />
 
       <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} />
+
+      <CoachingTips
+        tips={activeTips}
+        onTipClick={setOpenTip}
+        visible={hasClicked}
+      />
+
+      <TipOverlay
+        tip={openTip}
+        onClose={() => setOpenTip(null)}
+        onTryNow={doStartRecording}
+      />
 
       <TimerBar
         timerEnabled={timerEnabled}
