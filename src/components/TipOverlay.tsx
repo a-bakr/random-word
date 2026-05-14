@@ -1,20 +1,31 @@
 'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
-import { X } from 'lucide-react';
 import type { Tip } from '../lib/tips';
 
 const categoryLabel: Record<string, string> = {
-  vocal: 'Vocal Foundation',
-  framework: 'Framework',
-  archetype: 'Archetype',
+  vocal: 'vocal foundation',
+  framework: 'framework',
+  archetype: 'archetype',
 };
 
-const categoryAccent: Record<string, string> = {
-  vocal: 'text-blue-500 dark:text-blue-400',
-  framework: 'text-amber-500 dark:text-amber-400',
-  archetype: 'text-emerald-500 dark:text-emerald-400',
-};
+function WavyLine() {
+  return (
+    <svg
+      viewBox="0 0 300 10"
+      className="w-full max-w-xs mt-3 mb-8 text-zinc-300 dark:text-zinc-700"
+      preserveAspectRatio="none"
+    >
+      <path
+        d="M0,5 Q18,0 36,5 Q54,10 72,5 Q90,0 108,5 Q126,10 144,5 Q162,0 180,5 Q198,10 216,5 Q234,0 252,5 Q270,10 288,5 Q294,3 300,5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 export function TipOverlay({
   tip,
@@ -29,60 +40,74 @@ export function TipOverlay({
     <AnimatePresence>
       {tip && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="absolute inset-0 z-50 bg-zinc-50 dark:bg-zinc-950"
-          onClick={onClose}
+          initial={{ opacity: 0, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, filter: 'blur(12px)' }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0 z-40 flex flex-col justify-center px-12 select-none"
         >
+          <motion.p
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05, duration: 0.4 }}
+            className="text-xs tracking-[0.2em] uppercase text-zinc-400 dark:text-zinc-600 mb-5"
+          >
+            {categoryLabel[tip.category]}
+          </motion.p>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="text-[clamp(48px,10vw,88px)] leading-none font-medium tracking-tight text-zinc-900 dark:text-zinc-50"
+          >
+            {tip.title}
+          </motion.h2>
+
           <motion.div
-            initial={{ y: 24, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 24, opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-full px-8 pt-16 pb-10 max-w-lg mx-auto"
-            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, scaleX: 0 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            transition={{ delay: 0.2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            style={{ originX: 0 }}
+          >
+            <WavyLine />
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.4 }}
+            className="text-2xl text-zinc-500 dark:text-zinc-400 leading-snug max-w-md mb-4"
+          >
+            {tip.description}
+          </motion.p>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35, duration: 0.4 }}
+            className="text-lg text-zinc-400 dark:text-zinc-600 italic leading-relaxed max-w-sm"
+          >
+            {tip.instruction}
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.55, duration: 0.4 }}
+            className="mt-16 flex items-center gap-6"
           >
             <button
-              onClick={onClose}
-              className="absolute top-6 right-6 p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              className="text-sm text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors"
             >
-              <X size={20} strokeWidth={1.5} />
+              tap anywhere to dismiss
             </button>
-
-            <p className={`text-[11px] font-semibold tracking-widest uppercase mb-3 ${categoryAccent[tip.category]}`}>
-              {categoryLabel[tip.category]}
-            </p>
-
-            <h2 className="text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 mb-5">
-              {tip.title}
-            </h2>
-
-            <p className="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed mb-8">
-              {tip.description}
-            </p>
-
-            <div className="rounded-2xl bg-zinc-100 dark:bg-zinc-900 px-6 py-5 mb-6">
-              <p className="text-[10px] font-semibold tracking-widest uppercase text-zinc-400 dark:text-zinc-500 mb-2">
-                Example
-              </p>
-              <p className="text-base text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
-                {tip.example}
-              </p>
-            </div>
-
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-              {tip.instruction}
-            </p>
-
             <button
-              onClick={() => { onClose(); onTryNow(); }}
-              className="mt-auto w-full py-4 rounded-2xl bg-zinc-900 dark:bg-zinc-50
-                text-zinc-50 dark:text-zinc-900 font-medium text-base
-                hover:opacity-90 active:scale-[0.98] transition-all duration-150"
+              onClick={(e) => { e.stopPropagation(); onClose(); onTryNow(); }}
+              className="text-sm font-medium text-zinc-900 dark:text-zinc-50 underline decoration-dotted underline-offset-4 hover:opacity-70 transition-opacity"
             >
-              Try it now
+              try it now →
             </button>
           </motion.div>
         </motion.div>

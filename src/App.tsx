@@ -109,6 +109,10 @@ export default function App() {
   }, []);
 
   const handleScreenClick = (e: React.MouseEvent) => {
+    if (openTip) {
+      setOpenTip(null);
+      return;
+    }
     if (!hasClicked) {
       setHasClicked(true);
       track('hint_dismissed');
@@ -271,10 +275,10 @@ export default function App() {
       />
 
       <AnimatePresence>
-        {mode === 'words' && words.map(word => (
+        {!openTip && mode === 'words' && words.map(word => (
           <WordItem key={word.id} word={word} fontSize={fontSize} />
         ))}
-        {mode === 'twisters' && twister && (
+        {!openTip && mode === 'twisters' && twister && (
           <TwisterItem
             key={twister.key}
             id={String(twister.key)}
