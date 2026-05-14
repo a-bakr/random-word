@@ -55,14 +55,14 @@ export function SettingsOverlay({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
           className="absolute inset-0 z-50 bg-zinc-50 dark:bg-zinc-950 flex flex-col"
-          onClick={onClose}
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
         >
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col h-full px-8 pt-14 pb-10 max-w-lg mx-auto w-full"
+            className="flex flex-col px-8 pt-14 pb-10 max-w-lg mx-auto w-full"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -81,7 +81,7 @@ export function SettingsOverlay({
 
             <Row label="Theme">
               <button
-                onClick={onThemeToggle}
+                onClick={(e) => { e.stopPropagation(); onThemeToggle(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
@@ -92,7 +92,7 @@ export function SettingsOverlay({
 
             <Row label="Sound effects">
               <button
-                onClick={onSoundToggle}
+                onClick={(e) => { e.stopPropagation(); onSoundToggle(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
@@ -105,7 +105,7 @@ export function SettingsOverlay({
 
             <Row label="Font size">
               <button
-                onClick={cycleFontSize}
+                onClick={(e) => { e.stopPropagation(); cycleFontSize(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
@@ -116,7 +116,7 @@ export function SettingsOverlay({
 
             <Row label="Word display">
               <button
-                onClick={onCenteredWordToggle}
+                onClick={(e) => { e.stopPropagation(); onCenteredWordToggle(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
@@ -126,7 +126,7 @@ export function SettingsOverlay({
 
             <Row label="Timer">
               <button
-                onClick={onTimerToggle}
+                onClick={(e) => { e.stopPropagation(); onTimerToggle(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
@@ -135,10 +135,11 @@ export function SettingsOverlay({
               </button>
             </Row>
 
-            <p className="mt-auto text-xs text-zinc-300 dark:text-zinc-700">
-              tap anywhere to close
-            </p>
           </motion.div>
+
+          <p className="absolute bottom-6 inset-x-0 text-center text-xs text-zinc-300 dark:text-zinc-700 pointer-events-none">
+            tap anywhere to close
+          </p>
         </motion.div>
       )}
     </AnimatePresence>

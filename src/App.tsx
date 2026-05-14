@@ -62,7 +62,7 @@ export default function App() {
   const getWheelSector = (clientX: number, clientY: number): string | null => {
     const dx = clientX - window.innerWidth / 2;
     const dy = clientY - window.innerHeight / 2;
-    if (Math.sqrt(dx * dx + dy * dy) < 30) return null;
+    if (Math.sqrt(dx * dx + dy * dy) < 58) return null;
     const a = Math.atan2(dy, dx) * 180 / Math.PI;
     if (a >= -180 && a < -90) return 'twisters';
     if (a >= -90 && a < 0) return 'settings';
@@ -342,7 +342,9 @@ export default function App() {
       <CoachingTips
         tips={activeTips}
         onTipClick={setOpenTip}
-        visible={hasClicked}
+        visible={hasClicked && mode === 'words'}
+        wordX={centeredWord || !words.at(-1) ? window.innerWidth / 2 : words.at(-1)!.x}
+        wordY={centeredWord || !words.at(-1) ? window.innerHeight / 2 : words.at(-1)!.y}
       />
 
       <TipOverlay
