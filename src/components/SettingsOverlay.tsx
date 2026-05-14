@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Volume2, VolumeX, Moon, Sun, Clock } from 'lucide-react';
 
 const FONT_SIZES = [24, 36, 50, 72, 100, 140];
+const MAX_WORDS  = [1, 2, 3, 5, 10];
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -27,6 +28,8 @@ export function SettingsOverlay({
   onTimerToggle,
   centeredWord,
   onCenteredWordToggle,
+  maxWords,
+  onMaxWordsChange,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -40,10 +43,17 @@ export function SettingsOverlay({
   onTimerToggle: () => void;
   centeredWord: boolean;
   onCenteredWordToggle: () => void;
+  maxWords: number;
+  onMaxWordsChange: (n: number) => void;
 }) {
   const cycleFontSize = () => {
     const idx = FONT_SIZES.indexOf(fontSize);
     onFontSizeChange(FONT_SIZES[(idx + 1) % FONT_SIZES.length]);
+  };
+
+  const cycleMaxWords = () => {
+    const idx = MAX_WORDS.indexOf(maxWords);
+    onMaxWordsChange(MAX_WORDS[(idx + 1) % MAX_WORDS.length]);
   };
 
   return (
@@ -110,6 +120,17 @@ export function SettingsOverlay({
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 <span className="text-sm font-medium">{fontSize}px</span>
+                <span className="text-xs text-zinc-400">tap to cycle</span>
+              </button>
+            </Row>
+
+            <Row label="Words on screen">
+              <button
+                onClick={(e) => { e.stopPropagation(); cycleMaxWords(); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
+                  text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <span className="text-sm font-medium">{maxWords === 10 ? '∞' : maxWords}</span>
                 <span className="text-xs text-zinc-400">tap to cycle</span>
               </button>
             </Row>
