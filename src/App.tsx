@@ -303,15 +303,10 @@ export default function App() {
       onPointerCancel={() => { lpCancel(); setWheelOpen(false); setWheelHoveredId(null); }}
     >
       <TopBar
-        isSoundEnabled={isSoundEnabled}
-        onSoundToggle={onSoundToggle}
         isDark={isDark}
         onThemeToggle={onThemeToggle}
         fontSize={fontSize}
         onFontSizeChange={onFontSizeChange}
-        maxWords={maxWords}
-        onMaxWordsChange={onMaxWordsChange}
-        mode={mode}
       />
 
       <AnimatePresence>
@@ -399,6 +394,8 @@ export default function App() {
         onTimerToggle={() => setTimerEnabled(!timerEnabled)}
         centeredWord={centeredWord}
         onCenteredWordToggle={() => setCenteredWord(!centeredWord)}
+        maxWords={maxWords}
+        onMaxWordsChange={onMaxWordsChange}
       />
     </div>
   );
