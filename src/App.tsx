@@ -51,11 +51,23 @@ export default function App() {
   const [isTwisterPlaying, setIsTwisterPlaying] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
   const [wheelOpen, setWheelOpen] = useState(false);
+  const [wheelHoveredId, setWheelHoveredId] = useState<string | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const { activeTips, rotateTips } = useTips();
   const { start: lpStart, cancel: lpCancel, firedRef: lpFiredRef } = useLongPress(() => setWheelOpen(true));
+
+  const getWheelSector = (clientX: number, clientY: number): string | null => {
+    const dx = clientX - window.innerWidth / 2;
+    const dy = clientY - window.innerHeight / 2;
+    if (Math.sqrt(dx * dx + dy * dy) < 30) return null;
+    const a = Math.atan2(dy, dx) * 180 / Math.PI;
+    if (a >= -135 && a < -45) return 'twisters';
+    if (a >= -45 && a < 45) return 'settings';
+    if (a >= 45 && a < 135) return 'about';
+    return 'words';
+  };
 
   const voice = useVoiceRecognition();
   const rec = useRecordings();
@@ -152,18 +164,6 @@ export default function App() {
       ...prev,
       { text: word, x: e.clientX, y: e.clientY, id: Date.now(), color: getRandomColor(isDark) },
     ].slice(-maxWords));
-  };
-
-  const toggleMode = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    stopTwister();
-    const next = isTwisterMode ? 'words' : 'twisters';
-    setIsTwisterMode(!isTwisterMode);
-    setWords([]);
-    setTwister(null);
-    countersRef.current.mode_toggles++;
-    track('mode_toggled', { mode: next });
-    track('setting_changed', { key: 'mode', value: next });
   };
 
   const replayTwister = (e: React.MouseEvent) => {
@@ -280,17 +280,23 @@ export default function App() {
       className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700"
       onClick={handleScreenClick}
       onPointerDown={lpStart}
-      onPointerUp={lpCancel}
-      onPointerLeave={lpCancel}
-      onPointerCancel={lpCancel}
+      onPointerMove={(e) => { if (wheelOpen) setWheelHoveredId(getWheelSector(e.clientX, e.clientY)); }}
+      onPointerUp={(e) => {
+        lpCancel();
+        if (!wheelOpen) return;
+        const sector = getWheelSector(e.clientX, e.clientY);
+        setWheelOpen(false);
+        setWheelHoveredId(null);
+        if (sector) handleWheelSelect(sector);
+      }}
+      onPointerLeave={() => { lpCancel(); if (wheelOpen) { setWheelOpen(false); setWheelHoveredId(null); } }}
+      onPointerCancel={() => { lpCancel(); setWheelOpen(false); setWheelHoveredId(null); }}
     >
       <TopBar
         isSoundEnabled={isSoundEnabled}
         onSoundToggle={onSoundToggle}
         isDark={isDark}
         onThemeToggle={onThemeToggle}
-        mode={mode}
-        onModeToggle={toggleMode}
       />
 
       <AnimatePresence>
@@ -356,8 +362,7 @@ export default function App() {
 
       <ControlWheel
         visible={wheelOpen}
-        onSelect={handleWheelSelect}
-        onDismiss={() => setWheelOpen(false)}
+        hoveredId={wheelHoveredId}
       />
 
       <AboutOverlay
