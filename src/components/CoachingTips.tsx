@@ -15,12 +15,23 @@ const categoryBorders: Record<string, string> = {
   archetype:  'border-emerald-400/70 dark:border-emerald-500/60',
 };
 
-// Positions relative to word center (dx, dy in px), slight sketch rotation
 const TIP_OFFSETS = [
   { dx: -105, dy: -78, rot: -2 },
   { dx:  108, dy: -68, rot:  1.5 },
   { dx:    4, dy:  88, rot: -1 },
 ];
+
+// Approximate pill dimensions for clamping
+const PILL_W = 130, PILL_H = 32, PAD = 20;
+
+function clampTip(rawX: number, rawY: number) {
+  const ww = typeof window !== 'undefined' ? window.innerWidth  : 375;
+  const wh = typeof window !== 'undefined' ? window.innerHeight : 667;
+  return {
+    left: Math.max(PILL_W / 2 + PAD, Math.min(ww - PILL_W / 2 - PAD, rawX)),
+    top:  Math.max(PILL_H / 2 + PAD, Math.min(wh - PILL_H / 2 - PAD, rawY)),
+  };
+}
 
 export function CoachingTips({
   tips,
@@ -39,6 +50,7 @@ export function CoachingTips({
     <AnimatePresence>
       {visible && tips.map((tip, i) => {
         const { dx, dy, rot } = TIP_OFFSETS[i];
+        const { left, top } = clampTip(wordX + dx, wordY + dy);
         return (
           <motion.button
             key={`${tip.category}-${tip.label}`}
@@ -47,7 +59,7 @@ export function CoachingTips({
               border-2 border-dashed rounded-sm
               ${categoryBorders[tip.category]}
               ${categoryColors[tip.category]}`}
-            style={{ left: wordX + dx, top: wordY + dy }}
+            style={{ left, top }}
             initial={{ opacity: 0, x: '-50%', y: '-50%', scale: 0.7, rotate: 0 }}
             animate={{ opacity: 1, x: '-50%', y: '-50%', scale: 1, rotate: rot }}
             exit={{ opacity: 0, x: '-50%', y: '-50%', scale: 0.7, rotate: 0 }}

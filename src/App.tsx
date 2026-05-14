@@ -56,12 +56,21 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  const [wheelPos, setWheelPos] = useState({ x: 0, y: 0 });
+
   const { activeTips, rotateTips } = useTips();
-  const { start: lpStart, cancel: lpCancel, firedRef: lpFiredRef } = useLongPress(() => setWheelOpen(true));
+  const { start: lpStart, cancel: lpCancel, firedRef: lpFiredRef } = useLongPress((x, y) => {
+    setWheelPos({ x, y });
+    setWheelOpen(true);
+  });
+
+  // Clamp wheel center so the 340px donut stays fully on screen
+  const wheelCX = Math.max(170, Math.min(window.innerWidth - 170, wheelPos.x));
+  const wheelCY = Math.max(170, Math.min(window.innerHeight - 170, wheelPos.y));
 
   const getWheelSector = (clientX: number, clientY: number): string | null => {
-    const dx = clientX - window.innerWidth / 2;
-    const dy = clientY - window.innerHeight / 2;
+    const dx = clientX - wheelCX;
+    const dy = clientY - wheelCY;
     if (Math.sqrt(dx * dx + dy * dy) < 58) return null;
     const a = Math.atan2(dy, dx) * 180 / Math.PI;
     if (a >= -180 && a < -90) return 'twisters';
@@ -298,6 +307,11 @@ export default function App() {
         onSoundToggle={onSoundToggle}
         isDark={isDark}
         onThemeToggle={onThemeToggle}
+        fontSize={fontSize}
+        onFontSizeChange={onFontSizeChange}
+        maxWords={maxWords}
+        onMaxWordsChange={onMaxWordsChange}
+        mode={mode}
       />
 
       <AnimatePresence>
@@ -326,10 +340,6 @@ export default function App() {
         onTogglePlayback={rec.togglePlayback}
         onRemove={rec.removeRecording}
         onSelect={rec.selectRecording}
-        fontSize={fontSize}
-        onFontSizeChange={onFontSizeChange}
-        maxWords={maxWords}
-        onMaxWordsChange={onMaxWordsChange}
         mode={mode}
         onReplay={replayTwister}
         isTwisterPlaying={isTwisterPlaying}
@@ -342,7 +352,7 @@ export default function App() {
       <CoachingTips
         tips={activeTips}
         onTipClick={setOpenTip}
-        visible={hasClicked && mode === 'words'}
+        visible={hasClicked && mode === 'words' && !openTip}
         wordX={centeredWord || !words.at(-1) ? window.innerWidth / 2 : words.at(-1)!.x}
         wordY={centeredWord || !words.at(-1) ? window.innerHeight / 2 : words.at(-1)!.y}
       />
@@ -366,6 +376,9 @@ export default function App() {
       <ControlWheel
         visible={wheelOpen}
         hoveredId={wheelHoveredId}
+        x={wheelCX}
+        y={wheelCY}
+        isDark={isDark}
       />
 
       <AboutOverlay
