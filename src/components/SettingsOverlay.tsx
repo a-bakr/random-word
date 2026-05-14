@@ -25,6 +25,8 @@ export function SettingsOverlay({
   onFontSizeChange,
   timerEnabled,
   onTimerToggle,
+  centeredWord,
+  onCenteredWordToggle,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -36,6 +38,8 @@ export function SettingsOverlay({
   onFontSizeChange: (n: number) => void;
   timerEnabled: boolean;
   onTimerToggle: () => void;
+  centeredWord: boolean;
+  onCenteredWordToggle: () => void;
 }) {
   const cycleFontSize = () => {
     const idx = FONT_SIZES.indexOf(fontSize);
@@ -107,6 +111,16 @@ export function SettingsOverlay({
               >
                 <span className="text-sm font-medium">{fontSize}px</span>
                 <span className="text-xs text-zinc-400">tap to cycle</span>
+              </button>
+            </Row>
+
+            <Row label="Word display">
+              <button
+                onClick={onCenteredWordToggle}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
+                  text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <span className="text-sm">{centeredWord ? 'Centered' : 'Random'}</span>
               </button>
             </Row>
 

@@ -3,7 +3,8 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { Type, Mic2, SlidersHorizontal, Info } from 'lucide-react';
 
-const CX = 160, CY = 160, R = 140, ICON_R = 78;
+const CX = 160, CY = 160, R = 140, ICON_R = 88;
+const DIAG = ICON_R * Math.SQRT1_2;
 
 function deg2rad(d: number) { return (d * Math.PI) / 180; }
 
@@ -22,37 +23,37 @@ const SEGMENTS = [
     id: 'twisters',
     label: 'Twisters',
     Icon: Mic2,
-    path: sectorPath(225, 315),
-    ix: 0,
-    iy: -ICON_R,
+    path: sectorPath(180, 270),
+    ix: -DIAG,
+    iy: -DIAG,
   },
   {
     id: 'settings',
     label: 'Settings',
     Icon: SlidersHorizontal,
-    path: sectorPath(315, 45),
-    ix: ICON_R,
-    iy: 0,
+    path: sectorPath(270, 360),
+    ix: DIAG,
+    iy: -DIAG,
   },
   {
     id: 'about',
     label: 'About',
     Icon: Info,
-    path: sectorPath(45, 135),
-    ix: 0,
-    iy: ICON_R,
+    path: sectorPath(0, 90),
+    ix: DIAG,
+    iy: DIAG,
   },
   {
     id: 'words',
     label: 'Words',
     Icon: Type,
-    path: sectorPath(135, 225),
-    ix: -ICON_R,
-    iy: 0,
+    path: sectorPath(90, 180),
+    ix: -DIAG,
+    iy: DIAG,
   },
 ];
 
-const DIVIDERS = [45, 135, 225, 315].map(deg => {
+const DIVIDERS = [0, 90, 180, 270].map(deg => {
   const [x2, y2] = pt(deg, R);
   return { x1: CX, y1: CY, x2, y2 };
 });
