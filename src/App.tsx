@@ -62,7 +62,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const { lang, setLanguageCode } = useLanguage();
+  const { lang } = useLanguage();
   const { activeTips, rotateTips } = useTips(tipCount);
   const warmup = useWarmup();
 
@@ -402,7 +402,7 @@ export default function App() {
         </defs>
       </svg>
 
-      <TopBar mode={mode} onMenuSelect={handleMenuSelect} lang={lang} onLanguageSwitch={setLanguageCode} />
+      <TopBar mode={mode} onMenuSelect={handleMenuSelect} />
 
       {mode !== 'warmup' && <div
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2"
@@ -474,7 +474,7 @@ export default function App() {
 
       <TranscriptCard recording={rec.selectedRecording} onClose={rec.clearSelection} />
 
-      {mode !== 'warmup' && <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} tapMeLabel={lang.labels.tapMe} />}
+      {mode !== 'warmup' && <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} />}
 
       <CoachingTips
         tips={activeTips}

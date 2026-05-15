@@ -2,6 +2,9 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Volume2, VolumeX, Moon, Sun, Clock, LayoutDashboard } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import { getAllLanguages } from '../lib/languages/registry';
+import type { LanguageCode } from '../lib/languages/registry';
 
 const FONT_SIZES  = [24, 36, 50, 72, 100, 140];
 const MAX_WORDS   = [1, 2, 3, 5, 10];
@@ -53,6 +56,15 @@ export function SettingsOverlay({
   onTipCountChange: (n: number) => void;
   isAdmin: boolean;
 }) {
+  const { lang, setLanguageCode } = useLanguage();
+  const allLanguages = getAllLanguages();
+
+  const cycleLanguage = () => {
+    const idx = allLanguages.findIndex(l => l.code === lang.code);
+    const next = allLanguages[(idx + 1) % allLanguages.length];
+    setLanguageCode(next.code as LanguageCode);
+  };
+
   const cycleFontSize = () => {
     const idx = FONT_SIZES.indexOf(fontSize);
     onFontSizeChange(FONT_SIZES[(idx + 1) % FONT_SIZES.length]);
@@ -100,6 +112,17 @@ export function SettingsOverlay({
             <h2 className="text-[clamp(36px,8vw,64px)] leading-none font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-10">
               Settings
             </h2>
+
+            <Row label="Language">
+              <button
+                onClick={(e) => { e.stopPropagation(); cycleLanguage(); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
+                  text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <span className="text-sm font-medium">{lang.nativeName}</span>
+                <span className="text-xs text-zinc-400">tap to cycle</span>
+              </button>
+            </Row>
 
             <Row label="Theme">
               <button

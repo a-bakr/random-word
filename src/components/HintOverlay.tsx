@@ -1,8 +1,11 @@
 'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
+import { useLanguage } from '../contexts/LanguageContext';
 
-export function HintOverlay({ visible, fontSize, isDark, tapMeLabel = 'tap me' }: { visible: boolean; fontSize: number; isDark: boolean; tapMeLabel?: string }) {
+export function HintOverlay({ visible, fontSize, isDark }: { visible: boolean; fontSize: number; isDark: boolean }) {
+  const { lang } = useLanguage();
+
   return (
     <AnimatePresence>
       {visible && (
@@ -15,7 +18,7 @@ export function HintOverlay({ visible, fontSize, isDark, tapMeLabel = 'tap me' }
             className="leading-none font-medium tracking-tight text-center capitalize"
             style={{ fontSize: `${fontSize}px`, color: `hsl(0, 0%, ${isDark ? 30 : 75}%)` }}
           >
-            {tapMeLabel}
+            {lang.labels.tapMe}
           </h1>
         </motion.div>
       )}
