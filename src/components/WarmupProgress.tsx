@@ -1,14 +1,7 @@
 'use client';
 
 import { RotateCcw } from 'lucide-react';
-
-function progressLabel(index: number, total: number): string {
-  const n = index + 1;
-  if (n === Math.ceil(total / 2)) return `${n} of ${total} · halfway there!`;
-  if (n === total) return `${n} of ${total} · final stretch!`;
-  if (n === 1 && index !== 0) return `${n} of ${total} · going again!`;
-  return `${n} of ${total}`;
-}
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function WarmupProgress({
   index,
@@ -21,7 +14,18 @@ export function WarmupProgress({
   onReset: (e: React.MouseEvent) => void;
   isFirstVisit: boolean;
 }) {
-  const label = isFirstVisit && index === 0 ? `1 of ${total}` : progressLabel(index, total);
+  const { lang } = useLanguage();
+  const w = lang.labels.warmup;
+  const n = index + 1;
+
+  function progressLabel(): string {
+    if (n === Math.ceil(total / 2)) return `${n} ${w.of} ${total} · ${w.halfway}`;
+    if (n === total)                 return `${n} ${w.of} ${total} · ${w.finalStretch}`;
+    if (n === 1 && index !== 0)      return `${n} ${w.of} ${total} · ${w.goingAgain}`;
+    return `${n} ${w.of} ${total}`;
+  }
+
+  const label = isFirstVisit && index === 0 ? `${n} ${w.of} ${total}` : progressLabel();
 
   return (
     <div
@@ -36,7 +40,7 @@ export function WarmupProgress({
         className="text-zinc-300 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors duration-300"
         style={{ filter: 'url(#sketch)' }}
         aria-label="Reset warm-up"
-        title="Reset to first exercise"
+        title={w.resetExercise}
       >
         <RotateCcw size={14} strokeWidth={2.5} />
       </button>

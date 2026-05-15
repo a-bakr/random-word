@@ -57,6 +57,7 @@ export function SettingsOverlay({
   isAdmin: boolean;
 }) {
   const { lang, setLanguageCode } = useLanguage();
+  const s = lang.labels.settings;
   const allLanguages = getAllLanguages();
 
   const cycleLanguage = () => {
@@ -84,6 +85,7 @@ export function SettingsOverlay({
     <AnimatePresence>
       {visible && (
         <motion.div
+          dir="ltr"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -107,35 +109,35 @@ export function SettingsOverlay({
             </button>
 
             <p className="text-xs tracking-[0.2em] uppercase text-zinc-400 dark:text-zinc-600 mb-2">
-              preferences
+              {s.preferences}
             </p>
             <h2 className="text-[clamp(36px,8vw,64px)] leading-none font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-10">
-              Settings
+              {s.title}
             </h2>
 
-            <Row label="Language">
+            <Row label={s.language}>
               <button
                 onClick={(e) => { e.stopPropagation(); cycleLanguage(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 <span className="text-sm font-medium">{lang.nativeName}</span>
-                <span className="text-xs text-zinc-400">tap to cycle</span>
+                <span className="text-xs text-zinc-400">{s.tapToCycle}</span>
               </button>
             </Row>
 
-            <Row label="Theme">
+            <Row label={s.theme}>
               <button
                 onClick={(e) => { e.stopPropagation(); onThemeToggle(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 {isDark ? <Moon size={16} strokeWidth={1.5} /> : <Sun size={16} strokeWidth={1.5} />}
-                <span className="text-sm">{isDark ? 'Dark' : 'Light'}</span>
+                <span className="text-sm">{isDark ? s.themeDark : s.themeLight}</span>
               </button>
             </Row>
 
-            <Row label="Sound effects">
+            <Row label={s.sound}>
               <button
                 onClick={(e) => { e.stopPropagation(); onSoundToggle(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
@@ -144,66 +146,66 @@ export function SettingsOverlay({
                 {isSoundEnabled
                   ? <Volume2 size={16} strokeWidth={1.5} />
                   : <VolumeX size={16} strokeWidth={1.5} />}
-                <span className="text-sm">{isSoundEnabled ? 'On' : 'Off'}</span>
+                <span className="text-sm">{isSoundEnabled ? s.soundOn : s.soundOff}</span>
               </button>
             </Row>
 
-            <Row label="Font size">
+            <Row label={s.fontSize}>
               <button
                 onClick={(e) => { e.stopPropagation(); cycleFontSize(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 <span className="text-sm font-medium">{fontSize}px</span>
-                <span className="text-xs text-zinc-400">tap to cycle</span>
+                <span className="text-xs text-zinc-400">{s.tapToCycle}</span>
               </button>
             </Row>
 
-            <Row label="Words on screen">
+            <Row label={s.wordsOnScreen}>
               <button
                 onClick={(e) => { e.stopPropagation(); cycleMaxWords(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 <span className="text-sm font-medium">{maxWords === 10 ? '∞' : maxWords}</span>
-                <span className="text-xs text-zinc-400">tap to cycle</span>
+                <span className="text-xs text-zinc-400">{s.tapToCycle}</span>
               </button>
             </Row>
 
-            <Row label="Word display">
+            <Row label={s.wordDisplay}>
               <button
                 onClick={(e) => { e.stopPropagation(); onCenteredWordToggle(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
-                <span className="text-sm">{centeredWord ? 'Centered' : 'Random'}</span>
+                <span className="text-sm">{centeredWord ? s.wordCentered : s.wordRandom}</span>
               </button>
             </Row>
 
-            <Row label="Timer">
+            <Row label={s.timer}>
               <button
                 onClick={(e) => { e.stopPropagation(); onTimerToggle(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 <Clock size={16} strokeWidth={1.5} />
-                <span className="text-sm">{timerEnabled ? 'On' : 'Off'}</span>
+                <span className="text-sm">{timerEnabled ? s.on : s.off}</span>
               </button>
             </Row>
 
-            <Row label="Coaching tips">
+            <Row label={s.coachingTips}>
               <button
                 onClick={(e) => { e.stopPropagation(); cycleTipCount(); }}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
-                <span className="text-sm font-medium">{tipCount === 0 ? 'Off' : tipCount}</span>
-                <span className="text-xs text-zinc-400">tap to cycle</span>
+                <span className="text-sm font-medium">{tipCount === 0 ? s.off : tipCount}</span>
+                <span className="text-xs text-zinc-400">{s.tapToCycle}</span>
               </button>
             </Row>
 
             {isAdmin && (
-              <Row label="Admin">
+              <Row label={s.admin}>
                 <a
                   href="/admin"
                   onClick={e => e.stopPropagation()}
@@ -211,7 +213,7 @@ export function SettingsOverlay({
                     text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <LayoutDashboard size={16} strokeWidth={1.5} />
-                  <span className="text-sm">Dashboard</span>
+                  <span className="text-sm">{s.dashboard}</span>
                 </a>
               </Row>
             )}
@@ -219,7 +221,7 @@ export function SettingsOverlay({
           </motion.div>
 
           <p className="absolute bottom-6 inset-x-0 text-center text-xs text-zinc-300 dark:text-zinc-700 pointer-events-none">
-            tap anywhere to close
+            {s.tapToClose}
           </p>
         </motion.div>
       )}

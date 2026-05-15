@@ -2,12 +2,7 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import type { Tip } from '../lib/tips';
-
-const categoryLabel: Record<string, string> = {
-  vocal: 'vocal foundation',
-  framework: 'framework',
-  archetype: 'archetype',
-};
+import { useLanguage } from '../contexts/LanguageContext';
 
 function WavyLine() {
   return (
@@ -36,6 +31,15 @@ export function TipOverlay({
   onClose: () => void;
   onTryNow: () => void;
 }) {
+  const { lang } = useLanguage();
+  const t = lang.labels.tips;
+
+  const categoryLabel: Record<string, string> = {
+    vocal:     t.vocal,
+    framework: t.framework,
+    archetype: t.archetype,
+  };
+
   return (
     <AnimatePresence>
       {tip && (
@@ -101,13 +105,13 @@ export function TipOverlay({
               onClick={(e) => { e.stopPropagation(); onClose(); }}
               className="text-sm text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors"
             >
-              tap anywhere to dismiss
+              {t.tapToDismiss}
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onClose(); onTryNow(); }}
               className="text-sm font-medium text-zinc-900 dark:text-zinc-50 underline decoration-dotted underline-offset-4 hover:opacity-70 transition-opacity"
             >
-              try it now →
+              {t.tryNow}
             </button>
           </motion.div>
         </motion.div>

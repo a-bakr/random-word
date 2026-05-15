@@ -1,270 +1,270 @@
 import { registerLanguage } from './registry';
 import type { WordDifficulty } from './registry';
+import type { Tip } from '../tips';
+import type { WarmupExercise } from '../warmup';
 
-interface ArabicWord {
-  text: string;
-  difficulty: WordDifficulty;
-}
-
-// 250 Arabic words with harakat (diacritical marks), organized by difficulty.
-// easy   (~90): ultra-common, concrete, short — ideal for beginners
+// ─── Arabic word list ──────────────────────────────────────────────────────────
+// 250 words with harakat (diacritical marks) across 3 difficulty tiers.
+// easy   (~90): ultra-common, concrete, short
 // medium (~90): daily speech, 2–3 syllables
-// hard   (~70): longer, formal, abstract — challenge for advanced learners
+// hard   (~70): formal, abstract, multi-syllable
+
+interface ArabicWord { text: string; difficulty: WordDifficulty; }
+
 const ARABIC_WORDS: ArabicWord[] = [
-  // ── EASY ──────────────────────────────────────────────────────────────────
-  // family & people
-  { text: 'أُمّ',       difficulty: 'easy' },  // mother
-  { text: 'أَب',        difficulty: 'easy' },  // father
-  { text: 'أَخ',        difficulty: 'easy' },  // brother
-  { text: 'أُخْت',      difficulty: 'easy' },  // sister
-  { text: 'ابْن',       difficulty: 'easy' },  // son
-  { text: 'بِنْت',      difficulty: 'easy' },  // daughter
-  { text: 'جَدّ',       difficulty: 'easy' },  // grandfather
-  { text: 'جَدَّة',     difficulty: 'easy' },  // grandmother
-  { text: 'عَمّ',       difficulty: 'easy' },  // paternal uncle
-  { text: 'خَال',       difficulty: 'easy' },  // maternal uncle
-  // body
-  { text: 'يَد',        difficulty: 'easy' },  // hand
-  { text: 'رَأْس',      difficulty: 'easy' },  // head
-  { text: 'عَيْن',      difficulty: 'easy' },  // eye
-  { text: 'أُذُن',      difficulty: 'easy' },  // ear
-  { text: 'أَنْف',      difficulty: 'easy' },  // nose
-  { text: 'فَم',        difficulty: 'easy' },  // mouth
-  { text: 'قَلْب',      difficulty: 'easy' },  // heart
-  { text: 'رِجْل',      difficulty: 'easy' },  // leg
-  { text: 'ظَهْر',      difficulty: 'easy' },  // back
-  { text: 'بَطْن',      difficulty: 'easy' },  // belly
-  // nature
-  { text: 'شَمْس',      difficulty: 'easy' },  // sun
-  { text: 'قَمَر',      difficulty: 'easy' },  // moon
-  { text: 'نَجْم',      difficulty: 'easy' },  // star
-  { text: 'مَاء',       difficulty: 'easy' },  // water
-  { text: 'نَار',       difficulty: 'easy' },  // fire
-  { text: 'هَوَاء',     difficulty: 'easy' },  // air
-  { text: 'أَرْض',      difficulty: 'easy' },  // earth/ground
-  { text: 'بَحْر',      difficulty: 'easy' },  // sea
-  { text: 'جَبَل',      difficulty: 'easy' },  // mountain
-  { text: 'شَجَر',      difficulty: 'easy' },  // tree
-  // home & everyday objects
-  { text: 'بَيْت',      difficulty: 'easy' },  // house
-  { text: 'بَاب',       difficulty: 'easy' },  // door
-  { text: 'كُرْسِيّ',   difficulty: 'easy' },  // chair
-  { text: 'طَاوِلَة',   difficulty: 'easy' },  // table
-  { text: 'سَرِير',     difficulty: 'easy' },  // bed
-  { text: 'كِتَاب',     difficulty: 'easy' },  // book
-  { text: 'قَلَم',      difficulty: 'easy' },  // pen
-  { text: 'بَاب',       difficulty: 'easy' },  // door (kept for frequency)
-  { text: 'نَافِذَة',   difficulty: 'easy' },  // window
-  { text: 'مِفْتَاح',   difficulty: 'easy' },  // key
-  // food & drink
-  { text: 'خُبْز',      difficulty: 'easy' },  // bread
-  { text: 'مَاء',       difficulty: 'easy' },  // water (high frequency)
-  { text: 'لَحْم',      difficulty: 'easy' },  // meat
-  { text: 'بَيْض',      difficulty: 'easy' },  // eggs
-  { text: 'مِلْح',      difficulty: 'easy' },  // salt
-  { text: 'زَيْت',      difficulty: 'easy' },  // oil
-  { text: 'تُفَّاح',    difficulty: 'easy' },  // apple
-  { text: 'عَسَل',      difficulty: 'easy' },  // honey
-  { text: 'أَرُزّ',     difficulty: 'easy' },  // rice
-  { text: 'لَبَن',      difficulty: 'easy' },  // milk/yogurt
-  // colors
-  { text: 'أَحْمَر',    difficulty: 'easy' },  // red
-  { text: 'أَزْرَق',    difficulty: 'easy' },  // blue
-  { text: 'أَصْفَر',    difficulty: 'easy' },  // yellow
-  { text: 'أَخْضَر',    difficulty: 'easy' },  // green
-  { text: 'أَبْيَض',    difficulty: 'easy' },  // white
-  { text: 'أَسْوَد',    difficulty: 'easy' },  // black
-  // basic adjectives
-  { text: 'كَبِير',     difficulty: 'easy' },  // big
-  { text: 'صَغِير',     difficulty: 'easy' },  // small
-  { text: 'جَيِّد',     difficulty: 'easy' },  // good
-  { text: 'سَيِّئ',     difficulty: 'easy' },  // bad
-  { text: 'جَدِيد',     difficulty: 'easy' },  // new
-  { text: 'قَدِيم',     difficulty: 'easy' },  // old
-  { text: 'سَرِيع',     difficulty: 'easy' },  // fast
-  { text: 'بَطِيء',     difficulty: 'easy' },  // slow
-  { text: 'حَارّ',      difficulty: 'easy' },  // hot
-  { text: 'بَارِد',     difficulty: 'easy' },  // cold
-  // common verbs (past tense — easily recognized form)
-  { text: 'أَكَل',      difficulty: 'easy' },  // ate
-  { text: 'شَرِب',      difficulty: 'easy' },  // drank
-  { text: 'نَامَ',      difficulty: 'easy' },  // slept
-  { text: 'قَرَأَ',     difficulty: 'easy' },  // read
-  { text: 'كَتَب',      difficulty: 'easy' },  // wrote
-  { text: 'لَعِب',      difficulty: 'easy' },  // played
-  { text: 'رَكَض',      difficulty: 'easy' },  // ran
-  { text: 'وَقَف',      difficulty: 'easy' },  // stood
-  { text: 'جَلَس',      difficulty: 'easy' },  // sat
-  { text: 'فَتَح',      difficulty: 'easy' },  // opened
-  // common function words
-  { text: 'نَعَم',      difficulty: 'easy' },  // yes
-  { text: 'هُنَا',      difficulty: 'easy' },  // here
-  { text: 'الْآن',      difficulty: 'easy' },  // now
-  { text: 'غَدًا',      difficulty: 'easy' },  // tomorrow
-  { text: 'أَمْس',      difficulty: 'easy' },  // yesterday
-  { text: 'كُلّ',       difficulty: 'easy' },  // every/all
-  { text: 'مَعَ',       difficulty: 'easy' },  // with
-  { text: 'بَعْد',      difficulty: 'easy' },  // after
-  { text: 'قَبْل',      difficulty: 'easy' },  // before
-  { text: 'فِي',        difficulty: 'easy' },  // in/at
+  // ── EASY ─────────────────────────────────────────────────────────────────
+  { text: 'أُمّ',          difficulty: 'easy' },
+  { text: 'أَب',           difficulty: 'easy' },
+  { text: 'أَخ',           difficulty: 'easy' },
+  { text: 'أُخْت',         difficulty: 'easy' },
+  { text: 'ابْن',          difficulty: 'easy' },
+  { text: 'بِنْت',         difficulty: 'easy' },
+  { text: 'جَدّ',          difficulty: 'easy' },
+  { text: 'جَدَّة',        difficulty: 'easy' },
+  { text: 'عَمّ',          difficulty: 'easy' },
+  { text: 'خَال',          difficulty: 'easy' },
+  { text: 'يَد',           difficulty: 'easy' },
+  { text: 'رَأْس',         difficulty: 'easy' },
+  { text: 'عَيْن',         difficulty: 'easy' },
+  { text: 'أُذُن',         difficulty: 'easy' },
+  { text: 'أَنْف',         difficulty: 'easy' },
+  { text: 'فَم',           difficulty: 'easy' },
+  { text: 'قَلْب',         difficulty: 'easy' },
+  { text: 'رِجْل',         difficulty: 'easy' },
+  { text: 'ظَهْر',         difficulty: 'easy' },
+  { text: 'بَطْن',         difficulty: 'easy' },
+  { text: 'شَمْس',         difficulty: 'easy' },
+  { text: 'قَمَر',         difficulty: 'easy' },
+  { text: 'نَجْم',         difficulty: 'easy' },
+  { text: 'مَاء',          difficulty: 'easy' },
+  { text: 'نَار',          difficulty: 'easy' },
+  { text: 'هَوَاء',        difficulty: 'easy' },
+  { text: 'أَرْض',         difficulty: 'easy' },
+  { text: 'بَحْر',         difficulty: 'easy' },
+  { text: 'جَبَل',         difficulty: 'easy' },
+  { text: 'شَجَر',         difficulty: 'easy' },
+  { text: 'بَيْت',         difficulty: 'easy' },
+  { text: 'بَاب',          difficulty: 'easy' },
+  { text: 'كِتَاب',        difficulty: 'easy' },
+  { text: 'قَلَم',         difficulty: 'easy' },
+  { text: 'نَافِذَة',      difficulty: 'easy' },
+  { text: 'مِفْتَاح',      difficulty: 'easy' },
+  { text: 'سَرِير',        difficulty: 'easy' },
+  { text: 'كُرْسِيّ',      difficulty: 'easy' },
+  { text: 'خُبْز',         difficulty: 'easy' },
+  { text: 'لَحْم',         difficulty: 'easy' },
+  { text: 'بَيْض',         difficulty: 'easy' },
+  { text: 'مِلْح',         difficulty: 'easy' },
+  { text: 'زَيْت',         difficulty: 'easy' },
+  { text: 'تُفَّاح',       difficulty: 'easy' },
+  { text: 'عَسَل',         difficulty: 'easy' },
+  { text: 'أَرُزّ',        difficulty: 'easy' },
+  { text: 'لَبَن',         difficulty: 'easy' },
+  { text: 'سَمَك',         difficulty: 'easy' },
+  { text: 'كَلْب',         difficulty: 'easy' },
+  { text: 'قِطّ',          difficulty: 'easy' },
+  { text: 'أَحْمَر',       difficulty: 'easy' },
+  { text: 'أَزْرَق',       difficulty: 'easy' },
+  { text: 'أَصْفَر',       difficulty: 'easy' },
+  { text: 'أَخْضَر',       difficulty: 'easy' },
+  { text: 'أَبْيَض',       difficulty: 'easy' },
+  { text: 'أَسْوَد',       difficulty: 'easy' },
+  { text: 'كَبِير',        difficulty: 'easy' },
+  { text: 'صَغِير',        difficulty: 'easy' },
+  { text: 'جَيِّد',        difficulty: 'easy' },
+  { text: 'سَيِّئ',        difficulty: 'easy' },
+  { text: 'جَدِيد',        difficulty: 'easy' },
+  { text: 'قَدِيم',        difficulty: 'easy' },
+  { text: 'سَرِيع',        difficulty: 'easy' },
+  { text: 'بَطِيء',        difficulty: 'easy' },
+  { text: 'حَارّ',         difficulty: 'easy' },
+  { text: 'بَارِد',        difficulty: 'easy' },
+  { text: 'أَكَل',         difficulty: 'easy' },
+  { text: 'شَرِب',         difficulty: 'easy' },
+  { text: 'نَامَ',         difficulty: 'easy' },
+  { text: 'قَرَأَ',        difficulty: 'easy' },
+  { text: 'كَتَب',         difficulty: 'easy' },
+  { text: 'لَعِب',         difficulty: 'easy' },
+  { text: 'رَكَض',         difficulty: 'easy' },
+  { text: 'وَقَف',         difficulty: 'easy' },
+  { text: 'جَلَس',         difficulty: 'easy' },
+  { text: 'فَتَح',         difficulty: 'easy' },
+  { text: 'نَعَم',         difficulty: 'easy' },
+  { text: 'هُنَا',         difficulty: 'easy' },
+  { text: 'الْآن',         difficulty: 'easy' },
+  { text: 'غَدًا',         difficulty: 'easy' },
+  { text: 'أَمْس',         difficulty: 'easy' },
+  { text: 'كُلّ',          difficulty: 'easy' },
+  { text: 'مَعَ',          difficulty: 'easy' },
+  { text: 'بَعْد',         difficulty: 'easy' },
+  { text: 'قَبْل',         difficulty: 'easy' },
+  { text: 'يَوْم',         difficulty: 'easy' },
+  { text: 'لَيْل',         difficulty: 'easy' },
+  { text: 'صَوْت',         difficulty: 'easy' },
+  { text: 'لَوْن',         difficulty: 'easy' },
 
   // ── MEDIUM ────────────────────────────────────────────────────────────────
-  // people & professions
-  { text: 'مُعَلِّم',   difficulty: 'medium' }, // teacher
-  { text: 'طَبِيب',    difficulty: 'medium' }, // doctor
-  { text: 'طَالِب',    difficulty: 'medium' }, // student
-  { text: 'صَدِيق',    difficulty: 'medium' }, // friend
-  { text: 'جَار',      difficulty: 'medium' }, // neighbor
-  { text: 'زَمِيل',    difficulty: 'medium' }, // colleague
-  { text: 'ضَيْف',     difficulty: 'medium' }, // guest
-  { text: 'عَامِل',    difficulty: 'medium' }, // worker
-  { text: 'مُدِير',    difficulty: 'medium' }, // director/manager
-  { text: 'مُحَامِي',  difficulty: 'medium' }, // lawyer
-  // places
-  { text: 'مَدْرَسَة', difficulty: 'medium' }, // school
-  { text: 'مَدِينَة',  difficulty: 'medium' }, // city
-  { text: 'قَرْيَة',   difficulty: 'medium' }, // village
-  { text: 'مَسْجِد',   difficulty: 'medium' }, // mosque
-  { text: 'سُوق',      difficulty: 'medium' }, // market
-  { text: 'مَكْتَب',   difficulty: 'medium' }, // office/desk
-  { text: 'مَطْبَخ',   difficulty: 'medium' }, // kitchen
-  { text: 'حَدِيقَة',  difficulty: 'medium' }, // garden/park
-  { text: 'شَارِع',    difficulty: 'medium' }, // street
-  { text: 'طَرِيق',    difficulty: 'medium' }, // road/way
-  // abstract nouns
-  { text: 'وَقْت',     difficulty: 'medium' }, // time
-  { text: 'حَيَاة',    difficulty: 'medium' }, // life
-  { text: 'حُبّ',      difficulty: 'medium' }, // love
-  { text: 'صِحَّة',    difficulty: 'medium' }, // health
-  { text: 'عِلْم',     difficulty: 'medium' }, // knowledge/science
-  { text: 'عَمَل',     difficulty: 'medium' }, // work
-  { text: 'سَعَادَة',  difficulty: 'medium' }, // happiness
-  { text: 'حُرِّيَّة', difficulty: 'medium' }, // freedom
-  { text: 'فِكْرَة',   difficulty: 'medium' }, // idea
-  { text: 'مَعْرِفَة', difficulty: 'medium' }, // knowledge/acquaintance
-  // food & culture
-  { text: 'مَطْعَم',   difficulty: 'medium' }, // restaurant
-  { text: 'وَجْبَة',   difficulty: 'medium' }, // meal
-  { text: 'فَاكِهَة',  difficulty: 'medium' }, // fruit
-  { text: 'خَضَرَوَات',difficulty: 'medium' }, // vegetables
-  { text: 'حَلَوَى',   difficulty: 'medium' }, // sweets/candy
-  { text: 'قَهْوَة',   difficulty: 'medium' }, // coffee
-  { text: 'شَاي',      difficulty: 'medium' }, // tea
-  { text: 'عَصِير',    difficulty: 'medium' }, // juice
-  { text: 'سَمَك',     difficulty: 'medium' }, // fish
-  { text: 'دَجَاج',    difficulty: 'medium' }, // chicken
-  // weather & environment
-  { text: 'مَطَر',     difficulty: 'medium' }, // rain
-  { text: 'ثَلْج',     difficulty: 'medium' }, // snow/ice
-  { text: 'رِيح',      difficulty: 'medium' }, // wind
-  { text: 'سَحَاب',    difficulty: 'medium' }, // clouds
-  { text: 'ضَبَاب',    difficulty: 'medium' }, // fog
-  { text: 'فَصْل',     difficulty: 'medium' }, // season/chapter
-  { text: 'صَيْف',     difficulty: 'medium' }, // summer
-  { text: 'شِتَاء',    difficulty: 'medium' }, // winter
-  { text: 'رَبِيع',    difficulty: 'medium' }, // spring
-  { text: 'خَرِيف',    difficulty: 'medium' }, // autumn
-  // medium adjectives
-  { text: 'جَمِيل',    difficulty: 'medium' }, // beautiful
-  { text: 'قَبِيح',    difficulty: 'medium' }, // ugly
-  { text: 'صَعْب',     difficulty: 'medium' }, // difficult
-  { text: 'سَهْل',     difficulty: 'medium' }, // easy
-  { text: 'مُهِمّ',    difficulty: 'medium' }, // important
-  { text: 'مُمْتَاز',  difficulty: 'medium' }, // excellent
-  { text: 'مَشْهُور',  difficulty: 'medium' }, // famous
-  { text: 'غَرِيب',    difficulty: 'medium' }, // strange/foreign
-  { text: 'لَطِيف',    difficulty: 'medium' }, // kind/nice
-  { text: 'ذَكِيّ',    difficulty: 'medium' }, // intelligent
-  // medium verbs
-  { text: 'تَكَلَّم',  difficulty: 'medium' }, // spoke
-  { text: 'سَافَر',    difficulty: 'medium' }, // traveled
-  { text: 'تَعَلَّم',  difficulty: 'medium' }, // learned
-  { text: 'فَهِم',     difficulty: 'medium' }, // understood
-  { text: 'سَمِع',     difficulty: 'medium' }, // heard
-  { text: 'شَاهَد',    difficulty: 'medium' }, // watched
-  { text: 'سَاعَد',    difficulty: 'medium' }, // helped
-  { text: 'فَكَّر',    difficulty: 'medium' }, // thought/pondered
-  { text: 'اخْتَار',   difficulty: 'medium' }, // chose
-  { text: 'حَاوَل',    difficulty: 'medium' }, // tried
-  // tech & modern life
-  { text: 'هَاتِف',    difficulty: 'medium' }, // phone
-  { text: 'حَاسُوب',   difficulty: 'medium' }, // computer
-  { text: 'إِنْتَرْنَت',difficulty: 'medium' }, // internet
-  { text: 'سَيَّارَة',  difficulty: 'medium' }, // car
-  { text: 'طَائِرَة',  difficulty: 'medium' }, // airplane
-  { text: 'قِطَار',    difficulty: 'medium' }, // train
-  { text: 'مُسْتَشْفَى',difficulty: 'medium' }, // hospital
-  { text: 'صَيْدَلِيَّة',difficulty: 'medium' },// pharmacy
-  { text: 'مَكْتَبَة',  difficulty: 'medium' }, // library/bookstore
-  { text: 'مَلْعَب',   difficulty: 'medium' }, // playground/stadium
+  { text: 'مُعَلِّم',      difficulty: 'medium' },
+  { text: 'طَبِيب',        difficulty: 'medium' },
+  { text: 'طَالِب',        difficulty: 'medium' },
+  { text: 'صَدِيق',        difficulty: 'medium' },
+  { text: 'جَار',          difficulty: 'medium' },
+  { text: 'زَمِيل',        difficulty: 'medium' },
+  { text: 'ضَيْف',         difficulty: 'medium' },
+  { text: 'عَامِل',        difficulty: 'medium' },
+  { text: 'مُدِير',        difficulty: 'medium' },
+  { text: 'مُحَامِي',      difficulty: 'medium' },
+  { text: 'مَدْرَسَة',     difficulty: 'medium' },
+  { text: 'مَدِينَة',      difficulty: 'medium' },
+  { text: 'قَرْيَة',       difficulty: 'medium' },
+  { text: 'مَسْجِد',       difficulty: 'medium' },
+  { text: 'سُوق',          difficulty: 'medium' },
+  { text: 'مَكْتَب',       difficulty: 'medium' },
+  { text: 'مَطْبَخ',       difficulty: 'medium' },
+  { text: 'حَدِيقَة',      difficulty: 'medium' },
+  { text: 'شَارِع',        difficulty: 'medium' },
+  { text: 'طَرِيق',        difficulty: 'medium' },
+  { text: 'حَيَاة',        difficulty: 'medium' },
+  { text: 'صِحَّة',        difficulty: 'medium' },
+  { text: 'عِلْم',         difficulty: 'medium' },
+  { text: 'عَمَل',         difficulty: 'medium' },
+  { text: 'سَعَادَة',      difficulty: 'medium' },
+  { text: 'حُرِّيَّة',     difficulty: 'medium' },
+  { text: 'فِكْرَة',       difficulty: 'medium' },
+  { text: 'مَعْرِفَة',     difficulty: 'medium' },
+  { text: 'كَلِمَة',       difficulty: 'medium' },
+  { text: 'لُغَة',         difficulty: 'medium' },
+  { text: 'مَطْعَم',       difficulty: 'medium' },
+  { text: 'وَجْبَة',       difficulty: 'medium' },
+  { text: 'فَاكِهَة',      difficulty: 'medium' },
+  { text: 'خَضَرَوَات',    difficulty: 'medium' },
+  { text: 'حَلَوَى',       difficulty: 'medium' },
+  { text: 'قَهْوَة',       difficulty: 'medium' },
+  { text: 'شَاي',          difficulty: 'medium' },
+  { text: 'عَصِير',        difficulty: 'medium' },
+  { text: 'دَجَاج',        difficulty: 'medium' },
+  { text: 'خُضَار',        difficulty: 'medium' },
+  { text: 'مَطَر',         difficulty: 'medium' },
+  { text: 'ثَلْج',         difficulty: 'medium' },
+  { text: 'رِيح',          difficulty: 'medium' },
+  { text: 'سَحَاب',        difficulty: 'medium' },
+  { text: 'ضَبَاب',        difficulty: 'medium' },
+  { text: 'صَيْف',         difficulty: 'medium' },
+  { text: 'شِتَاء',        difficulty: 'medium' },
+  { text: 'رَبِيع',        difficulty: 'medium' },
+  { text: 'خَرِيف',        difficulty: 'medium' },
+  { text: 'فَصْل',         difficulty: 'medium' },
+  { text: 'جَمِيل',        difficulty: 'medium' },
+  { text: 'قَبِيح',        difficulty: 'medium' },
+  { text: 'صَعْب',         difficulty: 'medium' },
+  { text: 'سَهْل',         difficulty: 'medium' },
+  { text: 'مُهِمّ',        difficulty: 'medium' },
+  { text: 'مُمْتَاز',      difficulty: 'medium' },
+  { text: 'مَشْهُور',      difficulty: 'medium' },
+  { text: 'غَرِيب',        difficulty: 'medium' },
+  { text: 'لَطِيف',        difficulty: 'medium' },
+  { text: 'ذَكِيّ',        difficulty: 'medium' },
+  { text: 'تَكَلَّم',      difficulty: 'medium' },
+  { text: 'سَافَر',        difficulty: 'medium' },
+  { text: 'تَعَلَّم',      difficulty: 'medium' },
+  { text: 'فَهِم',         difficulty: 'medium' },
+  { text: 'سَمِع',         difficulty: 'medium' },
+  { text: 'شَاهَد',        difficulty: 'medium' },
+  { text: 'سَاعَد',        difficulty: 'medium' },
+  { text: 'فَكَّر',        difficulty: 'medium' },
+  { text: 'اخْتَار',       difficulty: 'medium' },
+  { text: 'حَاوَل',        difficulty: 'medium' },
+  { text: 'هَاتِف',        difficulty: 'medium' },
+  { text: 'حَاسُوب',       difficulty: 'medium' },
+  { text: 'سَيَّارَة',     difficulty: 'medium' },
+  { text: 'طَائِرَة',      difficulty: 'medium' },
+  { text: 'قِطَار',        difficulty: 'medium' },
+  { text: 'مَلْعَب',       difficulty: 'medium' },
+  { text: 'مَكْتَبَة',     difficulty: 'medium' },
+  { text: 'صَيْدَلِيَّة',  difficulty: 'medium' },
+  { text: 'مُسْتَشْفَى',   difficulty: 'medium' },
+  { text: 'رِيَاضَة',      difficulty: 'medium' },
+  { text: 'مُوسِيقَى',     difficulty: 'medium' },
+  { text: 'رِحْلَة',       difficulty: 'medium' },
+  { text: 'صُورَة',        difficulty: 'medium' },
+  { text: 'قِصَّة',        difficulty: 'medium' },
+  { text: 'شِعْر',         difficulty: 'medium' },
+  { text: 'تَارِيخ',       difficulty: 'medium' },
+  { text: 'ثَقَافَة',      difficulty: 'medium' },
+  { text: 'طَبِيعَة',      difficulty: 'medium' },
 
   // ── HARD ──────────────────────────────────────────────────────────────────
-  // formal/academic nouns
-  { text: 'مَسْؤُولِيَّة', difficulty: 'hard' }, // responsibility
-  { text: 'اجْتِمَاع',     difficulty: 'hard' }, // meeting/gathering
-  { text: 'مُجْتَمَع',     difficulty: 'hard' }, // society/community
-  { text: 'اقْتِصَاد',     difficulty: 'hard' }, // economy
-  { text: 'دِيمُقْرَاطِيَّة',difficulty: 'hard' },// democracy
-  { text: 'تَكْنُولُوجِيَا', difficulty: 'hard' }, // technology
-  { text: 'فَلْسَفَة',      difficulty: 'hard' }, // philosophy
-  { text: 'حَضَارَة',       difficulty: 'hard' }, // civilization
-  { text: 'اسْتِقْلَال',    difficulty: 'hard' }, // independence
-  { text: 'ظَاهِرَة',       difficulty: 'hard' }, // phenomenon
-  // complex abstract concepts
-  { text: 'مُصْطَلَح',      difficulty: 'hard' }, // term/terminology
-  { text: 'مَنْهَجِيَّة',   difficulty: 'hard' }, // methodology
-  { text: 'اسْتِرَاتِيجِيَّة',difficulty: 'hard' },// strategy
-  { text: 'اسْتِثْمَار',    difficulty: 'hard' }, // investment
-  { text: 'مُفَاوَضَات',    difficulty: 'hard' }, // negotiations
-  { text: 'مُقَارَنَة',     difficulty: 'hard' }, // comparison
-  { text: 'مُلَاحَظَة',     difficulty: 'hard' }, // observation/note
-  { text: 'تَحْلِيل',       difficulty: 'hard' }, // analysis
-  { text: 'تَشْخِيص',       difficulty: 'hard' }, // diagnosis
-  { text: 'مُعَالَجَة',     difficulty: 'hard' }, // processing/treatment
-  // long compound/derived words
-  { text: 'مُتَنَاقِض',     difficulty: 'hard' }, // contradictory
-  { text: 'مُتَوَازِن',      difficulty: 'hard' }, // balanced
-  { text: 'مُتَخَصِّص',     difficulty: 'hard' }, // specialist
-  { text: 'مُسْتَدَام',      difficulty: 'hard' }, // sustainable
-  { text: 'مُتَسَارِع',      difficulty: 'hard' }, // accelerating
-  { text: 'مُسْتَقِل',       difficulty: 'hard' }, // independent
-  { text: 'مُتَحَضِّر',      difficulty: 'hard' }, // civilized
-  { text: 'مُنَظَّم',        difficulty: 'hard' }, // organized
-  { text: 'مُتَعَدِّد',      difficulty: 'hard' }, // multiple/diverse
-  { text: 'مُسْتَمِرّ',      difficulty: 'hard' }, // continuous
-  // formal verbs
-  { text: 'اسْتَوْعَب',      difficulty: 'hard' }, // absorbed/comprehended
-  { text: 'تَجَاوَز',        difficulty: 'hard' }, // overcame/exceeded
-  { text: 'أَسَّس',          difficulty: 'hard' }, // founded/established
-  { text: 'طَوَّر',          difficulty: 'hard' }, // developed
-  { text: 'حَقَّق',          difficulty: 'hard' }, // achieved/verified
-  { text: 'اسْتَثْمَر',      difficulty: 'hard' }, // invested
-  { text: 'تَفَاوَض',        difficulty: 'hard' }, // negotiated
-  { text: 'اسْتَنْتَج',      difficulty: 'hard' }, // concluded/inferred
-  { text: 'تَخَصَّص',        difficulty: 'hard' }, // specialized
-  { text: 'اعْتَرَف',        difficulty: 'hard' }, // acknowledged/admitted
-  // science & academic fields
-  { text: 'كِيمِيَاء',       difficulty: 'hard' }, // chemistry
-  { text: 'فِيزِيَاء',       difficulty: 'hard' }, // physics
-  { text: 'رِيَاضِيَّات',    difficulty: 'hard' }, // mathematics
-  { text: 'جُغْرَافِيَا',    difficulty: 'hard' }, // geography
-  { text: 'بُيُولُوجِيَا',   difficulty: 'hard' }, // biology
-  { text: 'أَنْثُرُوبُولُوجِيَا', difficulty: 'hard' }, // anthropology
-  { text: 'سُوسْيُولُوجِيَا', difficulty: 'hard' }, // sociology
-  { text: 'سَيْكُولُوجِيَا', difficulty: 'hard' }, // psychology
-  { text: 'اقْتِصَادِيَّات', difficulty: 'hard' }, // economics
-  { text: 'إِحْصَاء',        difficulty: 'hard' }, // statistics
-  // governance & society
-  { text: 'مُنَظَّمَة',      difficulty: 'hard' }, // organization
-  { text: 'مُؤَسَّسَة',      difficulty: 'hard' }, // institution
-  { text: 'حُكُومَة',        difficulty: 'hard' }, // government
-  { text: 'بُرْلَمَان',      difficulty: 'hard' }, // parliament
-  { text: 'دُسْتُور',        difficulty: 'hard' }, // constitution
-  { text: 'مُعَارَضَة',      difficulty: 'hard' }, // opposition
-  { text: 'انْتِخَابَات',    difficulty: 'hard' }, // elections
-  { text: 'مَشْرُوعِيَّة',   difficulty: 'hard' }, // legitimacy
-  { text: 'إِصْلَاحَات',     difficulty: 'hard' }, // reforms
-  { text: 'قَضَائِيَّة',     difficulty: 'hard' }, // judicial
+  { text: 'مَسْؤُولِيَّة',    difficulty: 'hard' },
+  { text: 'اجْتِمَاع',        difficulty: 'hard' },
+  { text: 'مُجْتَمَع',        difficulty: 'hard' },
+  { text: 'اقْتِصَاد',        difficulty: 'hard' },
+  { text: 'دِيمُقْرَاطِيَّة', difficulty: 'hard' },
+  { text: 'تَكْنُولُوجِيَا',  difficulty: 'hard' },
+  { text: 'فَلْسَفَة',        difficulty: 'hard' },
+  { text: 'حَضَارَة',         difficulty: 'hard' },
+  { text: 'اسْتِقْلَال',      difficulty: 'hard' },
+  { text: 'ظَاهِرَة',         difficulty: 'hard' },
+  { text: 'مُصْطَلَح',        difficulty: 'hard' },
+  { text: 'مَنْهَجِيَّة',     difficulty: 'hard' },
+  { text: 'اسْتِرَاتِيجِيَّة',difficulty: 'hard' },
+  { text: 'اسْتِثْمَار',      difficulty: 'hard' },
+  { text: 'مُفَاوَضَات',      difficulty: 'hard' },
+  { text: 'مُقَارَنَة',       difficulty: 'hard' },
+  { text: 'مُلَاحَظَة',       difficulty: 'hard' },
+  { text: 'تَحْلِيل',         difficulty: 'hard' },
+  { text: 'تَشْخِيص',         difficulty: 'hard' },
+  { text: 'مُعَالَجَة',       difficulty: 'hard' },
+  { text: 'مُتَنَاقِض',       difficulty: 'hard' },
+  { text: 'مُتَوَازِن',       difficulty: 'hard' },
+  { text: 'مُتَخَصِّص',       difficulty: 'hard' },
+  { text: 'مُسْتَدَام',       difficulty: 'hard' },
+  { text: 'مُسْتَقِل',        difficulty: 'hard' },
+  { text: 'مُتَحَضِّر',       difficulty: 'hard' },
+  { text: 'مُنَظَّم',         difficulty: 'hard' },
+  { text: 'مُتَعَدِّد',       difficulty: 'hard' },
+  { text: 'مُسْتَمِرّ',       difficulty: 'hard' },
+  { text: 'مُتَسَارِع',       difficulty: 'hard' },
+  { text: 'اسْتَوْعَب',       difficulty: 'hard' },
+  { text: 'تَجَاوَز',         difficulty: 'hard' },
+  { text: 'أَسَّس',           difficulty: 'hard' },
+  { text: 'طَوَّر',           difficulty: 'hard' },
+  { text: 'حَقَّق',           difficulty: 'hard' },
+  { text: 'اسْتَثْمَر',       difficulty: 'hard' },
+  { text: 'تَفَاوَض',         difficulty: 'hard' },
+  { text: 'اسْتَنْتَج',       difficulty: 'hard' },
+  { text: 'تَخَصَّص',         difficulty: 'hard' },
+  { text: 'اعْتَرَف',         difficulty: 'hard' },
+  { text: 'كِيمِيَاء',        difficulty: 'hard' },
+  { text: 'فِيزِيَاء',        difficulty: 'hard' },
+  { text: 'رِيَاضِيَّات',     difficulty: 'hard' },
+  { text: 'جُغْرَافِيَا',     difficulty: 'hard' },
+  { text: 'بُيُولُوجِيَا',    difficulty: 'hard' },
+  { text: 'سَيْكُولُوجِيَا',  difficulty: 'hard' },
+  { text: 'اقْتِصَادِيَّات',  difficulty: 'hard' },
+  { text: 'إِحْصَاء',         difficulty: 'hard' },
+  { text: 'مُنَظَّمَة',       difficulty: 'hard' },
+  { text: 'مُؤَسَّسَة',       difficulty: 'hard' },
+  { text: 'حُكُومَة',         difficulty: 'hard' },
+  { text: 'بُرْلَمَان',       difficulty: 'hard' },
+  { text: 'دُسْتُور',         difficulty: 'hard' },
+  { text: 'مُعَارَضَة',       difficulty: 'hard' },
+  { text: 'انْتِخَابَات',     difficulty: 'hard' },
+  { text: 'مَشْرُوعِيَّة',    difficulty: 'hard' },
+  { text: 'إِصْلَاحَات',      difficulty: 'hard' },
+  { text: 'قَضَائِيَّة',      difficulty: 'hard' },
+  { text: 'مُسْتَقْبَل',      difficulty: 'hard' },
+  { text: 'مُجَتَمَعِيّ',     difficulty: 'hard' },
+  { text: 'إِبْدَاعِيَّة',    difficulty: 'hard' },
+  { text: 'اسْتِدَامَة',      difficulty: 'hard' },
+  { text: 'انْعِكَاسَات',     difficulty: 'hard' },
+  { text: 'تَحَوُّلَات',      difficulty: 'hard' },
+  { text: 'مُتَطَلَّبَات',    difficulty: 'hard' },
+  { text: 'إِمْكَانِيَّات',   difficulty: 'hard' },
+  { text: 'تَفَاعُلِيَّة',    difficulty: 'hard' },
+  { text: 'مُشَارَكَة',       difficulty: 'hard' },
+  { text: 'انْعِدَام',        difficulty: 'hard' },
+  { text: 'اضْطِرَاب',        difficulty: 'hard' },
+  { text: 'تَوَاصُل',         difficulty: 'hard' },
 ];
 
 function generateArabicWord(opts?: { difficulty?: WordDifficulty }): string {
@@ -275,6 +275,157 @@ function generateArabicWord(opts?: { difficulty?: WordDifficulty }): string {
   return list[Math.floor(Math.random() * list.length)].text;
 }
 
+// ─── Arabic coaching tips ─────────────────────────────────────────────────────
+
+const arVocalTips: Tip[] = [
+  {
+    label: 'وَقْفَة',
+    category: 'vocal',
+    title: 'الوَقْفَة',
+    description: 'الصَّمت بعد الكلمة المحورية يحمل وزناً أكبر من الكلمة ذاتها.',
+    example: '"الصَّبر… [وقفة] مفتاح… [وقفة] الفَرَج."',
+    instruction: 'قُل الكلمة، ثم توقف تماماً لثانية واحدة. دعها تستقر قبل المُضي.',
+  },
+  {
+    label: 'تَمَهَّل',
+    category: 'vocal',
+    title: 'وَتِيرَة الكَلَام',
+    description: 'كلما كانت النقطة أهم، كان عليك التحدث بشكل أبطأ.',
+    example: '"هذا… هو… أهمّ ما سأقوله."',
+    instruction: 'قُل كل مقطع بتعمُّد. لا تتسرَّع.',
+  },
+  {
+    label: 'ارفع صوتك',
+    category: 'vocal',
+    title: 'حَجْم الصَّوْت',
+    description: 'الحجم هو الثقة بصوت مسموع. الرفع درجتين يُظهر الثقة بالنفس.',
+    example: '"أنا أؤمن بهذا." (٥٠٪) مقابل "أنا أُؤْمِن بهذا!" (٩٠٪)',
+    instruction: 'قُل الكلمة بنصف الصوت، ثم بالصوت كاملاً. أحسس الفرق.',
+  },
+  {
+    label: 'غَنِّها',
+    category: 'vocal',
+    title: 'النَّبْرَة واللَّحْن',
+    description: 'الرتابة تُفقد الانتباه. دع نبرتك ترتفع وتنخفض كالموسيقى.',
+    example: '"أليس هذا ↗ رائعاً ↘" — ارفع عند الذروة، انخفض للهبوط.',
+    instruction: 'قُل الكلمة مع رفع النبرة في النصف الأول وخفضها في الثاني.',
+  },
+  {
+    label: 'أَحسِسْها',
+    category: 'vocal',
+    title: 'طَرِيقَة الأَدَاء',
+    description: 'تعبيرات وجهك هي ريموت كنترول صوتك. المشاعر تقود الأداء.',
+    example: 'قُل "رائع" بدفء. ثم قلها بسخرية. نفس الكلمة، عالَم مختلف.',
+    instruction: 'اختر مشاعر — دافئ، فضولي، حازم — وقُل الكلمة من ذلك المكان.',
+  },
+];
+
+const arFrameworkTips: Tip[] = [
+  {
+    label: 'ن.م.ن',
+    category: 'framework',
+    title: 'نقطة ← مثال ← نقطة',
+    description: 'أوضح هيكل لأي فكرة منطوقة.',
+    example: '"الممارسة مهمة. [الرياضيون يتدربون لسنوات.] لهذا الممارسة مهمة."',
+    instruction: 'قُل نقطتك باستخدام هذه الكلمة، أعطِ مثالاً واحداً، ثم كرر النقطة.',
+  },
+  {
+    label: '٣-٢-١',
+    category: 'framework',
+    title: 'حِيلَة ٣-٢-١',
+    description: 'عند الارتجال: اختر ٣ خطوات، أو ٢ نوعين، أو الشيء الواحد.',
+    example: '"ثمة ٣ طرق للنظر إلى هذا: الصوت، والمعنى، والإحساس."',
+    instruction: 'استخدم هذه الكلمة موضوعاً. تحدث ٣٠ ثانية بإطار "٣ خطوات".',
+  },
+  {
+    label: 'قِصَّة',
+    category: 'framework',
+    title: 'حَادِثَة ← نُقْطَة ← رَابِط',
+    description: 'كل القصص العظيمة لها ثلاثة أجزاء: ما حدث، ماذا يعني، ولماذا يهمّ.',
+    example: '"نطقت كلمة بشكل خاطئ في اجتماع. [حادثة] الكلمات تشكّل التصور. [نقطة] لهذا نتدرب. [رابط]"',
+    instruction: 'احكِ قصة من ٢٠ ثانية باستخدام هذه الكلمة كمحفِّز.',
+  },
+  {
+    label: '٥ أجزاء',
+    category: 'framework',
+    title: 'هَيْكَل خَمْسَة أَجزَاء',
+    description: 'مقدمة ١٢.٥٪ ← أ ٢٥٪ ← ب ٢٥٪ ← ج ٢٥٪ ← خاتمة ١٢.٥٪',
+    example: 'افتح بخطاف، قدِّم ثلاث نقاط واضحة، أغلق بالعودة إلى الخطاف.',
+    instruction: 'خطِّط رداً من ٦٠ ثانية بهذا الهيكل. قُله بصوت عالٍ الآن.',
+  },
+];
+
+const arArchetypeTips: Tip[] = [
+  {
+    label: 'مُحَفِّز',
+    category: 'archetype',
+    title: 'المُحَفِّز',
+    description: 'طاقة عالية. سلاسة. أنت تخلق إحساساً بالإمكانية.',
+    example: '"هذه الكلمة — هذه الكلمة وحدها — تستطيع أن تغيّر نظرة شخص إليك للأبد."',
+    instruction: 'قُل الكلمة وكأنك تُلهم حشداً. دع الطاقة تتصاعد.',
+  },
+  {
+    label: 'مُعَلِّم',
+    category: 'archetype',
+    title: 'المُعَلِّم',
+    description: 'أبطأ. حيادي. أنت تُقدِّم الفهم بدقة.',
+    example: '"لاحظ أين يقع لسانك على كل مقطع. هذا هو النطق."',
+    instruction: 'قُل الكلمة وكأنك تعلِّمها لأول مرة. بتعمُّد وإتقان.',
+  },
+  {
+    label: 'مُدَرِّب',
+    category: 'archetype',
+    title: 'المُدَرِّب',
+    description: 'قصير. قوي. حازم. أنت تدفع شخصاً ليتجاوز نفسه.',
+    example: '"مجدداً. بصوت أعلى. امتلكها."',
+    instruction: 'قُل الكلمة كأمر. مباشر، بلا تليين.',
+  },
+  {
+    label: 'صَدِيق',
+    category: 'archetype',
+    title: 'الصَّدِيق',
+    description: 'طبيعي. دافئ. موسيقي. أنت تتواصل، لا تؤدي.',
+    example: '"تعرف ما المضحك في هذه الكلمة؟ صوتها يشبه تماماً معناها."',
+    instruction: 'قُل الكلمة وكأنك تشاركها مع شخص تثق به. مرتاح، حقيقي.',
+  },
+];
+
+// ─── Arabic warmup exercises ──────────────────────────────────────────────────
+// 20 exercises — breathing(4) physical(3) resonance(3) articulation(4) pitch(3) projection(3)
+// Exercise #13 replaces "Red Lorry" with an Arabic articulation drill.
+// Exercise #20 replaces "Good Morning" with صباح الخير.
+
+const ARABIC_WARMUP: WarmupExercise[] = [
+  // breathing
+  { id: 'w001', category: 'breathing',    title: 'التنفُّس المربَّع', instruction: 'تنفَّس ٤ عدَّات. أمسك ٤. أخرج ٤. أمسك ٤. أحسس بتوسُّع بطنك.' },
+  { id: 'w002', category: 'breathing',    title: 'الزفير الصافر',    instruction: 'خذ نفساً عميقاً، ثم أخرجه ببطء على سسسس طويلة. اجعلها تدوم ١٠ ثوانٍ.' },
+  { id: 'w003', category: 'breathing',    title: 'الزفير المريح',    instruction: 'خذ نفساً ضخماً، ثم أخرجه على آهههه مريحة. دع كل شيء يهبط.' },
+  { id: 'w004', category: 'breathing',    title: 'اهتزاز الشفتين',  instruction: 'أخرج الهواء عبر شفتين مرتخيتين لتحدث رفرفة. أبقِ فكَّك ناعماً.' },
+  // physical
+  { id: 'w005', category: 'physical',     title: 'تدوير الرقبة',    instruction: 'دوِّر رأسك ببطء في دائرة واسعة، اتجاهاً ثم الآخر. أحسس بالتمدُّد.' },
+  { id: 'w006', category: 'physical',     title: 'تدليك الفك',      instruction: 'ضع أطراف أصابعك على مفصل الفك ودوِّر ببطء. دع فمك ينفتح.' },
+  { id: 'w007', category: 'physical',     title: 'إخراج اللسان',    instruction: 'أخرج لسانك بأقصى ما يمكن. أمسك ٣ ثوانٍ، ثم اسحبه. كرِّر.' },
+  // resonance
+  { id: 'w008', category: 'resonance',    title: 'الطنين الصدري',   instruction: 'أصدر همهمة بنبرة منخفضة مريحة. أحسس الاهتزاز في صدرك. ضع يدك هناك.' },
+  { id: 'w009', category: 'resonance',    title: 'مـ-بَاه',          instruction: 'تناوب: همهمة طويلة مممممم، ثم انفجر في بَاه! دع الهمهمة تُطنِّن شفتيك.' },
+  { id: 'w010', category: 'resonance',    title: 'تثاؤب وزفير',     instruction: 'افتح فمك بتثاؤب كبير، ثم تنهَّد نزولاً في آهههه طويلة. التثاؤب يفتح حلقك.' },
+  // articulation
+  { id: 'w011', category: 'articulation', title: 'فقاعات الشفتين',  instruction: 'أخرج هواء عبر شفتيك في بررررر طويل فقاعي. أبقِ رقبتك مرتخية.' },
+  { id: 'w012', category: 'articulation', title: 'بَ-دَ-غَ',         instruction: 'كرِّر بَ-دَ-غَ، بَ-دَ-غَ ببطء، ثم أسرع وأسرع. أحسس كل حرف يتفجَّر.' },
+  { id: 'w013', category: 'articulation', title: 'كَيَّاك كَايِك',  instruction: 'قُل ببطء: كَيَّاك كَايِك. سرِّع. كَيَّاك كَايِك كَيَّاك. هيا!' },
+  { id: 'w014', category: 'articulation', title: 'لَا لَا لَا',      instruction: 'حرِّك لسانك بسرعة على لَا-لَا-لَا-لَا. أبقِ فكَّك ثابتاً ولسانك مرتخياً.' },
+  // pitch
+  { id: 'w015', category: 'pitch',        title: 'صافرة الصوت',     instruction: 'أنزلق بصوتك من أدنى نبرة لديك إلى أعلاها. كالصافرة.' },
+  { id: 'w016', category: 'pitch',        title: 'خمس درجات',       instruction: 'غنِّ مَا-مِي-مُو-مَا-مُو صعوداً بخمس درجات، ثم نزولاً. ارفع حنكك الناعم.' },
+  { id: 'w017', category: 'pitch',        title: 'قفزة الأوكتاف',   instruction: 'اختر نبرة مريحة. اقفز أوكتاف أعلى. ثم عُد. تناوب بانسيابية.' },
+  // projection
+  { id: 'w018', category: 'projection',   title: 'هَا هَا هَا',      instruction: 'قُل هَا من بطنك لا من حلقك. قصيرة، حادة، قوية. هَا! هَا! هَا! مجدداً!' },
+  { id: 'w019', category: 'projection',   title: 'عُدَّ عبر الغرفة', instruction: 'عُدَّ من واحد إلى عشرة وكأنك تنادي شخصاً في غرفة واسعة. أوصله إليه!' },
+  { id: 'w020', category: 'projection',   title: 'صَبَاح الخَيْر',   instruction: 'قُل تحية الصباح برنين ونية. صَبَاح الخَيْر! امتلك الغرفة! أعِدها!' },
+];
+
+// ─── Registration ─────────────────────────────────────────────────────────────
+
 registerLanguage({
   code: 'ar',
   name: 'Arabic',
@@ -282,10 +433,76 @@ registerLanguage({
   direction: 'rtl',
   speechRecognitionCode: 'ar-SA',
   labels: {
-    words: 'كَلِمَات',
-    twisters: 'أَلاعِيب',
-    warmup: 'إِحْمَاء',
-    tapMe: 'اِضْغَط هُنَا',
+    nav: {
+      words: 'كَلِمَات',
+      twisters: 'أَلاعِيب',
+      warmup: 'إِحْمَاء',
+      tapMe: 'اِضْغَط هُنَا',
+    },
+    settings: {
+      title: 'الإعدادات',
+      preferences: 'التفضيلات',
+      language: 'اللغة',
+      tapToCycle: 'اضغط للتبديل',
+      tapToClose: 'اضغط في أي مكان للإغلاق',
+      theme: 'المظهر',
+      themeLight: 'فاتح',
+      themeDark: 'داكن',
+      sound: 'المؤثرات الصوتية',
+      soundOn: 'مفعَّل',
+      soundOff: 'مُعطَّل',
+      fontSize: 'حجم الخط',
+      wordsOnScreen: 'كلمات على الشاشة',
+      wordDisplay: 'موضع الكلمة',
+      wordCentered: 'في المنتصف',
+      wordRandom: 'عشوائي',
+      timer: 'المؤقت',
+      coachingTips: 'نصائح التدريب',
+      on: 'مفعَّل',
+      off: 'مُعطَّل',
+      admin: 'المشرف',
+      dashboard: 'لوحة التحكم',
+    },
+    about: {
+      createdBy: 'من تصميم',
+      bioSubtitle: 'مهندس ذكاء اصطناعي · القاهرة، مصر',
+      appTagline: 'تدرَّب على طريقة حديثك، كلمةً كلمة.',
+      appDescription: 'نصائح تدريبية مستوحاة من أكاديمية STAGE لـ Vinh Giang — أسس الصوت وأطر السرد وأساليب الخطابة مندمجة في ممارستك اليومية.',
+      bioText: 'مهندس بنية تحوَّل إلى مهندس ذكاء اصطناعي. يبني حالياً AIDA — منصة متعددة الوكلاء تخدم أكثر من ١٠٬٠٠٠ مهندس في إحدى أكبر شركات الاستشارات في العالم.',
+      tapToClose: 'اضغط في أي مكان للإغلاق',
+    },
+    warmup: {
+      tapToContinue: 'اضغط في أي مكان للمتابعة',
+      resetExercise: 'إعادة إلى التمرين الأول',
+      of: 'من',
+      halfway: 'في المنتصف!',
+      finalStretch: 'الجولة الأخيرة!',
+      goingAgain: 'من البداية مجدداً!',
+      stop: 'إيقاف',
+      play: 'تشغيل',
+      catBreathing: '🌬 تنفُّس',
+      catPhysical: '💪 تمدُّد',
+      catResonance: '🎵 رنين',
+      catArticulation: '👅 نطق',
+      catPitch: '🎼 نبرة',
+      catProjection: '📢 إسقاط',
+    },
+    tips: {
+      vocal: 'أساس صوتي',
+      framework: 'إطار',
+      archetype: 'نمط',
+      tapToDismiss: 'اضغط في أي مكان للإغلاق',
+      tryNow: 'جرّبها الآن ←',
+    },
+    ui: {
+      noTranscript: 'لا يوجد نص',
+    },
   },
   generateWord: generateArabicWord,
+  warmupExercises: ARABIC_WARMUP,
+  tips: {
+    vocal: arVocalTips,
+    framework: arFrameworkTips,
+    archetype: arArchetypeTips,
+  },
 });
