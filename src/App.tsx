@@ -44,6 +44,7 @@ export default function App() {
   const [isWarmupMode, setIsWarmupMode] = useLocalStorageBool('warmupMode', false);
   const [centeredWord, setCenteredWord] = useLocalStorageBool('centeredWord', false);
   const [lastTwisterId, setLastTwisterId] = useLocalStorageStr('lastTwisterId', '');
+  const [lastWordText, setLastWordText] = useLocalStorageStr('lastWordText', '');
   const [twisterOrder, setTwisterOrder] = useState<string[]>([]);
   const mode: 'words' | 'twisters' | 'warmup' = isWarmupMode ? 'warmup' : isTwisterMode ? 'twisters' : 'words';
 
@@ -113,6 +114,24 @@ export default function App() {
   useEffect(() => subscribeTwisterPlaying(setIsTwisterPlaying), []);
   useEffect(() => subscribeWarmupPlaying(setIsWarmupPlaying), []);
 
+  // Restore last content on page refresh
+  useEffect(() => {
+    if (isTwisterMode && lastTwisterId) {
+      const entry = getTwisterById(lastTwisterId);
+      if (entry) setTwister({ entry, key: 0 });
+    } else if (!isTwisterMode && !isWarmupMode && lastWordText) {
+      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setWords([{
+        text: lastWordText,
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        id: Date.now(),
+        color: getRandomColor(dark),
+      }]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const all = allTwisterIds();
     const allSet = new Set(all);
@@ -169,6 +188,7 @@ export default function App() {
     }
 
     const word = generate() as string;
+    setLastWordText(word);
     track('word_generated', { word });
     countersRef.current.words++;
     rotateTips();
