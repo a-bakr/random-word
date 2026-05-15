@@ -26,7 +26,7 @@ export function AboutOverlay({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col px-8 pt-14 pb-10"
+            className="flex flex-col px-8 pt-14 pb-10 overflow-y-auto flex-1"
             onClick={(e) => e.stopPropagation()}
           >
             <button
