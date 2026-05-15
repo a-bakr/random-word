@@ -28,19 +28,6 @@ export function TimerBar({
 }) {
   return (
     <div className="absolute bottom-6 right-6 z-10 flex items-center gap-3 pointer-events-auto">
-      {mode === 'twisters' && (
-        <button
-          onClick={onReplay}
-          className={`rounded-full p-3 transition-all duration-500 ${isTwisterPlaying
-            ? 'text-zinc-900 dark:text-zinc-50'
-            : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50'
-            }`}
-          style={{ filter: 'url(#sketch)' }}
-          aria-label={isTwisterPlaying ? 'Stop audio' : 'Replay audio'}
-        >
-          {isTwisterPlaying ? <Square size={20} strokeWidth={2.5} /> : <Play size={20} strokeWidth={2.5} />}
-        </button>
-      )}
       {timerEnabled && (
         <Timer
           key={timerKey}
@@ -62,6 +49,19 @@ export function TimerBar({
       >
         <Clock size={18} strokeWidth={2.5} />
       </button>
+      {mode === 'twisters' && (
+        <button
+          onClick={onReplay}
+          className={`rounded-full p-3 transition-all duration-500 ${isTwisterPlaying
+            ? 'text-zinc-900 dark:text-zinc-50'
+            : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50'
+            }`}
+          style={{ filter: 'url(#sketch)' }}
+          aria-label={isTwisterPlaying ? 'Stop audio' : 'Replay audio'}
+        >
+          {isTwisterPlaying ? <Square size={20} strokeWidth={2.5} /> : <Play size={20} strokeWidth={2.5} />}
+        </button>
+      )}
     </div>
   );
 }
