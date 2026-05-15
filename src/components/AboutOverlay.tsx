@@ -18,7 +18,7 @@ export function AboutOverlay({
     <AnimatePresence>
       {visible && (
         <motion.div
-          dir="ltr"
+          dir={lang.direction}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -36,7 +36,7 @@ export function AboutOverlay({
           >
             <button
               onClick={onClose}
-              className="absolute top-6 right-6 p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              className={`absolute top-6 ${lang.direction === 'rtl' ? 'left-6' : 'right-6'} p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors`}
             >
               <X size={20} strokeWidth={1.5} />
             </button>
