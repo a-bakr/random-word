@@ -91,6 +91,25 @@ export default function ZenPage() {
     if (localStorage.getItem('isAdmin') === 'true') setAuthed(true);
   }, []);
 
+  const load = useCallback(async (w: Win) => {
+    const [s, ts, f] = await Promise.all([
+      fetch(`/api/admin/summary?window=${w}`).then(r => r.json()),
+      fetch(`/api/admin/timeseries?window=${w}`).then(r => r.json()),
+      fetch('/api/admin/feed').then(r => r.json()),
+    ]);
+    setSummary(s);
+    setSeries(ts);
+    setFeed(f);
+  }, []);
+
+  useEffect(() => { if (authed) load(win); }, [authed, win, load]);
+
+  useEffect(() => {
+    if (!authed) return;
+    const t = setInterval(() => load(win), 30_000);
+    return () => clearInterval(t);
+  }, [authed, win, load]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === process.env.NEXT_PUBLIC_ADMIN_KEY) {
@@ -134,24 +153,6 @@ export default function ZenPage() {
       </div>
     );
   }
-
-  const load = useCallback(async (w: Win) => {
-    const [s, ts, f] = await Promise.all([
-      fetch(`/api/admin/summary?window=${w}`).then(r => r.json()),
-      fetch(`/api/admin/timeseries?window=${w}`).then(r => r.json()),
-      fetch('/api/admin/feed').then(r => r.json()),
-    ]);
-    setSummary(s);
-    setSeries(ts);
-    setFeed(f);
-  }, []);
-
-  useEffect(() => { load(win); }, [win, load]);
-
-  useEffect(() => {
-    const t = setInterval(() => load(win), 30_000);
-    return () => clearInterval(t);
-  }, [win, load]);
 
   const winLabel = win === '24h' ? '24 hours' : win === '7d' ? '7 days' : '30 days';
 
