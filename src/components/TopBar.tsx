@@ -1,25 +1,31 @@
 'use client';
 
 import { Type, Zap, Flame, SlidersHorizontal, Info } from 'lucide-react';
-
-const NAV_ITEMS = [
-  { id: 'words',    Icon: Type,              label: 'Words'    },
-  { id: 'twisters', Icon: Zap,               label: 'Twisters' },
-  { id: 'warmup',   Icon: Flame,             label: 'Warm-up'  },
-  { id: 'settings', Icon: SlidersHorizontal, label: 'Settings' },
-  { id: 'about',    Icon: Info,              label: 'About'    },
-];
+import type { LanguageConfig, LanguageCode } from '../lib/languages/registry';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function TopBar({
   mode,
   onMenuSelect,
+  lang,
+  onLanguageSwitch,
 }: {
   mode: 'words' | 'twisters' | 'warmup';
   onMenuSelect: (id: string) => void;
+  lang: LanguageConfig;
+  onLanguageSwitch: (code: LanguageCode) => void;
 }) {
+  const NAV_ITEMS = [
+    { id: 'words',    Icon: Type,              label: lang.labels.words    },
+    { id: 'twisters', Icon: Zap,               label: lang.labels.twisters },
+    { id: 'warmup',   Icon: Flame,             label: lang.labels.warmup   },
+    { id: 'settings', Icon: SlidersHorizontal, label: 'Settings'           },
+    { id: 'about',    Icon: Info,              label: 'About'              },
+  ];
+
   return (
     <div
-      className="absolute top-6 inset-x-0 z-20 flex justify-center pointer-events-none"
+      className="absolute top-6 inset-x-0 z-20 flex items-center justify-center pointer-events-none"
     >
       <div
         className="flex items-center gap-1 pointer-events-auto"
@@ -46,6 +52,12 @@ export function TopBar({
             </button>
           );
         })}
+      </div>
+      <div
+        className="absolute right-4 pointer-events-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <LanguageSwitcher current={lang.code} onChange={onLanguageSwitch} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { generate } from 'random-words';
+import { useLanguage } from './contexts/LanguageContext';
 import { AnimatePresence } from 'motion/react';
 
 import type { WordEntry } from './types';
@@ -62,10 +62,11 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const { lang, setLanguageCode } = useLanguage();
   const { activeTips, rotateTips } = useTips(tipCount);
   const warmup = useWarmup();
 
-  const voice = useVoiceRecognition();
+  const voice = useVoiceRecognition(lang.speechRecognitionCode);
   const rec = useRecordings();
 
   const PULL_THRESHOLD = 80;
@@ -110,6 +111,11 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
+
+  useEffect(() => {
+    document.documentElement.lang = lang.code;
+    document.documentElement.dir = lang.direction;
+  }, [lang]);
 
   useEffect(() => subscribeTwisterPlaying(setIsTwisterPlaying), []);
   useEffect(() => subscribeWarmupPlaying(setIsWarmupPlaying), []);
@@ -187,7 +193,7 @@ export default function App() {
       return;
     }
 
-    const word = generate() as string;
+    const word = lang.generateWord();
     setLastWordText(word);
     track('word_generated', { word });
     countersRef.current.words++;
@@ -379,6 +385,7 @@ export default function App() {
 
   return (
     <div
+      dir={lang.direction}
       className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700 select-none touch-none"
       onClick={handleScreenClick}
       onPointerDown={handlePointerDown}
@@ -395,7 +402,7 @@ export default function App() {
         </defs>
       </svg>
 
-      <TopBar mode={mode} onMenuSelect={handleMenuSelect} />
+      <TopBar mode={mode} onMenuSelect={handleMenuSelect} lang={lang} onLanguageSwitch={setLanguageCode} />
 
       {mode !== 'warmup' && <div
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2"
@@ -467,7 +474,7 @@ export default function App() {
 
       <TranscriptCard recording={rec.selectedRecording} onClose={rec.clearSelection} />
 
-      {mode !== 'warmup' && <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} />}
+      {mode !== 'warmup' && <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} tapMeLabel={lang.labels.tapMe} />}
 
       <CoachingTips
         tips={activeTips}
