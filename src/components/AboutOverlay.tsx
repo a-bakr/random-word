@@ -51,7 +51,7 @@ export function AboutOverlay({
               created by
             </p>
             <h2 className="text-[clamp(36px,8vw,64px)] leading-none font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
-              A. Bakr
+              Abdallah Bakr
             </h2>
 
             <svg viewBox="0 0 200 8" className="w-48 mt-3 mb-8 text-zinc-300 dark:text-zinc-700">
