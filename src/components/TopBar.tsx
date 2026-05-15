@@ -34,9 +34,9 @@ export function TopBar({
               onClick={e => { e.stopPropagation(); onMenuSelect(id); }}
               aria-label={label}
               style={{ filter: 'url(#sketch)' }}
-              className={`rounded-full p-3 transition-colors duration-300 ${
+              className={`rounded-full p-3 transition-all duration-300 ${
                 active
-                  ? 'text-zinc-900 dark:text-zinc-50'
+                  ? 'text-zinc-900 dark:text-zinc-50 bg-zinc-900/10 dark:bg-zinc-50/10'
                   : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50'
               }`}
             >
