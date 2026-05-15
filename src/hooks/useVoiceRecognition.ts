@@ -12,7 +12,7 @@ const isMobileDevice = () =>
   typeof navigator !== 'undefined' &&
   /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-export function useVoiceRecognition() {
+export function useVoiceRecognition(speechLang: string = 'en-US') {
   const [state, setState] = useState<VoiceRecognitionState>({
     isListening: false,
     transcript: '',
@@ -62,7 +62,7 @@ export function useVoiceRecognition() {
       recognitionRef.current = recognition;
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = speechLang;
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
         let sessionFinal = '';

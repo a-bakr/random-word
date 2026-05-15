@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 
-export function HintOverlay({ visible, fontSize, isDark }: { visible: boolean; fontSize: number; isDark: boolean }) {
+export function HintOverlay({ visible, fontSize, isDark, tapMeLabel = 'tap me' }: { visible: boolean; fontSize: number; isDark: boolean; tapMeLabel?: string }) {
   return (
     <AnimatePresence>
       {visible && (
@@ -15,7 +15,7 @@ export function HintOverlay({ visible, fontSize, isDark }: { visible: boolean; f
             className="leading-none font-medium tracking-tight text-center capitalize"
             style={{ fontSize: `${fontSize}px`, color: `hsl(0, 0%, ${isDark ? 30 : 75}%)` }}
           >
-            tap me
+            {tapMeLabel}
           </h1>
         </motion.div>
       )}
