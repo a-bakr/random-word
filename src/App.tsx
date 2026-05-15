@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { generate } from 'random-words';
-import { motion, AnimatePresence } from 'motion/react';
-import { RefreshCw } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 
 import type { WordEntry } from './types';
 import { playPopSound, getRandomColor } from './lib/sounds';
@@ -59,12 +58,7 @@ export default function App() {
   const voice = useVoiceRecognition();
   const rec = useRecordings();
 
-  const [pullY, setPullY] = useState(0);
-  const [isPulling, setIsPulling] = useState(false);
-  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
-
   const PULL_THRESHOLD = 80;
-  const PULL_MAX = 110;
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -304,11 +298,8 @@ export default function App() {
           holdTimerRef.current = null;
         }
         isPullingRef.current = true;
-        setIsPulling(true);
       }
-      const clamped = Math.min(deltaY, PULL_MAX);
-      pullYRef.current = clamped;
-      setPullY(clamped);
+      pullYRef.current = Math.min(deltaY, 120);
     }
   };
 
@@ -323,20 +314,12 @@ export default function App() {
 
     if (isPullingRef.current) {
       isPullingRef.current = false;
-      setIsPulling(false);
       if (pullYRef.current >= PULL_THRESHOLD) {
         holdFiredRef.current = true;
-        setIsPullRefreshing(true);
-        doGenerate();
-        setTimeout(() => {
-          setIsPullRefreshing(false);
-          setPullY(0);
-          pullYRef.current = 0;
-        }, 600);
-      } else {
-        setPullY(0);
-        pullYRef.current = 0;
+        window.location.reload();
+        return;
       }
+      pullYRef.current = 0;
     }
   };
 
@@ -350,8 +333,6 @@ export default function App() {
     }
     holdFiredRef.current = false;
     isPullingRef.current = false;
-    setIsPulling(false);
-    setPullY(0);
     pullYRef.current = 0;
   };
 
@@ -364,40 +345,6 @@ export default function App() {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
     >
-      <div
-        className="absolute top-0 left-1/2 z-50 pointer-events-none"
-        style={{
-          transform: `translateX(-50%) translateY(${isPullRefreshing ? 16 : pullY - 44}px)`,
-          transition: isPulling ? 'none' : 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s',
-          opacity: pullY > 0 || isPullRefreshing ? 1 : 0,
-        }}
-      >
-        <div
-          className={`w-10 h-10 rounded-full shadow-lg flex items-center justify-center ${
-            pullY >= PULL_THRESHOLD || isPullRefreshing
-              ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-              : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
-          }`}
-          style={{ transition: 'background-color 0.2s, color 0.2s' }}
-        >
-          <motion.span
-            className="block"
-            animate={{
-              rotate: isPullRefreshing
-                ? 360
-                : Math.min((pullY / PULL_THRESHOLD) * 180, 180),
-            }}
-            transition={
-              isPullRefreshing
-                ? { duration: 0.6, repeat: Infinity, ease: 'linear' }
-                : { duration: 0 }
-            }
-          >
-            <RefreshCw size={16} />
-          </motion.span>
-        </div>
-      </div>
-
       <TopBar mode={mode} onMenuSelect={handleMenuSelect} />
 
       <div
@@ -409,7 +356,7 @@ export default function App() {
           className="rounded-full px-3 py-2 text-zinc-400/50 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
           aria-label="Decrease font size"
         >
-          <span className="text-sm font-semibold leading-none select-none">a</span>
+          <span className="text-base font-semibold leading-none select-none">a</span>
         </button>
         <button
           onClick={e => { e.stopPropagation(); onFontSizeChange(Math.min(160, fontSize + 4)); }}
@@ -458,7 +405,7 @@ export default function App() {
       <CoachingTips
         tips={activeTips}
         onTipClick={setOpenTip}
-        visible={hasClicked && mode === 'words' && !openTip}
+        visible={hasClicked && words.length > 0 && mode === 'words' && !openTip}
         wordX={centeredWord || !words.at(-1) ? window.innerWidth / 2 : words.at(-1)!.x}
         wordY={centeredWord || !words.at(-1) ? window.innerHeight / 2 : words.at(-1)!.y}
       />
