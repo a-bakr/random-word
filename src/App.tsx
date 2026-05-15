@@ -239,9 +239,9 @@ export default function App() {
   };
 
   const handleMenuSelect = (id: string) => {
-    if (id === 'words') { stopTwister(); stopWarmup(); setIsTwisterMode(false); setIsWarmupMode(false); setWords([]); setTwister(null); }
-    else if (id === 'twisters') { stopTwister(); stopWarmup(); setIsTwisterMode(true); setIsWarmupMode(false); setWords([]); setTwister(null); }
-    else if (id === 'warmup') { stopTwister(); stopWarmup(); setIsWarmupMode(true); setIsTwisterMode(false); setWords([]); setTwister(null); }
+    if (id === 'words') { stopTwister(); stopWarmup(); setIsTwisterMode(false); setIsWarmupMode(false); }
+    else if (id === 'twisters') { stopWarmup(); setIsTwisterMode(true); setIsWarmupMode(false); }
+    else if (id === 'warmup') { stopTwister(); setIsWarmupMode(true); setIsTwisterMode(false); }
     else if (id === 'settings') setSettingsOpen(true);
     else if (id === 'about') setAboutOpen(true);
   };
