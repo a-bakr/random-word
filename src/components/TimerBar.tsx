@@ -35,12 +35,13 @@ export function TimerBar({
         onClick={toggleTimerEnabled}
         className={`flex items-center justify-center rounded-full p-3 bg-zinc-100/80 dark:bg-zinc-900/80 backdrop-blur transition-all duration-300 ${timerEnabled
           ? 'text-zinc-800 dark:text-zinc-100 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-200/80 dark:hover:bg-zinc-800/80'
-          : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'
+          : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60'
           }`}
+        style={{ filter: 'url(#sketch)' }}
         aria-label={timerEnabled ? 'Disable timer' : 'Enable timer'}
         title={timerEnabled ? 'Disable timer' : 'Enable timer'}
       >
-        <Clock size={18} strokeWidth={1.75} />
+        <Clock size={18} strokeWidth={2.5} />
       </button>
     </div>
   );

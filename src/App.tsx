@@ -345,6 +345,15 @@ export default function App() {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
     >
+      <svg width="0" height="0" className="absolute" aria-hidden="true">
+        <defs>
+          <filter id="sketch" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="4" seed="8" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.8" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </defs>
+      </svg>
+
       <TopBar mode={mode} onMenuSelect={handleMenuSelect} />
 
       <div
@@ -353,14 +362,16 @@ export default function App() {
       >
         <button
           onClick={e => { e.stopPropagation(); onFontSizeChange(Math.max(16, fontSize - 4)); }}
-          className="rounded-full px-3 py-2 text-zinc-400/50 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+          className="rounded-full px-3 py-2 text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+          style={{ filter: 'url(#sketch)' }}
           aria-label="Decrease font size"
         >
           <span className="text-base font-semibold leading-none select-none">a</span>
         </button>
         <button
           onClick={e => { e.stopPropagation(); onFontSizeChange(Math.min(160, fontSize + 4)); }}
-          className="rounded-full px-3 py-2 text-zinc-400/50 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+          className="rounded-full px-3 py-2 text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+          style={{ filter: 'url(#sketch)' }}
           aria-label="Increase font size"
         >
           <span className="text-2xl font-semibold leading-none select-none">A</span>

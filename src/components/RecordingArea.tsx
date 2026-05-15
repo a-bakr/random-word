@@ -53,12 +53,13 @@ export function RecordingArea({
           >
             <button
               onClick={onTogglePlayback(rec.id)}
-              className="text-zinc-400/60 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300 flex-shrink-0"
+              className="text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300 flex-shrink-0"
+              style={{ filter: 'url(#sketch)' }}
               aria-label={playingId === rec.id ? 'Stop playback' : 'Play recording'}
             >
               {playingId === rec.id
-                ? <Square size={16} strokeWidth={1.5} />
-                : <Play  size={16} strokeWidth={1.5} />}
+                ? <Square size={16} strokeWidth={2.5} />
+                : <Play  size={16} strokeWidth={2.5} />}
             </button>
             <span
               className="text-sm text-zinc-500 dark:text-zinc-400 max-w-[9rem] truncate cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors duration-300"
@@ -70,10 +71,11 @@ export function RecordingArea({
             </span>
             <button
               onClick={onRemove(rec.id)}
-              className="text-zinc-400/30 hover:text-red-400 dark:hover:text-red-400 transition-colors duration-300 flex-shrink-0"
+              className="text-zinc-400 dark:text-zinc-500 hover:text-red-400 dark:hover:text-red-400 transition-colors duration-300 flex-shrink-0"
+              style={{ filter: 'url(#sketch)' }}
               aria-label="Remove recording"
             >
-              <X size={14} strokeWidth={1.5} />
+              <X size={14} strokeWidth={2} />
             </button>
           </motion.div>
         ))}
@@ -85,26 +87,27 @@ export function RecordingArea({
             onClick={onReplay}
             className={`rounded-full p-3 transition-all duration-500 ${isTwisterPlaying
               ? 'text-zinc-900 dark:text-zinc-50'
-              : 'text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50'
+              : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50'
               }`}
+            style={{ filter: 'url(#sketch)' }}
             aria-label={isTwisterPlaying ? 'Stop audio' : 'Replay audio'}
           >
-            {isTwisterPlaying ? <Square size={20} strokeWidth={1.5} /> : <Play size={20} strokeWidth={1.5} />}
+            {isTwisterPlaying ? <Square size={20} strokeWidth={2.5} /> : <Play size={20} strokeWidth={2.5} />}
           </button>
         )}
         <button
           onClick={onToggleRecord}
           className={`rounded-full p-3 transition-all duration-500 ${isRecording
             ? 'text-zinc-900 dark:text-zinc-50'
-            : 'text-zinc-400/30 hover:text-zinc-900 dark:hover:text-zinc-50'
+            : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50'
             }`}
           aria-label={isRecording ? 'Stop recording' : 'Start recording'}
         >
-          <span className="relative flex">
+          <span className="relative flex" style={{ filter: 'url(#sketch)' }}>
             {isRecording && (
               <span className="absolute inset-0 rounded-full bg-red-400/40 dark:bg-red-400/30 animate-ping" />
             )}
-            {isRecording ? <Square size={20} strokeWidth={1.5} /> : <Mic size={20} strokeWidth={1.5} />}
+            {isRecording ? <Square size={20} strokeWidth={2.5} /> : <Mic size={20} strokeWidth={2.5} />}
           </span>
         </button>
       </div>
