@@ -83,8 +83,6 @@ export default function App() {
   const pullYRef = useRef(0);
   const swipeStartXRef = useRef(0);
   const swipeDirRef = useRef<'h' | 'v' | null>(null);
-  const wordHistoryRef = useRef<Array<typeof words>>([]);
-  const twisterHistoryRef = useRef<Array<{ entry: Twister; key: number }>>([]);
 
   const sessionStartRef = useRef<number>(Date.now());
   const countersRef = useRef({ words: 0, twisters: 0, recordings: 0, mode_toggles: 0 });
@@ -211,7 +209,6 @@ export default function App() {
 
     if (mode === 'twisters') {
       if (!twisterOrder.length) return;
-      if (twister) twisterHistoryRef.current = [...twisterHistoryRef.current.slice(-19), twister];
       const currentId = twister?.entry.id ?? lastTwisterId ?? null;
       const currentIdx = currentId ? twisterOrder.indexOf(currentId) : -1;
       const nextIdx = (currentIdx + 1) % twisterOrder.length;
@@ -243,11 +240,7 @@ export default function App() {
     track('word_generated', { word });
     countersRef.current.words++;
     rotateTips();
-    setWords(prev => {
-      const next = [...prev, { text: word, x, y, id: Date.now(), color: getRandomColor(isDark) }].slice(-maxWords);
-      wordHistoryRef.current = [...wordHistoryRef.current.slice(-19), prev.length ? prev : []];
-      return next;
-    });
+    setWords(prev => [...prev, { text: word, x, y, id: Date.now(), color: getRandomColor(isDark) }].slice(-maxWords));
   };
 
   const doGoBack = () => {
@@ -259,17 +252,19 @@ export default function App() {
     }
     if (isSoundEnabled) playPopSound();
     if (mode === 'twisters') {
-      const prev = twisterHistoryRef.current.pop();
+      if (!twisterOrder.length) return;
+      const currentId = twister?.entry.id ?? lastTwisterId ?? null;
+      const currentIdx = currentId ? twisterOrder.indexOf(currentId) : 0;
+      const prevIdx = (currentIdx - 1 + twisterOrder.length) % twisterOrder.length;
+      const prev = activeTwisters.find(t => t.id === twisterOrder[prevIdx]);
       if (!prev) return;
       stopTwister();
-      setLastTwisterId(prev.entry.id);
-      setTwister({ entry: prev.entry, key: Date.now() });
+      setLastTwisterId(prev.id);
+      setTwister({ entry: prev, key: Date.now() });
       return;
     }
-    // words
-    const prev = wordHistoryRef.current.pop();
-    if (prev === undefined) { setWords([]); return; }
-    setWords(prev);
+    // words: just generate a new random word
+    doGenerate();
   };
 
   const handleScreenClick = (e: React.MouseEvent) => {
