@@ -52,6 +52,7 @@ export default function App() {
   const [openTip, setOpenTip] = useState<Tip | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const { activeTips, rotateTips } = useTips(tipCount);
 
@@ -76,6 +77,7 @@ export default function App() {
 
   useEffect(() => {
     setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
     track('pageview');
     track('session_start');
 
@@ -404,9 +406,6 @@ export default function App() {
         onTogglePlayback={rec.togglePlayback}
         onRemove={rec.removeRecording}
         onSelect={rec.selectRecording}
-        mode={mode}
-        onReplay={replayTwister}
-        isTwisterPlaying={isTwisterPlaying}
       />
 
       <TranscriptCard recording={rec.selectedRecording} onClose={rec.clearSelection} />
@@ -435,6 +434,9 @@ export default function App() {
         isTimerRunning={isTimerRunning}
         onTimerStop={() => setIsTimerRunning(false)}
         onDurationChange={onDurationChange}
+        mode={mode}
+        onReplay={replayTwister}
+        isTwisterPlaying={isTwisterPlaying}
       />
 
       <AboutOverlay
@@ -459,6 +461,7 @@ export default function App() {
         onMaxWordsChange={onMaxWordsChange}
         tipCount={tipCount}
         onTipCountChange={n => { setTipCount(n); track('setting_changed', { key: 'tipCount', value: n }); }}
+        isAdmin={isAdmin}
       />
     </div>
   );

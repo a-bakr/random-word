@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock } from 'lucide-react';
+import { Clock, Play, Square } from 'lucide-react';
 import { Timer } from './Timer';
 
 export function TimerBar({
@@ -11,6 +11,9 @@ export function TimerBar({
   isTimerRunning,
   onTimerStop,
   onDurationChange,
+  mode,
+  onReplay,
+  isTwisterPlaying,
 }: {
   timerEnabled: boolean;
   toggleTimerEnabled: (e: React.MouseEvent) => void;
@@ -19,9 +22,25 @@ export function TimerBar({
   isTimerRunning: boolean;
   onTimerStop: () => void;
   onDurationChange: (secs: number) => void;
+  mode: 'words' | 'twisters';
+  onReplay: (e: React.MouseEvent) => void;
+  isTwisterPlaying: boolean;
 }) {
   return (
     <div className="absolute bottom-6 right-6 z-10 flex items-center gap-3 pointer-events-auto">
+      {mode === 'twisters' && (
+        <button
+          onClick={onReplay}
+          className={`rounded-full p-3 transition-all duration-500 ${isTwisterPlaying
+            ? 'text-zinc-900 dark:text-zinc-50'
+            : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50'
+            }`}
+          style={{ filter: 'url(#sketch)' }}
+          aria-label={isTwisterPlaying ? 'Stop audio' : 'Replay audio'}
+        >
+          {isTwisterPlaying ? <Square size={20} strokeWidth={2.5} /> : <Play size={20} strokeWidth={2.5} />}
+        </button>
+      )}
       {timerEnabled && (
         <Timer
           key={timerKey}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Mic, Play, Square, X } from 'lucide-react';
+import { Mic, Square, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Recording } from '../types';
 
@@ -20,9 +20,6 @@ export function RecordingArea({
   onTogglePlayback,
   onRemove,
   onSelect,
-  mode,
-  onReplay,
-  isTwisterPlaying,
 }: {
   recordings: Recording[];
   isRecording: boolean;
@@ -32,9 +29,6 @@ export function RecordingArea({
   onTogglePlayback: (id: number) => (e: React.MouseEvent) => void;
   onRemove: (id: number) => (e: React.MouseEvent) => void;
   onSelect: (id: number) => void;
-  mode: 'words' | 'twisters';
-  onReplay: (e: React.MouseEvent) => void;
-  isTwisterPlaying: boolean;
 }) {
   return (
     <div
@@ -82,19 +76,6 @@ export function RecordingArea({
       </AnimatePresence>
 
       <div className="flex items-center">
-        {mode === 'twisters' && (
-          <button
-            onClick={onReplay}
-            className={`rounded-full p-3 transition-all duration-500 ${isTwisterPlaying
-              ? 'text-zinc-900 dark:text-zinc-50'
-              : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50'
-              }`}
-            style={{ filter: 'url(#sketch)' }}
-            aria-label={isTwisterPlaying ? 'Stop audio' : 'Replay audio'}
-          >
-            {isTwisterPlaying ? <Square size={20} strokeWidth={2.5} /> : <Play size={20} strokeWidth={2.5} />}
-          </button>
-        )}
         <button
           onClick={onToggleRecord}
           className={`rounded-full p-3 transition-all duration-500 ${isRecording
