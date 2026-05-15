@@ -1,6 +1,6 @@
 'use client';
 
-import { Mic, Square, X } from 'lucide-react';
+import { Mic, Play, Square, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Recording } from '../types';
 

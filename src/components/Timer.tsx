@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { RotateCcw } from 'lucide-react';
 import { playBeepSound } from '../lib/sounds';
 
 export function Timer({
@@ -102,26 +101,17 @@ export function Timer({
 
   // Running / overtime state
   return (
-    <div
-      className="flex items-center gap-2"
+    <motion.span
+      key={isOvertime ? 'over' : 'count'}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className={`text-2xl font-black font-mono tabular-nums tracking-tight cursor-pointer transition-colors duration-500 ${isOvertime
+        ? 'text-amber-400/80 dark:text-amber-300/80'
+        : 'text-zinc-400/70 dark:text-zinc-500/70'
+        }`}
       onClick={e => { e.stopPropagation(); onStop(); }}
     >
-      <motion.span
-        key={isOvertime ? 'over' : 'count'}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className={`text-2xl font-black font-mono tabular-nums tracking-tight cursor-pointer transition-colors duration-500 ${isOvertime
-          ? 'text-amber-400/80 dark:text-amber-300/80'
-          : 'text-zinc-400/70 dark:text-zinc-500/70'
-          }`}
-      >
-        {display()}
-      </motion.span>
-      <RotateCcw
-        size={16}
-        strokeWidth={2}
-        className="text-zinc-400/30 dark:text-zinc-600/30 cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
-      />
-    </div>
+      {display()}
+    </motion.span>
   );
 }
