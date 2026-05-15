@@ -39,8 +39,8 @@ export function AboutOverlay({
             <div className="mb-8">
               <div className="w-20 h-20 rounded-full overflow-hidden bg-zinc-200 dark:bg-zinc-800">
                 <img
-                  src="/creator.jpg"
-                  alt="Creator"
+                  src="/creator.png"
+                  alt="Abdallah Bakr"
                   className="w-full h-full object-cover"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
@@ -53,6 +53,7 @@ export function AboutOverlay({
             <h2 className="text-[clamp(36px,8vw,64px)] leading-none font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
               Abdallah Bakr
             </h2>
+            <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-1">AI Engineer · Cairo, Egypt</p>
 
             <svg viewBox="0 0 200 8" className="w-48 mt-3 mb-8 text-zinc-300 dark:text-zinc-700">
               <path
@@ -67,9 +68,41 @@ export function AboutOverlay({
             <p className="text-lg text-zinc-400 dark:text-zinc-600 leading-relaxed max-w-sm mb-4 italic">
               Practice how you speak, one word at a time.
             </p>
-            <p className="text-base text-zinc-400 dark:text-zinc-600 leading-relaxed max-w-sm">
+            <p className="text-base text-zinc-400 dark:text-zinc-600 leading-relaxed max-w-sm mb-6">
               Coaching tips inspired by Vinh Giang's STAGE Academy — vocal foundations, storytelling frameworks, and speaking archetypes woven into your daily practice.
             </p>
+            <p className="text-sm text-zinc-400 dark:text-zinc-600 leading-relaxed max-w-sm">
+              Architect turned AI Engineer. Currently building AIDA — an enterprise multi-agent platform serving 10,000+ engineers at one of the world's largest consultancies.
+            </p>
+            <div className="flex gap-4 mt-6">
+              <a
+                href="https://bakrai.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200 underline underline-offset-2"
+              >
+                bakrai.com
+              </a>
+              <a
+                href="https://linkedin.com/in/abdallah-bakr"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200 underline underline-offset-2"
+              >
+                linkedin
+              </a>
+              <a
+                href="https://github.com/a-bakr"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-200 underline underline-offset-2"
+              >
+                github
+              </a>
+            </div>
           </motion.div>
 
           <p className="absolute bottom-6 inset-x-0 text-center text-xs text-zinc-300 dark:text-zinc-700 pointer-events-none">
