@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { RotateCcw } from 'lucide-react';
-import { playBeepSound, fmtDuration } from '../lib/sounds';
+import { playBeepSound } from '../lib/sounds';
 
 export function Timer({
   duration,
@@ -51,9 +51,8 @@ export function Timer({
   const isOvertime = elapsed >= duration;
 
   const display = () => {
-    const secs = isOvertime ? elapsed - duration : Math.abs(remaining);
-    const formatted = fmtDuration(secs);
-    return isOvertime ? `+${formatted}` : formatted;
+    if (isOvertime) return `+${elapsed - duration}`;
+    return String(remaining).padStart(2, '0');
   };
 
   const commitDuration = () => {
@@ -96,7 +95,7 @@ export function Timer({
         className="text-2xl font-black font-mono tabular-nums tracking-tight cursor-pointer select-none
           text-zinc-400 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-500"
       >
-        {fmtDuration(duration)}
+        {String(duration)}
       </div>
     );
   }
