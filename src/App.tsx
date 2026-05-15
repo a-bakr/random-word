@@ -167,6 +167,23 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang.code]);
 
+  const langCodeRef = useRef(lang.code);
+  useEffect(() => {
+    if (langCodeRef.current === lang.code) return;
+    langCodeRef.current = lang.code;
+
+    if (mode === 'words' && words.length > 0) {
+      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setWords(prev => prev.map(w => ({ ...w, text: lang.generateWord(), color: getRandomColor(dark) })));
+    } else if (mode === 'twisters' && twister !== null) {
+      const list = activeTwisters;
+      const next = list[Math.floor(Math.random() * list.length)];
+      setLastTwisterId(next.id);
+      setTwister({ entry: next, key: Date.now() });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang.code]);
+
   const doGenerate = (x = window.innerWidth / 2, y = window.innerHeight / 2) => {
     if (openTip) { setOpenTip(null); return; }
     if (!hasClicked) {
@@ -483,12 +500,16 @@ export default function App() {
 
       <TranscriptCard recording={rec.selectedRecording} onClose={rec.clearSelection} />
 
-      {mode !== 'warmup' && <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} />}
+      {mode !== 'warmup' && <HintOverlay
+        visible={(mode === 'words' && words.length === 0) || (mode === 'twisters' && twister === null)}
+        fontSize={fontSize}
+        isDark={isDark}
+      />}
 
       <CoachingTips
         tips={activeTips}
         onTipClick={setOpenTip}
-        visible={hasClicked && words.length > 0 && mode === 'words' && !openTip}
+        visible={words.length > 0 && mode === 'words' && !openTip}
         wordX={centeredWord || !words.at(-1) ? window.innerWidth / 2 : words.at(-1)!.x}
         wordY={centeredWord || !words.at(-1) ? window.innerHeight / 2 : words.at(-1)!.y}
       />
