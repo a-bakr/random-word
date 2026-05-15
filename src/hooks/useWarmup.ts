@@ -54,10 +54,14 @@ export function useWarmup() {
     setOrderIndex(nextIndex);
   };
 
+  const goBack = () => {
+    setOrderIndex((safeIndex - 1 + total) % total);
+  };
+
   const reset = () => {
     setOrderStr(JSON.stringify(shuffle([...allIds])));
     setOrderIndex(0);
   };
 
-  return { exercise, index: safeIndex, total, advance, reset };
+  return { exercise, index: safeIndex, total, advance, goBack, reset };
 }

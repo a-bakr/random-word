@@ -81,6 +81,10 @@ export default function App() {
   const pullStartYRef = useRef(0);
   const isPullingRef = useRef(false);
   const pullYRef = useRef(0);
+  const swipeStartXRef = useRef(0);
+  const swipeDirRef = useRef<'h' | 'v' | null>(null);
+  const wordHistoryRef = useRef<Array<typeof words>>([]);
+  const twisterHistoryRef = useRef<Array<{ entry: Twister; key: number }>>([]);
 
   const sessionStartRef = useRef<number>(Date.now());
   const countersRef = useRef({ words: 0, twisters: 0, recordings: 0, mode_toggles: 0 });
@@ -207,6 +211,7 @@ export default function App() {
 
     if (mode === 'twisters') {
       if (!twisterOrder.length) return;
+      if (twister) twisterHistoryRef.current = [...twisterHistoryRef.current.slice(-19), twister];
       const currentId = twister?.entry.id ?? lastTwisterId ?? null;
       const currentIdx = currentId ? twisterOrder.indexOf(currentId) : -1;
       const nextIdx = (currentIdx + 1) % twisterOrder.length;
@@ -238,10 +243,33 @@ export default function App() {
     track('word_generated', { word });
     countersRef.current.words++;
     rotateTips();
-    setWords(prev => [
-      ...prev,
-      { text: word, x, y, id: Date.now(), color: getRandomColor(isDark) },
-    ].slice(-maxWords));
+    setWords(prev => {
+      const next = [...prev, { text: word, x, y, id: Date.now(), color: getRandomColor(isDark) }].slice(-maxWords);
+      wordHistoryRef.current = [...wordHistoryRef.current.slice(-19), prev.length ? prev : []];
+      return next;
+    });
+  };
+
+  const doGoBack = () => {
+    if (mode === 'warmup') {
+      warmup.goBack();
+      stopWarmup();
+      if (isSoundEnabled) playPopSound();
+      return;
+    }
+    if (isSoundEnabled) playPopSound();
+    if (mode === 'twisters') {
+      const prev = twisterHistoryRef.current.pop();
+      if (!prev) return;
+      stopTwister();
+      setLastTwisterId(prev.entry.id);
+      setTwister({ entry: prev.entry, key: Date.now() });
+      return;
+    }
+    // words
+    const prev = wordHistoryRef.current.pop();
+    if (prev === undefined) { setWords([]); return; }
+    setWords(prev);
   };
 
   const handleScreenClick = (e: React.MouseEvent) => {
@@ -367,6 +395,8 @@ export default function App() {
   const handlePointerDown = (e: React.PointerEvent) => {
     if ((e.target as Element).closest('button, a, [role="button"]')) return;
     pullStartYRef.current = e.clientY;
+    swipeStartXRef.current = e.clientX;
+    swipeDirRef.current = null;
     isPullingRef.current = false;
     pullYRef.current = 0;
     holdFiredRef.current = false;
@@ -377,27 +407,40 @@ export default function App() {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    const deltaX = e.clientX - swipeStartXRef.current;
     const deltaY = e.clientY - pullStartYRef.current;
-    if (deltaY > 15) {
+
+    if (!swipeDirRef.current && (Math.abs(deltaX) > 8 || deltaY > 8)) {
+      swipeDirRef.current = Math.abs(deltaX) > Math.abs(deltaY) * 1.2 ? 'h' : 'v';
+      if (swipeDirRef.current === 'h') {
+        if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null; }
+      }
+    }
+
+    if (swipeDirRef.current === 'v' && deltaY > 15) {
       if (!isPullingRef.current) {
-        if (holdTimerRef.current) {
-          clearTimeout(holdTimerRef.current);
-          holdTimerRef.current = null;
-        }
+        if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null; }
         isPullingRef.current = true;
       }
       pullYRef.current = Math.min(deltaY, 120);
     }
   };
 
-  const handlePointerUp = async () => {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
+  const handlePointerUp = async (e: React.PointerEvent) => {
+    if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null; }
+    if (holdFiredRef.current && isRecordingRef.current) { await doStopRecording(); }
+
+    const deltaX = e.clientX - swipeStartXRef.current;
+
+    if (swipeDirRef.current === 'h' && Math.abs(deltaX) > 50) {
+      holdFiredRef.current = true;
+      swipeDirRef.current = null;
+      if (deltaX > 0) doGenerate();
+      else doGoBack();
+      return;
     }
-    if (holdFiredRef.current && isRecordingRef.current) {
-      await doStopRecording();
-    }
+
+    swipeDirRef.current = null;
 
     if (isPullingRef.current) {
       isPullingRef.current = false;
@@ -411,16 +454,12 @@ export default function App() {
   };
 
   const handlePointerCancel = async () => {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
-    if (holdFiredRef.current && isRecordingRef.current) {
-      await doStopRecording();
-    }
+    if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null; }
+    if (holdFiredRef.current && isRecordingRef.current) { await doStopRecording(); }
     holdFiredRef.current = false;
     isPullingRef.current = false;
     pullYRef.current = 0;
+    swipeDirRef.current = null;
   };
 
   return (
