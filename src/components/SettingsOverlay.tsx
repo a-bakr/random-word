@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Volume2, VolumeX, Moon, Sun, Clock } from 'lucide-react';
+import { X, Volume2, VolumeX, Moon, Sun, Clock, LayoutDashboard } from 'lucide-react';
 
 const FONT_SIZES  = [24, 36, 50, 72, 100, 140];
 const MAX_WORDS   = [1, 2, 3, 5, 10];
@@ -33,6 +33,7 @@ export function SettingsOverlay({
   onMaxWordsChange,
   tipCount,
   onTipCountChange,
+  isAdmin,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -50,6 +51,7 @@ export function SettingsOverlay({
   onMaxWordsChange: (n: number) => void;
   tipCount: number;
   onTipCountChange: (n: number) => void;
+  isAdmin: boolean;
 }) {
   const cycleFontSize = () => {
     const idx = FONT_SIZES.indexOf(fontSize);
@@ -176,6 +178,20 @@ export function SettingsOverlay({
                 <span className="text-xs text-zinc-400">tap to cycle</span>
               </button>
             </Row>
+
+            {isAdmin && (
+              <Row label="Admin">
+                <a
+                  href="/admin"
+                  onClick={e => e.stopPropagation()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
+                    text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <LayoutDashboard size={16} strokeWidth={1.5} />
+                  <span className="text-sm">Dashboard</span>
+                </a>
+              </Row>
+            )}
 
           </motion.div>
 

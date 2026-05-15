@@ -76,6 +76,10 @@ function Divider() {
 }
 
 export default function ZenPage() {
+  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(false);
+
   const [win, setWin] = useState<Win>('7d');
   const [summary, setSummary] = useState<Summary | null>(null);
   const [series, setSeries] = useState<Point[]>([]);
@@ -84,7 +88,52 @@ export default function ZenPage() {
   useEffect(() => {
     const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     document.documentElement.classList.toggle('dark', dark);
+    if (localStorage.getItem('isAdmin') === 'true') setAuthed(true);
   }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === process.env.NEXT_PUBLIC_ADMIN_KEY) {
+      localStorage.setItem('isAdmin', 'true');
+      setAuthed(true);
+      setError(false);
+    } else {
+      setError(true);
+      setPassword('');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAdmin');
+    setAuthed(false);
+  };
+
+  if (!authed) {
+    return (
+      <div className="h-dvh flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <form onSubmit={handleLogin} className="flex flex-col gap-4 w-64">
+          <p className="text-xs tracking-[0.2em] uppercase text-zinc-400 text-center">admin</p>
+          <input
+            autoFocus
+            type="password"
+            placeholder="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 rounded-full px-4 py-2 text-sm outline-none text-center placeholder:text-zinc-400"
+          />
+          {error && (
+            <p className="text-xs text-red-400 text-center">incorrect password</p>
+          )}
+          <button
+            type="submit"
+            className="rounded-full px-4 py-2 bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 text-sm hover:opacity-80 transition-opacity"
+          >
+            enter
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   const load = useCallback(async (w: Win) => {
     const [s, ts, f] = await Promise.all([
@@ -112,7 +161,13 @@ export default function ZenPage() {
 
         <div className="flex items-baseline justify-between">
           <span className="text-xs font-mono tracking-widest text-zinc-400">zen</span>
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
+            <button
+              onClick={handleLogout}
+              className="text-xs font-mono text-zinc-300 dark:text-zinc-600 hover:text-red-400 transition-colors duration-200"
+            >
+              logout
+            </button>
             {(['24h', '7d', '30d'] as Win[]).map(w => (
               <button
                 key={w}
