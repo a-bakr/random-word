@@ -32,6 +32,7 @@ export function RecordingArea({
 }) {
   return (
     <div
+      dir="ltr"
       className="absolute bottom-6 left-6 z-20 flex flex-col items-start gap-1.5"
       onClick={e => e.stopPropagation()}
     >

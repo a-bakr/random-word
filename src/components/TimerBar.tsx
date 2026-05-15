@@ -27,7 +27,7 @@ export function TimerBar({
   isTwisterPlaying: boolean;
 }) {
   return (
-    <div className="absolute bottom-6 right-6 z-10 flex flex-col items-end gap-1 pointer-events-auto">
+    <div dir="ltr" className="absolute bottom-6 right-6 z-10 flex flex-col items-end gap-1 pointer-events-auto">
       {mode === 'twisters' && (
         <button
           onClick={onReplay}
