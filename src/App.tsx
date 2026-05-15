@@ -207,7 +207,21 @@ export default function App() {
 
     if (mode === 'twisters') {
       if (!twisterOrder.length) return;
-      const nextId = getNextIdInOrder(twisterOrder, twister?.entry.id ?? lastTwisterId ?? null);
+      const currentId = twister?.entry.id ?? lastTwisterId ?? null;
+      const currentIdx = currentId ? twisterOrder.indexOf(currentId) : -1;
+      const nextIdx = (currentIdx + 1) % twisterOrder.length;
+      let order = twisterOrder;
+      if (nextIdx === 0) {
+        const shuffled = [...twisterOrder];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        order = shuffled;
+        setTwisterOrder(shuffled);
+        try { localStorage.setItem(`twisterOrder_${lang.code}`, JSON.stringify(shuffled)); } catch {}
+      }
+      const nextId = order[nextIdx];
       const next = activeTwisters.find(t => t.id === nextId);
       if (!next) return;
       track('twister_generated', { id: next.id });
