@@ -33,13 +33,14 @@ export function TopBar({
               key={id}
               onClick={e => { e.stopPropagation(); onMenuSelect(id); }}
               aria-label={label}
+              style={{ filter: 'url(#sketch)' }}
               className={`rounded-full p-3 transition-colors duration-300 ${
                 active
                   ? 'text-zinc-900 dark:text-zinc-50'
-                  : 'text-zinc-400/40 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50'
+                  : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50'
               }`}
             >
-              <Icon size={20} strokeWidth={1.5} />
+              <Icon size={20} strokeWidth={2.5} />
             </button>
           );
         })}
