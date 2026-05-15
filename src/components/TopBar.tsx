@@ -21,11 +21,11 @@ export function TopBar({
   const { lang } = useLanguage();
 
   const NAV_ITEMS = [
-    { ...NAV_IDS[0], label: lang.labels.words    },
-    { ...NAV_IDS[1], label: lang.labels.twisters },
-    { ...NAV_IDS[2], label: lang.labels.warmup   },
-    { ...NAV_IDS[3], label: 'Settings'           },
-    { ...NAV_IDS[4], label: 'About'              },
+    { ...NAV_IDS[0], label: lang.labels.nav.words    },
+    { ...NAV_IDS[1], label: lang.labels.nav.twisters },
+    { ...NAV_IDS[2], label: lang.labels.nav.warmup   },
+    { ...NAV_IDS[3], label: 'Settings'               },
+    { ...NAV_IDS[4], label: 'About'                  },
   ];
 
   return (

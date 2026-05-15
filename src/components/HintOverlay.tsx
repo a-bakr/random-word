@@ -18,7 +18,7 @@ export function HintOverlay({ visible, fontSize, isDark }: { visible: boolean; f
             className="leading-none font-medium tracking-tight text-center capitalize"
             style={{ fontSize: `${fontSize}px`, color: `hsl(0, 0%, ${isDark ? 30 : 75}%)` }}
           >
-            {lang.labels.tapMe}
+            {lang.labels.nav.tapMe}
           </h1>
         </motion.div>
       )}

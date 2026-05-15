@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useLocalStorage, useLocalStorageStr } from './useLocalStorage';
 import { WARMUP_EXERCISES } from '../lib/warmup';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function shuffle(arr: string[]): string[] {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -13,8 +14,10 @@ function shuffle(arr: string[]): string[] {
 }
 
 export function useWarmup() {
-  const total = WARMUP_EXERCISES.length;
-  const allIds = WARMUP_EXERCISES.map(e => e.id);
+  const { lang } = useLanguage();
+  const exercises = lang.warmupExercises ?? WARMUP_EXERCISES;
+  const total = exercises.length;
+  const allIds = exercises.map(e => e.id);
 
   const [orderIndex, setOrderIndex] = useLocalStorage('warmupOrderIndex', 0);
   const [orderStr, setOrderStr] = useLocalStorageStr('warmupOrder', '');
@@ -41,7 +44,7 @@ export function useWarmup() {
 
   const safeIndex = Math.min(Math.max(0, orderIndex), total - 1);
   const currentId = order[safeIndex];
-  const exercise = WARMUP_EXERCISES.find(e => e.id === currentId) ?? WARMUP_EXERCISES[0];
+  const exercise = exercises.find(e => e.id === currentId) ?? exercises[0];
 
   const advance = () => {
     const nextIndex = (safeIndex + 1) % total;

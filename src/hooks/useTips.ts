@@ -1,5 +1,8 @@
+'use client';
+
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { vocalTips, frameworkTips, archetypeTips, type Tip } from '../lib/tips';
+import { useLanguage } from '../contexts/LanguageContext';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -23,9 +26,11 @@ function makeShuffleDeck<T>(items: T[]) {
 }
 
 export function useTips(tipCount: number) {
-  const vocalDeck = useRef(makeShuffleDeck(vocalTips));
-  const frameworkDeck = useRef(makeShuffleDeck(frameworkTips));
-  const archetypeDeck = useRef(makeShuffleDeck(archetypeTips));
+  const { lang } = useLanguage();
+
+  const vocalDeck   = useRef(makeShuffleDeck(lang.tips?.vocal     ?? vocalTips));
+  const frameworkDeck = useRef(makeShuffleDeck(lang.tips?.framework ?? frameworkTips));
+  const archetypeDeck = useRef(makeShuffleDeck(lang.tips?.archetype ?? archetypeTips));
   const categoryOffsetRef = useRef(0);
 
   const decksRef = useRef([
@@ -39,6 +44,16 @@ export function useTips(tipCount: number) {
   []);
 
   const [activeTips, setActiveTips] = useState<Tip[]>(() => draw(tipCount, 0));
+
+  // Rebuild shuffle decks when the language changes
+  useEffect(() => {
+    vocalDeck.current     = makeShuffleDeck(lang.tips?.vocal     ?? vocalTips);
+    frameworkDeck.current = makeShuffleDeck(lang.tips?.framework ?? frameworkTips);
+    archetypeDeck.current = makeShuffleDeck(lang.tips?.archetype ?? archetypeTips);
+    categoryOffsetRef.current = 0;
+    setActiveTips(draw(tipCount, 0));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang.code]);
 
   const rotateTips = useCallback(() => {
     const next = (categoryOffsetRef.current + tipCount) % 3;

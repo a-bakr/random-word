@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Recording } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function TranscriptCard({
   recording,
@@ -11,6 +12,7 @@ export function TranscriptCard({
   recording: Recording | null;
   onClose: () => void;
 }) {
+  const { lang } = useLanguage();
   const cardTapRef = useRef<{ x: number; y: number } | null>(null);
 
   return (
@@ -46,7 +48,7 @@ export function TranscriptCard({
             <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 max-h-[40vh] overflow-y-auto sm:max-h-48 scrollbar-thin-dark select-none">
               {recording.transcript
                 ? recording.transcript
-                : <span className="text-zinc-400 dark:text-zinc-600 italic">No transcript</span>}
+                : <span className="text-zinc-400 dark:text-zinc-600 italic">{lang.labels.ui.noTranscript}</span>}
             </p>
           </motion.div>
         </>

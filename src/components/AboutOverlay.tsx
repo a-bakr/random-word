@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function AboutOverlay({
   visible,
@@ -10,10 +11,14 @@ export function AboutOverlay({
   visible: boolean;
   onClose: () => void;
 }) {
+  const { lang } = useLanguage();
+  const a = lang.labels.about;
+
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
+          dir="ltr"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -48,12 +53,12 @@ export function AboutOverlay({
             </div>
 
             <p className="text-xs tracking-[0.2em] uppercase text-zinc-400 dark:text-zinc-600 mb-2">
-              created by
+              {a.createdBy}
             </p>
             <h2 className="text-[clamp(36px,8vw,64px)] leading-none font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-2">
               Abdallah Bakr
             </h2>
-            <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-1">AI Engineer · Cairo, Egypt</p>
+            <p className="text-sm text-zinc-400 dark:text-zinc-500 mb-1">{a.bioSubtitle}</p>
 
             <svg viewBox="0 0 200 8" className="w-48 mt-3 mb-8 text-zinc-300 dark:text-zinc-700">
               <path
@@ -66,13 +71,13 @@ export function AboutOverlay({
               Random Word
             </p>
             <p className="text-lg text-zinc-400 dark:text-zinc-600 leading-relaxed max-w-sm mb-4 italic">
-              Practice how you speak, one word at a time.
+              {a.appTagline}
             </p>
             <p className="text-base text-zinc-400 dark:text-zinc-600 leading-relaxed max-w-sm mb-6">
-              Coaching tips inspired by Vinh Giang's STAGE Academy — vocal foundations, storytelling frameworks, and speaking archetypes woven into your daily practice.
+              {a.appDescription}
             </p>
             <p className="text-sm text-zinc-400 dark:text-zinc-600 leading-relaxed max-w-sm">
-              Architect turned AI Engineer. Currently building AIDA — an enterprise multi-agent platform serving 10,000+ engineers at one of the world's largest consultancies.
+              {a.bioText}
             </p>
             <div className="flex gap-4 mt-6">
               <a
@@ -106,7 +111,7 @@ export function AboutOverlay({
           </motion.div>
 
           <p className="absolute bottom-6 inset-x-0 text-center text-xs text-zinc-300 dark:text-zinc-700 pointer-events-none">
-            tap anywhere to close
+            {a.tapToClose}
           </p>
         </motion.div>
       )}
