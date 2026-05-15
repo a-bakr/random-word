@@ -21,7 +21,16 @@ export function TimerBar({
   onDurationChange: (secs: number) => void;
 }) {
   return (
-    <div className="absolute bottom-6 left-6 z-10 flex items-center gap-3 pointer-events-auto">
+    <div className="absolute bottom-6 right-6 z-10 flex items-center gap-3 pointer-events-auto">
+      {timerEnabled && (
+        <Timer
+          key={timerKey}
+          duration={duration}
+          isRunning={isTimerRunning}
+          onStop={onTimerStop}
+          onDurationChange={onDurationChange}
+        />
+      )}
       <button
         onClick={toggleTimerEnabled}
         className={`flex items-center justify-center rounded-full p-3 bg-zinc-100/80 dark:bg-zinc-900/80 backdrop-blur transition-all duration-300 ${timerEnabled
@@ -33,15 +42,6 @@ export function TimerBar({
       >
         <Clock size={18} strokeWidth={1.75} />
       </button>
-      {timerEnabled && (
-        <Timer
-          key={timerKey}
-          duration={duration}
-          isRunning={isTimerRunning}
-          onStop={onTimerStop}
-          onDurationChange={onDurationChange}
-        />
-      )}
     </div>
   );
 }
