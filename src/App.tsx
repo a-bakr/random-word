@@ -23,7 +23,6 @@ import { HintOverlay } from './components/HintOverlay';
 import { TimerBar } from './components/TimerBar';
 import { CoachingTips } from './components/CoachingTips';
 import { TipOverlay } from './components/TipOverlay';
-import { MenuButton } from './components/MenuButton';
 import { AboutOverlay } from './components/AboutOverlay';
 import { SettingsOverlay } from './components/SettingsOverlay';
 import { useTips } from './hooks/useTips';
@@ -33,6 +32,7 @@ export default function App() {
   const [words, setWords] = useState<WordEntry[]>([]);
   const [twister, setTwister] = useState<{ entry: Twister; key: number } | null>(null);
   const [maxWords, setMaxWords] = useLocalStorage('maxWords', 1);
+  const [tipCount, setTipCount] = useLocalStorage('tipCount', 1);
   const [fontSize, setFontSize] = useLocalStorage('fontSize', 80);
   const [duration, setDuration] = useLocalStorage('timerDuration', 60);
   const [timerEnabled, setTimerEnabled] = useLocalStorageBool('timerEnabled', true);
@@ -54,7 +54,7 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const { activeTips, rotateTips } = useTips();
+  const { activeTips, rotateTips } = useTips(tipCount);
 
   const voice = useVoiceRecognition();
   const rec = useRecordings();
@@ -62,6 +62,9 @@ export default function App() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartRef = useRef<number>(0);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdFiredRef = useRef(false);
+  const isRecordingRef = useRef(false);
 
   const sessionStartRef = useRef<number>(Date.now());
   const countersRef = useRef({ words: 0, twisters: 0, recordings: 0, mode_toggles: 0 });
@@ -116,6 +119,7 @@ export default function App() {
   }, []);
 
   const handleScreenClick = (e: React.MouseEvent) => {
+    if (holdFiredRef.current) { holdFiredRef.current = false; return; }
     if (menuOpen) { setMenuOpen(false); return; }
     if (openTip) { setOpenTip(null); return; }
     if (!hasClicked) {
@@ -243,7 +247,18 @@ export default function App() {
     voice.start(stream);
     recordingStartRef.current = Date.now();
     track('recording_started');
+    isRecordingRef.current = true;
     setIsRecording(true);
+  };
+
+  const doStopRecording = async () => {
+    const duration_ms = Date.now() - recordingStartRef.current;
+    track('recording_stopped', { duration_ms });
+    countersRef.current.recordings++;
+    await voice.stop();
+    mediaRecorderRef.current?.stop();
+    isRecordingRef.current = false;
+    setIsRecording(false);
   };
 
   const startRecording = async (e: React.MouseEvent) => {
@@ -253,24 +268,56 @@ export default function App() {
 
   const stopRecording = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const duration_ms = Date.now() - recordingStartRef.current;
-    track('recording_stopped', { duration_ms });
-    countersRef.current.recordings++;
-    await voice.stop();
-    mediaRecorderRef.current?.stop();
-    setIsRecording(false);
+    await doStopRecording();
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if ((e.target as Element).closest('button, a, [role="button"]')) return;
+    holdFiredRef.current = false;
+    holdTimerRef.current = setTimeout(async () => {
+      holdFiredRef.current = true;
+      await doStartRecording();
+    }, 300);
+  };
+
+  const handlePointerUp = async () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    if (holdFiredRef.current && isRecordingRef.current) {
+      await doStopRecording();
+    }
+  };
+
+  const handlePointerCancel = async () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    if (holdFiredRef.current && isRecordingRef.current) {
+      await doStopRecording();
+    }
+    holdFiredRef.current = false;
   };
 
   return (
     <div
       className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700 select-none touch-none"
       onClick={handleScreenClick}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
     >
       <TopBar
         isDark={isDark}
         onThemeToggle={onThemeToggle}
         fontSize={fontSize}
         onFontSizeChange={onFontSizeChange}
+        menuOpen={menuOpen}
+        onMenuToggle={() => setMenuOpen(v => !v)}
+        onMenuSelect={handleMenuSelect}
+        mode={mode}
       />
 
       <AnimatePresence>
@@ -332,13 +379,6 @@ export default function App() {
         onDurationChange={onDurationChange}
       />
 
-      <MenuButton
-        open={menuOpen}
-        onToggle={() => setMenuOpen(v => !v)}
-        onSelect={handleMenuSelect}
-        mode={mode}
-      />
-
       <AboutOverlay
         visible={aboutOpen}
         onClose={() => setAboutOpen(false)}
@@ -359,6 +399,8 @@ export default function App() {
         onCenteredWordToggle={() => setCenteredWord(!centeredWord)}
         maxWords={maxWords}
         onMaxWordsChange={onMaxWordsChange}
+        tipCount={tipCount}
+        onTipCountChange={n => { setTipCount(n); track('setting_changed', { key: 'tipCount', value: n }); }}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { vocalTips, frameworkTips, archetypeTips, type Tip } from '../lib/tips';
 
 function shuffle<T>(arr: T[]): T[] {
@@ -22,24 +22,33 @@ function makeShuffleDeck<T>(items: T[]) {
   };
 }
 
-export function useTips() {
+export function useTips(tipCount: number) {
   const vocalDeck = useRef(makeShuffleDeck(vocalTips));
   const frameworkDeck = useRef(makeShuffleDeck(frameworkTips));
   const archetypeDeck = useRef(makeShuffleDeck(archetypeTips));
+  const categoryOffsetRef = useRef(0);
 
-  const [activeTips, setActiveTips] = useState<[Tip, Tip, Tip]>(() => [
-    vocalDeck.current(),
-    frameworkDeck.current(),
-    archetypeDeck.current(),
+  const decksRef = useRef([
+    () => vocalDeck.current(),
+    () => frameworkDeck.current(),
+    () => archetypeDeck.current(),
   ]);
 
+  const draw = useCallback((count: number, offset: number): Tip[] =>
+    Array.from({ length: count }, (_, i) => decksRef.current[(offset + i) % 3]()),
+  []);
+
+  const [activeTips, setActiveTips] = useState<Tip[]>(() => draw(tipCount, 0));
+
   const rotateTips = useCallback(() => {
-    setActiveTips([
-      vocalDeck.current(),
-      frameworkDeck.current(),
-      archetypeDeck.current(),
-    ]);
-  }, []);
+    const next = (categoryOffsetRef.current + tipCount) % 3;
+    categoryOffsetRef.current = next;
+    setActiveTips(draw(tipCount, next));
+  }, [tipCount, draw]);
+
+  useEffect(() => {
+    setActiveTips(draw(tipCount, categoryOffsetRef.current));
+  }, [tipCount, draw]);
 
   return { activeTips, rotateTips };
 }
