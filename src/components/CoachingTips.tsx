@@ -16,9 +16,9 @@ const categoryBorders: Record<string, string> = {
 };
 
 const TIP_OFFSETS_BY_COUNT: Record<number, { dx: number; dy: number; rot: number }[]> = {
-  1: [{ dx: 0,    dy:  100, rot: -1   }],
-  2: [{ dx: -110, dy:  -80, rot: -2   }, { dx: 115, dy: -70, rot: 1.5 }],
-  3: [{ dx: -105, dy:  -78, rot: -2   }, { dx: 108, dy: -68, rot: 1.5 }, { dx: 4, dy: 88, rot: -1 }],
+  1: [{ dx: 0,    dy:  -68, rot: -1   }],
+  2: [{ dx:  -90, dy:  -60, rot: -2   }, { dx:  94, dy: -56, rot: 1.5 }],
+  3: [{ dx:  -90, dy:  -60, rot: -2   }, { dx:  94, dy: -56, rot: 1.5 }, { dx: 4, dy: 72, rot: -1 }],
 };
 
 const PILL_W = 130, PILL_H = 32, PAD = 20;
