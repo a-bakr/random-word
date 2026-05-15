@@ -405,14 +405,14 @@ export default function App() {
         onClick={e => e.stopPropagation()}
       >
         <button
-          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.max(16, fontSize - 2)); }}
+          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.max(16, fontSize - 4)); }}
           className="rounded-full px-3 py-2 text-zinc-400/50 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
           aria-label="Decrease font size"
         >
-          <span className="text-xs font-semibold leading-none select-none">a</span>
+          <span className="text-sm font-semibold leading-none select-none">a</span>
         </button>
         <button
-          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.min(160, fontSize + 2)); }}
+          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.min(160, fontSize + 4)); }}
           className="rounded-full px-3 py-2 text-zinc-400/50 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
           aria-label="Increase font size"
         >

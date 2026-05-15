@@ -38,26 +38,18 @@ export function RecordingArea({
 }) {
   return (
     <div
-      className="absolute bottom-6 right-6 z-20 flex flex-col items-end gap-1.5"
+      className="absolute bottom-6 left-6 z-20 flex flex-col items-start gap-1.5"
       onClick={e => e.stopPropagation()}
     >
       <AnimatePresence>
         {recordings.map(rec => (
           <motion.div
             key={rec.id}
-            className="flex items-center gap-3 px-3 py-2 overflow-hidden cursor-grab active:cursor-grabbing"
-            initial={{ opacity: 0, x: 20, filter: 'blur(6px)' }}
+            className="flex items-center gap-3 px-3 py-2 overflow-hidden"
+            initial={{ opacity: 0, x: -20, filter: 'blur(6px)' }}
             animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, x: 20, filter: 'blur(6px)' }}
+            exit={{ opacity: 0, x: -20, filter: 'blur(6px)' }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            drag="x"
-            dragConstraints={{ left: -140, right: 0 }}
-            dragElastic={{ left: 0.15, right: 0 }}
-            onDragEnd={(_, info) => {
-              if (info.offset.x < -70) {
-                onRemove(rec.id)({ stopPropagation: () => {} } as React.MouseEvent);
-              }
-            }}
           >
             <button
               onClick={onTogglePlayback(rec.id)}
