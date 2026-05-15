@@ -5,7 +5,7 @@ import { X, Volume2, VolumeX, Moon, Sun, Clock } from 'lucide-react';
 
 const FONT_SIZES  = [24, 36, 50, 72, 100, 140];
 const MAX_WORDS   = [1, 2, 3, 5, 10];
-const TIP_COUNTS  = [1, 2, 3];
+const TIP_COUNTS  = [0, 1, 2, 3];
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -172,7 +172,7 @@ export function SettingsOverlay({
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
-                <span className="text-sm font-medium">{tipCount}</span>
+                <span className="text-sm font-medium">{tipCount === 0 ? 'Off' : tipCount}</span>
                 <span className="text-xs text-zinc-400">tap to cycle</span>
               </button>
             </Row>

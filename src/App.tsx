@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { generate } from 'random-words';
-import { AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { RefreshCw } from 'lucide-react';
 
 import type { WordEntry } from './types';
 import { playPopSound, getRandomColor } from './lib/sounds';
@@ -58,12 +59,22 @@ export default function App() {
   const voice = useVoiceRecognition();
   const rec = useRecordings();
 
+  const [pullY, setPullY] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+
+  const PULL_THRESHOLD = 80;
+  const PULL_MAX = 110;
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartRef = useRef<number>(0);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdFiredRef = useRef(false);
   const isRecordingRef = useRef(false);
+  const pullStartYRef = useRef(0);
+  const isPullingRef = useRef(false);
+  const pullYRef = useRef(0);
 
   const sessionStartRef = useRef<number>(Date.now());
   const countersRef = useRef({ words: 0, twisters: 0, recordings: 0, mode_toggles: 0 });
@@ -117,8 +128,7 @@ export default function App() {
     setTwisterOrder(order);
   }, []);
 
-  const handleScreenClick = (e: React.MouseEvent) => {
-    if (holdFiredRef.current) { holdFiredRef.current = false; return; }
+  const doGenerate = (x = window.innerWidth / 2, y = window.innerHeight / 2) => {
     if (openTip) { setOpenTip(null); return; }
     if (!hasClicked) {
       setHasClicked(true);
@@ -150,8 +160,13 @@ export default function App() {
     rotateTips();
     setWords(prev => [
       ...prev,
-      { text: word, x: e.clientX, y: e.clientY, id: Date.now(), color: getRandomColor(isDark) },
+      { text: word, x, y, id: Date.now(), color: getRandomColor(isDark) },
     ].slice(-maxWords));
+  };
+
+  const handleScreenClick = (e: React.MouseEvent) => {
+    if (holdFiredRef.current) { holdFiredRef.current = false; return; }
+    doGenerate(e.clientX, e.clientY);
   };
 
   const replayTwister = (e: React.MouseEvent) => {
@@ -270,11 +285,31 @@ export default function App() {
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if ((e.target as Element).closest('button, a, [role="button"]')) return;
+    pullStartYRef.current = e.clientY;
+    isPullingRef.current = false;
+    pullYRef.current = 0;
     holdFiredRef.current = false;
     holdTimerRef.current = setTimeout(async () => {
       holdFiredRef.current = true;
       await doStartRecording();
     }, 300);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    const deltaY = e.clientY - pullStartYRef.current;
+    if (deltaY > 15) {
+      if (!isPullingRef.current) {
+        if (holdTimerRef.current) {
+          clearTimeout(holdTimerRef.current);
+          holdTimerRef.current = null;
+        }
+        isPullingRef.current = true;
+        setIsPulling(true);
+      }
+      const clamped = Math.min(deltaY, PULL_MAX);
+      pullYRef.current = clamped;
+      setPullY(clamped);
+    }
   };
 
   const handlePointerUp = async () => {
@@ -284,6 +319,24 @@ export default function App() {
     }
     if (holdFiredRef.current && isRecordingRef.current) {
       await doStopRecording();
+    }
+
+    if (isPullingRef.current) {
+      isPullingRef.current = false;
+      setIsPulling(false);
+      if (pullYRef.current >= PULL_THRESHOLD) {
+        holdFiredRef.current = true;
+        setIsPullRefreshing(true);
+        doGenerate();
+        setTimeout(() => {
+          setIsPullRefreshing(false);
+          setPullY(0);
+          pullYRef.current = 0;
+        }, 600);
+      } else {
+        setPullY(0);
+        pullYRef.current = 0;
+      }
     }
   };
 
@@ -296,6 +349,10 @@ export default function App() {
       await doStopRecording();
     }
     holdFiredRef.current = false;
+    isPullingRef.current = false;
+    setIsPulling(false);
+    setPullY(0);
+    pullYRef.current = 0;
   };
 
   return (
@@ -303,9 +360,44 @@ export default function App() {
       className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700 select-none touch-none"
       onClick={handleScreenClick}
       onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
     >
+      <div
+        className="absolute top-0 left-1/2 z-50 pointer-events-none"
+        style={{
+          transform: `translateX(-50%) translateY(${isPullRefreshing ? 16 : pullY - 44}px)`,
+          transition: isPulling ? 'none' : 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s',
+          opacity: pullY > 0 || isPullRefreshing ? 1 : 0,
+        }}
+      >
+        <div
+          className={`w-10 h-10 rounded-full shadow-lg flex items-center justify-center ${
+            pullY >= PULL_THRESHOLD || isPullRefreshing
+              ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+              : 'bg-white text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+          }`}
+          style={{ transition: 'background-color 0.2s, color 0.2s' }}
+        >
+          <motion.span
+            className="block"
+            animate={{
+              rotate: isPullRefreshing
+                ? 360
+                : Math.min((pullY / PULL_THRESHOLD) * 180, 180),
+            }}
+            transition={
+              isPullRefreshing
+                ? { duration: 0.6, repeat: Infinity, ease: 'linear' }
+                : { duration: 0 }
+            }
+          >
+            <RefreshCw size={16} />
+          </motion.span>
+        </div>
+      </div>
+
       <TopBar mode={mode} onMenuSelect={handleMenuSelect} />
 
       <div
@@ -313,14 +405,14 @@ export default function App() {
         onClick={e => e.stopPropagation()}
       >
         <button
-          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.max(16, fontSize - 2)); }}
+          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.max(16, fontSize - 4)); }}
           className="rounded-full px-3 py-2 text-zinc-400/50 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
           aria-label="Decrease font size"
         >
-          <span className="text-xs font-semibold leading-none select-none">a</span>
+          <span className="text-sm font-semibold leading-none select-none">a</span>
         </button>
         <button
-          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.min(160, fontSize + 2)); }}
+          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.min(160, fontSize + 4)); }}
           className="rounded-full px-3 py-2 text-zinc-400/50 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
           aria-label="Increase font size"
         >
