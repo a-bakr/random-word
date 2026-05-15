@@ -38,30 +38,38 @@ export function RecordingArea({
 }) {
   return (
     <div
-      className="absolute bottom-6 right-6 z-20 flex flex-col items-end gap-2"
+      className="absolute bottom-6 right-6 z-20 flex flex-col items-end gap-1.5"
       onClick={e => e.stopPropagation()}
     >
       <AnimatePresence>
         {recordings.map(rec => (
           <motion.div
             key={rec.id}
-            className="flex items-center gap-2 px-3 py-1"
-            initial={{ opacity: 0, y: 8, filter: 'blur(6px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: 8, filter: 'blur(6px)' }}
+            className="flex items-center gap-3 px-3 py-2 overflow-hidden cursor-grab active:cursor-grabbing"
+            initial={{ opacity: 0, x: 20, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, x: 20, filter: 'blur(6px)' }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            drag="x"
+            dragConstraints={{ left: -140, right: 0 }}
+            dragElastic={{ left: 0.15, right: 0 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.x < -70) {
+                onRemove(rec.id)({ stopPropagation: () => {} } as React.MouseEvent);
+              }
+            }}
           >
             <button
               onClick={onTogglePlayback(rec.id)}
-              className="text-zinc-400/60 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+              className="text-zinc-400/60 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300 flex-shrink-0"
               aria-label={playingId === rec.id ? 'Stop playback' : 'Play recording'}
             >
               {playingId === rec.id
-                ? <Square size={14} strokeWidth={1.5} />
-                : <Play size={14} strokeWidth={1.5} />}
+                ? <Square size={16} strokeWidth={1.5} />
+                : <Play  size={16} strokeWidth={1.5} />}
             </button>
             <span
-              className="text-xs text-zinc-500 dark:text-zinc-400 max-w-[8rem] truncate cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors duration-300"
+              className="text-sm text-zinc-500 dark:text-zinc-400 max-w-[9rem] truncate cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors duration-300"
               onClick={e => { e.stopPropagation(); onSelect(rec.id); }}
             >
               {transcribingId === rec.id
@@ -70,10 +78,10 @@ export function RecordingArea({
             </span>
             <button
               onClick={onRemove(rec.id)}
-              className="text-zinc-400/30 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+              className="text-zinc-400/30 hover:text-red-400 dark:hover:text-red-400 transition-colors duration-300 flex-shrink-0"
               aria-label="Remove recording"
             >
-              <X size={12} strokeWidth={1.5} />
+              <X size={14} strokeWidth={1.5} />
             </button>
           </motion.div>
         ))}

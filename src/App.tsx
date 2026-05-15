@@ -50,7 +50,6 @@ export default function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isTwisterPlaying, setIsTwisterPlaying] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -120,7 +119,6 @@ export default function App() {
 
   const handleScreenClick = (e: React.MouseEvent) => {
     if (holdFiredRef.current) { holdFiredRef.current = false; return; }
-    if (menuOpen) { setMenuOpen(false); return; }
     if (openTip) { setOpenTip(null); return; }
     if (!hasClicked) {
       setHasClicked(true);
@@ -212,7 +210,6 @@ export default function App() {
   };
 
   const handleMenuSelect = (id: string) => {
-    setMenuOpen(false);
     if (id === 'words') { stopTwister(); setIsTwisterMode(false); setWords([]); setTwister(null); }
     else if (id === 'twisters') { stopTwister(); setIsTwisterMode(true); setWords([]); setTwister(null); }
     else if (id === 'settings') setSettingsOpen(true);
@@ -309,16 +306,27 @@ export default function App() {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
     >
-      <TopBar
-        isDark={isDark}
-        onThemeToggle={onThemeToggle}
-        fontSize={fontSize}
-        onFontSizeChange={onFontSizeChange}
-        menuOpen={menuOpen}
-        onMenuToggle={() => setMenuOpen(v => !v)}
-        onMenuSelect={handleMenuSelect}
-        mode={mode}
-      />
+      <TopBar mode={mode} onMenuSelect={handleMenuSelect} />
+
+      <div
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.max(16, fontSize - 2)); }}
+          className="rounded-full px-3 py-2 text-zinc-400/50 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+          aria-label="Decrease font size"
+        >
+          <span className="text-xs font-semibold leading-none select-none">a</span>
+        </button>
+        <button
+          onClick={e => { e.stopPropagation(); onFontSizeChange(Math.min(160, fontSize + 2)); }}
+          className="rounded-full px-3 py-2 text-zinc-400/50 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
+          aria-label="Increase font size"
+        >
+          <span className="text-2xl font-semibold leading-none select-none">A</span>
+        </button>
+      </div>
 
       <AnimatePresence>
         {!openTip && mode === 'words' && words.map(word => (
