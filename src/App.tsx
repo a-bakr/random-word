@@ -10,7 +10,7 @@ import { track } from './lib/track';
 import { useLocalStorage, useLocalStorageBool, useLocalStorageStr } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
-import { allTwisterIds, getNextIdInOrder, getTwisterById, shuffleAllIds, type Twister } from './lib/twisters';
+import { getNextIdInOrder, twisters as englishTwisters, type Twister } from './lib/twisters';
 import { playTwister, stopTwister, subscribeTwisterPlaying } from './lib/twisterAudio';
 import { playWarmup, stopWarmup, subscribeWarmupPlaying } from './lib/warmupAudio';
 import { useWarmup } from './hooks/useWarmup';
@@ -63,6 +63,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const { lang } = useLanguage();
+  const activeTwisters = lang.twisters ?? englishTwisters;
   const { activeTips, rotateTips } = useTips(tipCount);
   const warmup = useWarmup();
 
@@ -123,7 +124,7 @@ export default function App() {
   // Restore last content on page refresh
   useEffect(() => {
     if (isTwisterMode && lastTwisterId) {
-      const entry = getTwisterById(lastTwisterId);
+      const entry = activeTwisters.find(t => t.id === lastTwisterId);
       if (entry) setTwister({ entry, key: 0 });
     } else if (!isTwisterMode && !isWarmupMode && lastWordText) {
       const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -139,24 +140,31 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const all = allTwisterIds();
-    const allSet = new Set(all);
+    const allIds = activeTwisters.map(t => t.id);
+    const allSet = new Set(allIds);
     let order: string[] | null = null;
+    const storageKey = `twisterOrder_${lang.code}`;
     try {
-      const stored = localStorage.getItem('twisterOrder');
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length === all.length && parsed.every(id => typeof id === 'string' && allSet.has(id))) {
+        if (Array.isArray(parsed) && parsed.length === allIds.length && parsed.every(id => typeof id === 'string' && allSet.has(id))) {
           order = parsed;
         }
       }
     } catch {}
     if (!order) {
-      order = shuffleAllIds();
-      try { localStorage.setItem('twisterOrder', JSON.stringify(order)); } catch {}
+      const shuffled = [...allIds];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      order = shuffled;
+      try { localStorage.setItem(storageKey, JSON.stringify(order)); } catch {}
     }
     setTwisterOrder(order);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang.code]);
 
   const doGenerate = (x = window.innerWidth / 2, y = window.innerHeight / 2) => {
     if (openTip) { setOpenTip(null); return; }
@@ -182,7 +190,7 @@ export default function App() {
     if (mode === 'twisters') {
       if (!twisterOrder.length) return;
       const nextId = getNextIdInOrder(twisterOrder, twister?.entry.id ?? lastTwisterId ?? null);
-      const next = getTwisterById(nextId);
+      const next = activeTwisters.find(t => t.id === nextId);
       if (!next) return;
       track('twister_generated', { id: next.id });
       countersRef.current.twisters++;

@@ -2,6 +2,7 @@ import { registerLanguage } from './registry';
 import type { WordDifficulty } from './registry';
 import type { Tip } from '../tips';
 import type { WarmupExercise } from '../warmup';
+import type { Twister } from '../twisters';
 
 // ─── Arabic word list ──────────────────────────────────────────────────────────
 // 250 words with harakat (diacritical marks) across 3 difficulty tiers.
@@ -426,6 +427,46 @@ const ARABIC_WARMUP: WarmupExercise[] = [
 
 // ─── Registration ─────────────────────────────────────────────────────────────
 
+// ─── Arabic tongue twisters ────────────────────────────────────────────────────
+const ARABIC_TWISTERS: Twister[] = [
+  // 🔴 الفصحى الكلاسيكية
+  { id: 'ar-001', text: 'وَقَبْرُ حَرْبٍ بِمَكانٍ قَفْرٍ، وَلَيْسَ قُرْبَ قَبْرِ حَرْبٍ قَبْرُ', sound: 'ق ر ب', difficulty: 'very-hard' },
+  { id: 'ar-002', text: 'أَلَمٌ أَلَمَّ أَلَمْ أُلِمَّ بِدائِهِ\nإِنْ آنَ آنٌ آنَ آنُ أَوانِهِ', sound: 'أ ل م', difficulty: 'very-hard' },
+  { id: 'ar-003', text: 'مَنْ مَنَّ مِنْ مَنٍّ مُنَّ مِنَ المَنَّانِ', sound: 'م ن', difficulty: 'hard' },
+  { id: 'ar-004', text: 'طَرَقْتُ البابَ حتى كَلَّ مَتْني\nفلمَّا كَلَّمَتْني كَلَّ مَتْني\nقالت: يا إسماعيلُ صَبْراً\nقلتُ: يا أَسْماءُ عِيلَ صَبْري', sound: 'ك ل م', difficulty: 'hard' },
+  { id: 'ar-005', text: 'خَيْرُ الصَّديقِ صَديقُ خَيْرِ الصَّديقِ', sound: 'خ ص د', difficulty: 'medium' },
+  { id: 'ar-006', text: 'الحَديدُ يُحَدِّدُ الحُدودَ', sound: 'ح د', difficulty: 'medium' },
+
+  // 🟠 الأمثال الشعبية
+  { id: 'ar-007', text: 'خَيْطُ حَريرٍ على حَيْطِ خَليل', sound: 'خ ح ر ل', difficulty: 'medium' },
+  { id: 'ar-008', text: 'لَحْمُ الحَمامِ حَلال ولَحْمُ الحِمارِ حَرام', sound: 'ح ل م', difficulty: 'easy' },
+  { id: 'ar-009', text: 'صَفْحَة سَبْعة صَعْبة', sound: 'ص ف ح س', difficulty: 'easy' },
+  { id: 'ar-010', text: 'شَمْسُ الصَّيْفِ وشَمْسُ الشِّتاء', sound: 'ش ص', difficulty: 'easy' },
+  { id: 'ar-011', text: 'شَرَفٌ فَرَشَ شَرْشَفَ شَريفٍ، وشَريفٌ يُشْرِفُ على شَرَف', sound: 'ش ف ر', difficulty: 'hard' },
+  { id: 'ar-012', text: 'خَشَبةُ الحَبْسِ حَبَسَتْ خَمْسَ خَشَبات وخَشَبة', sound: 'خ ح ب', difficulty: 'hard' },
+  { id: 'ar-013', text: 'مِفْتاحي مع مِفْتاحِ عبدِ الفتَّاحِ\nومِفْتاحُ عبدِ الفتَّاحِ مع مِفْتاحي\nومِفْتاحي فَتَح ومِفْتاحُ عبدِ الفتَّاحِ ما فَتَح', sound: 'م ف ت ح', difficulty: 'very-hard' },
+  { id: 'ar-014', text: 'أَرْنَبُنا في مَنْوَرِ أَنْور، وأَرْنَبُ أَنْور في مَنْوَرِنا', sound: 'أ ر ن م', difficulty: 'medium' },
+  { id: 'ar-015', text: 'هذا المِشْمِش مِش مِن مِشْمِشْنا\nوحتى مِشْمِشْنا مِش زي هذا المِشْمِش', sound: 'م ش', difficulty: 'medium' },
+  { id: 'ar-016', text: 'طَبَقُ طَبَقْنا طَبَقَ على طَبَقِ طَبَقِكُمْ\nيَقْدِرْ طَبَقُ طَبَقِكُمْ يُطْبَقَ على طَبَقْنا؟', sound: 'ط ب ق', difficulty: 'hard' },
+
+  // 🟡 مصري
+  { id: 'ar-017', text: 'بَطِّتْنا بَطِّتْ بَطْنَ بَطِّتْكُمْ\nتِقْدَر بَطِّتْكُمْ تِبُطّ بَطْنَ بَطِّتْنا؟', sound: 'ب ط', difficulty: 'hard' },
+  { id: 'ar-018', text: 'خَميس الخَبّاز خَبَز خَمْس خِبْزات', sound: 'خ ب ز', difficulty: 'easy' },
+  { id: 'ar-019', text: 'قَميص نَفيسة نِشِف ولّا ما نِشِفْش؟', sound: 'ق م ص ن ش', difficulty: 'medium' },
+  { id: 'ar-020', text: 'خَميس كَمَش خَشْم حَبَش، وحَبَش كَمَش خَشْم خَميس', sound: 'خ ك م ش ح', difficulty: 'hard' },
+
+  // 🟢 شامي
+  { id: 'ar-021', text: 'روحي وروحَك يا روحي\nروحَين بروح\nمَطْرَح ما تروح روحَك\nروحي بِترُوح', sound: 'ر و ح', difficulty: 'medium' },
+  { id: 'ar-022', text: 'طَبَخْنا طَبْخَتْنا بمَطْبَخْكُن\nطَبَخْنا بمَطْبَخْكُن طَبْخَتْنا', sound: 'ط ب خ م', difficulty: 'hard' },
+  { id: 'ar-023', text: 'القُصْمان لِبسوا قُمصان وأكلوا قُرصان', sound: 'ق ص م', difficulty: 'medium' },
+  { id: 'ar-024', text: 'حُسام حاسِب حِساب حَسَن', sound: 'ح س ب', difficulty: 'easy' },
+
+  // 🔵 خليجي / سعودي
+  { id: 'ar-025', text: 'أَسْعَد سَعيد صابِر صَعَدَ سور سَعَد صايِل', sound: 'س ص ع', difficulty: 'medium' },
+  { id: 'ar-026', text: 'قُمْ يا قَمْقَم قوم تَقَمْقَم\nقُمْ على قُفَّةٍ قُمْ كُلْ قَمْح', sound: 'ق م', difficulty: 'hard' },
+  { id: 'ar-027', text: 'طَرْبوش تَطَرْبَشْنا بِه وطَرْبوش ما تَطَرْبَشْنا بِه\nقوم يا مْتَطَرْبِش وتَطَرْبَش بالطَّرْبوش الذي لم نَتَطَرْبَش بِه', sound: 'ط ر ب ش', difficulty: 'very-hard' },
+];
+
 registerLanguage({
   code: 'ar',
   name: 'Arabic',
@@ -499,6 +540,7 @@ registerLanguage({
     },
   },
   generateWord: generateArabicWord,
+  twisters: ARABIC_TWISTERS,
   warmupExercises: ARABIC_WARMUP,
   tips: {
     vocal: arVocalTips,
