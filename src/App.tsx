@@ -125,7 +125,7 @@ export default function App() {
   useEffect(() => {
     if (isTwisterMode && lastTwisterId) {
       const entry = activeTwisters.find(t => t.id === lastTwisterId);
-      if (entry) setTwister({ entry, key: 0 });
+      if (entry) { setTwister({ entry, key: 0 }); setHasClicked(true); }
     } else if (!isTwisterMode && !isWarmupMode && lastWordText) {
       const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setWords([{
@@ -135,6 +135,7 @@ export default function App() {
         id: Date.now(),
         color: getRandomColor(dark),
       }]);
+      setHasClicked(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -523,10 +524,6 @@ export default function App() {
         onThemeToggle={() => setIsDark(v => !v)}
         isSoundEnabled={isSoundEnabled}
         onSoundToggle={() => setIsSoundEnabled(v => !v)}
-        fontSize={fontSize}
-        onFontSizeChange={onFontSizeChange}
-        timerEnabled={timerEnabled}
-        onTimerToggle={() => setTimerEnabled(!timerEnabled)}
         centeredWord={centeredWord}
         onCenteredWordToggle={() => setCenteredWord(!centeredWord)}
         maxWords={maxWords}

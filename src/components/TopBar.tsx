@@ -1,7 +1,9 @@
 'use client';
 
-import { Type, Zap, Flame, SlidersHorizontal, Info } from 'lucide-react';
+import { Type, Zap, Flame, SlidersHorizontal, Info, Languages } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { getAllLanguages } from '../lib/languages/registry';
+import type { LanguageCode } from '../lib/languages/registry';
 
 const NAV_IDS = [
   { id: 'words',    Icon: Type              },
@@ -18,7 +20,15 @@ export function TopBar({
   mode: 'words' | 'twisters' | 'warmup';
   onMenuSelect: (id: string) => void;
 }) {
-  const { lang } = useLanguage();
+  const { lang, setLanguageCode } = useLanguage();
+  const allLanguages = getAllLanguages();
+
+  const cycleLanguage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const idx = allLanguages.findIndex(l => l.code === lang.code);
+    const next = allLanguages[(idx + 1) % allLanguages.length];
+    setLanguageCode(next.code as LanguageCode);
+  };
 
   const NAV_ITEMS = [
     { ...NAV_IDS[0], label: lang.labels.nav.words    },
@@ -59,6 +69,16 @@ export function TopBar({
             </button>
           );
         })}
+
+        <button
+          onClick={cycleLanguage}
+          aria-label={`Switch language — ${lang.nativeName}`}
+          title={lang.nativeName}
+          style={{ filter: 'url(#sketch)' }}
+          className="rounded-full p-3 transition-all duration-300 text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50"
+        >
+          <Languages size={20} strokeWidth={2.5} />
+        </button>
       </div>
     </div>
   );

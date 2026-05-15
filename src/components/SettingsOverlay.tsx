@@ -1,14 +1,11 @@
 'use client';
 
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Volume2, VolumeX, Moon, Sun, Clock, LayoutDashboard } from 'lucide-react';
+import { X, Volume2, VolumeX, Moon, Sun, LayoutDashboard } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getAllLanguages } from '../lib/languages/registry';
-import type { LanguageCode } from '../lib/languages/registry';
 
-const FONT_SIZES  = [24, 36, 50, 72, 100, 140];
-const MAX_WORDS   = [1, 2, 3, 5, 10];
-const TIP_COUNTS  = [0, 1, 2, 3];
+const MAX_WORDS  = [1, 2, 3, 5, 10];
+const TIP_COUNTS = [0, 1, 2, 3];
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -26,10 +23,6 @@ export function SettingsOverlay({
   onThemeToggle,
   isSoundEnabled,
   onSoundToggle,
-  fontSize,
-  onFontSizeChange,
-  timerEnabled,
-  onTimerToggle,
   centeredWord,
   onCenteredWordToggle,
   maxWords,
@@ -44,10 +37,6 @@ export function SettingsOverlay({
   onThemeToggle: () => void;
   isSoundEnabled: boolean;
   onSoundToggle: () => void;
-  fontSize: number;
-  onFontSizeChange: (n: number) => void;
-  timerEnabled: boolean;
-  onTimerToggle: () => void;
   centeredWord: boolean;
   onCenteredWordToggle: () => void;
   maxWords: number;
@@ -56,20 +45,8 @@ export function SettingsOverlay({
   onTipCountChange: (n: number) => void;
   isAdmin: boolean;
 }) {
-  const { lang, setLanguageCode } = useLanguage();
+  const { lang } = useLanguage();
   const s = lang.labels.settings;
-  const allLanguages = getAllLanguages();
-
-  const cycleLanguage = () => {
-    const idx = allLanguages.findIndex(l => l.code === lang.code);
-    const next = allLanguages[(idx + 1) % allLanguages.length];
-    setLanguageCode(next.code as LanguageCode);
-  };
-
-  const cycleFontSize = () => {
-    const idx = FONT_SIZES.indexOf(fontSize);
-    onFontSizeChange(FONT_SIZES[(idx + 1) % FONT_SIZES.length]);
-  };
 
   const cycleMaxWords = () => {
     const idx = MAX_WORDS.indexOf(maxWords);
@@ -115,17 +92,6 @@ export function SettingsOverlay({
               {s.title}
             </h2>
 
-            <Row label={s.language}>
-              <button
-                onClick={(e) => { e.stopPropagation(); cycleLanguage(); }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
-                  text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <span className="text-sm font-medium">{lang.nativeName}</span>
-                <span className="text-xs text-zinc-400">{s.tapToCycle}</span>
-              </button>
-            </Row>
-
             <Row label={s.theme}>
               <button
                 onClick={(e) => { e.stopPropagation(); onThemeToggle(); }}
@@ -150,17 +116,6 @@ export function SettingsOverlay({
               </button>
             </Row>
 
-            <Row label={s.fontSize}>
-              <button
-                onClick={(e) => { e.stopPropagation(); cycleFontSize(); }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
-                  text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <span className="text-sm font-medium">{fontSize}px</span>
-                <span className="text-xs text-zinc-400">{s.tapToCycle}</span>
-              </button>
-            </Row>
-
             <Row label={s.wordsOnScreen}>
               <button
                 onClick={(e) => { e.stopPropagation(); cycleMaxWords(); }}
@@ -179,17 +134,6 @@ export function SettingsOverlay({
                   text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
               >
                 <span className="text-sm">{centeredWord ? s.wordCentered : s.wordRandom}</span>
-              </button>
-            </Row>
-
-            <Row label={s.timer}>
-              <button
-                onClick={(e) => { e.stopPropagation(); onTimerToggle(); }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
-                  text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <Clock size={16} strokeWidth={1.5} />
-                <span className="text-sm">{timerEnabled ? s.on : s.off}</span>
               </button>
             </Row>
 
