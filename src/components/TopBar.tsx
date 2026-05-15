@@ -1,10 +1,11 @@
 'use client';
 
-import { Type, Zap, SlidersHorizontal, Info } from 'lucide-react';
+import { Type, Zap, Flame, SlidersHorizontal, Info } from 'lucide-react';
 
 const NAV_ITEMS = [
   { id: 'words',    Icon: Type,              label: 'Words'    },
   { id: 'twisters', Icon: Zap,               label: 'Twisters' },
+  { id: 'warmup',   Icon: Flame,             label: 'Warm-up'  },
   { id: 'settings', Icon: SlidersHorizontal, label: 'Settings' },
   { id: 'about',    Icon: Info,              label: 'About'    },
 ];
@@ -13,7 +14,7 @@ export function TopBar({
   mode,
   onMenuSelect,
 }: {
-  mode: 'words' | 'twisters';
+  mode: 'words' | 'twisters' | 'warmup';
   onMenuSelect: (id: string) => void;
 }) {
   return (
@@ -27,7 +28,8 @@ export function TopBar({
         {NAV_ITEMS.map(({ id, Icon, label }) => {
           const active =
             (id === 'words'    && mode === 'words') ||
-            (id === 'twisters' && mode === 'twisters');
+            (id === 'twisters' && mode === 'twisters') ||
+            (id === 'warmup'   && mode === 'warmup');
           return (
             <button
               key={id}

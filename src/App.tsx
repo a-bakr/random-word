@@ -12,10 +12,14 @@ import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
 import { allTwisterIds, getNextIdInOrder, getTwisterById, shuffleAllIds, type Twister } from './lib/twisters';
 import { playTwister, stopTwister, subscribeTwisterPlaying } from './lib/twisterAudio';
+import { playWarmup, stopWarmup, subscribeWarmupPlaying } from './lib/warmupAudio';
+import { useWarmup } from './hooks/useWarmup';
 
 import { TopBar } from './components/TopBar';
 import { WordItem } from './components/WordItem';
 import { TwisterItem } from './components/TwisterItem';
+import { WarmupItem } from './components/WarmupItem';
+import { WarmupProgress } from './components/WarmupProgress';
 import { RecordingArea } from './components/RecordingArea';
 import { TranscriptOverlay } from './components/TranscriptOverlay';
 import { TranscriptCard } from './components/TranscriptCard';
@@ -37,10 +41,11 @@ export default function App() {
   const [duration, setDuration] = useLocalStorage('timerDuration', 60);
   const [timerEnabled, setTimerEnabled] = useLocalStorageBool('timerEnabled', true);
   const [isTwisterMode, setIsTwisterMode] = useLocalStorageBool('twisterMode', false);
+  const [isWarmupMode, setIsWarmupMode] = useLocalStorageBool('warmupMode', false);
   const [centeredWord, setCenteredWord] = useLocalStorageBool('centeredWord', false);
   const [lastTwisterId, setLastTwisterId] = useLocalStorageStr('lastTwisterId', '');
   const [twisterOrder, setTwisterOrder] = useState<string[]>([]);
-  const mode: 'words' | 'twisters' = isTwisterMode ? 'twisters' : 'words';
+  const mode: 'words' | 'twisters' | 'warmup' = isWarmupMode ? 'warmup' : isTwisterMode ? 'twisters' : 'words';
 
   const [isDark, setIsDark] = useState(false);
   const [hasClicked, setHasClicked] = useState(false);
@@ -49,12 +54,15 @@ export default function App() {
   const [timerKey, setTimerKey] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [isTwisterPlaying, setIsTwisterPlaying] = useState(false);
+  const [isWarmupPlaying, setIsWarmupPlaying] = useState(false);
+  const [warmupHasAdvanced, setWarmupHasAdvanced] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const { activeTips, rotateTips } = useTips(tipCount);
+  const warmup = useWarmup();
 
   const voice = useVoiceRecognition();
   const rec = useRecordings();
@@ -103,6 +111,7 @@ export default function App() {
   }, [isDark]);
 
   useEffect(() => subscribeTwisterPlaying(setIsTwisterPlaying), []);
+  useEffect(() => subscribeWarmupPlaying(setIsWarmupPlaying), []);
 
   useEffect(() => {
     const all = allTwisterIds();
@@ -130,6 +139,15 @@ export default function App() {
       setHasClicked(true);
       track('hint_dismissed');
     }
+
+    if (mode === 'warmup') {
+      warmup.advance();
+      stopWarmup();
+      setWarmupHasAdvanced(true);
+      if (isSoundEnabled) playPopSound();
+      return;
+    }
+
     if (isSoundEnabled) playPopSound();
     if (timerEnabled) {
       if (isTimerRunning) setTimerKey(k => k + 1);
@@ -221,8 +239,9 @@ export default function App() {
   };
 
   const handleMenuSelect = (id: string) => {
-    if (id === 'words') { stopTwister(); setIsTwisterMode(false); setWords([]); setTwister(null); }
-    else if (id === 'twisters') { stopTwister(); setIsTwisterMode(true); setWords([]); setTwister(null); }
+    if (id === 'words') { stopTwister(); stopWarmup(); setIsTwisterMode(false); setIsWarmupMode(false); setWords([]); setTwister(null); }
+    else if (id === 'twisters') { stopTwister(); stopWarmup(); setIsTwisterMode(true); setIsWarmupMode(false); setWords([]); setTwister(null); }
+    else if (id === 'warmup') { stopTwister(); stopWarmup(); setIsWarmupMode(true); setIsTwisterMode(false); setWords([]); setTwister(null); }
     else if (id === 'settings') setSettingsOpen(true);
     else if (id === 'about') setAboutOpen(true);
   };
@@ -358,7 +377,7 @@ export default function App() {
 
       <TopBar mode={mode} onMenuSelect={handleMenuSelect} />
 
-      <div
+      {mode !== 'warmup' && <div
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2"
         onClick={e => e.stopPropagation()}
       >
@@ -378,7 +397,7 @@ export default function App() {
         >
           <span className="text-2xl font-semibold leading-none select-none">A</span>
         </button>
-      </div>
+      </div>}
 
       <AnimatePresence>
         {!openTip && mode === 'words' && words.map(word => (
@@ -395,9 +414,27 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {mode === 'warmup' && (
+        <WarmupItem
+          key={warmup.index}
+          exercise={warmup.exercise}
+          isPlaying={isWarmupPlaying}
+          onTogglePlay={e => { e.stopPropagation(); isWarmupPlaying ? stopWarmup() : playWarmup(warmup.exercise.id); }}
+          hasAdvanced={warmupHasAdvanced}
+        />
+      )}
+      {mode === 'warmup' && (
+        <WarmupProgress
+          index={warmup.index}
+          total={warmup.total}
+          onReset={e => { e.stopPropagation(); warmup.reset(); stopWarmup(); setWarmupHasAdvanced(false); }}
+          isFirstVisit={!warmupHasAdvanced}
+        />
+      )}
+
       <TranscriptOverlay text={voice.transcript} onDismiss={voice.clearTranscript} />
 
-      <RecordingArea
+      {mode !== 'warmup' && <RecordingArea
         recordings={rec.recordings}
         isRecording={isRecording}
         playingId={rec.playingId}
@@ -406,11 +443,11 @@ export default function App() {
         onTogglePlayback={rec.togglePlayback}
         onRemove={rec.removeRecording}
         onSelect={rec.selectRecording}
-      />
+      />}
 
       <TranscriptCard recording={rec.selectedRecording} onClose={rec.clearSelection} />
 
-      <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} />
+      {mode !== 'warmup' && <HintOverlay visible={!hasClicked} fontSize={fontSize} isDark={isDark} />}
 
       <CoachingTips
         tips={activeTips}
@@ -426,7 +463,7 @@ export default function App() {
         onTryNow={doStartRecording}
       />
 
-      <TimerBar
+      {mode !== 'warmup' && <TimerBar
         timerEnabled={timerEnabled}
         toggleTimerEnabled={toggleTimerEnabled}
         timerKey={timerKey}
@@ -434,10 +471,10 @@ export default function App() {
         isTimerRunning={isTimerRunning}
         onTimerStop={() => setIsTimerRunning(false)}
         onDurationChange={onDurationChange}
-        mode={mode}
+        mode={mode as 'words' | 'twisters'}
         onReplay={replayTwister}
         isTwisterPlaying={isTwisterPlaying}
-      />
+      />}
 
       <AboutOverlay
         visible={aboutOpen}
