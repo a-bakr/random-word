@@ -1,31 +1,38 @@
 'use client';
 
 import { Type, Zap, Flame, SlidersHorizontal, Info } from 'lucide-react';
-import type { LanguageConfig, LanguageCode } from '../lib/languages/registry';
-import { LanguageSwitcher } from './LanguageSwitcher';
+import { useLanguage } from '../contexts/LanguageContext';
+
+const NAV_IDS = [
+  { id: 'words',    Icon: Type              },
+  { id: 'twisters', Icon: Zap               },
+  { id: 'warmup',   Icon: Flame             },
+  { id: 'settings', Icon: SlidersHorizontal },
+  { id: 'about',    Icon: Info              },
+];
 
 export function TopBar({
   mode,
   onMenuSelect,
-  lang,
-  onLanguageSwitch,
 }: {
   mode: 'words' | 'twisters' | 'warmup';
   onMenuSelect: (id: string) => void;
-  lang: LanguageConfig;
-  onLanguageSwitch: (code: LanguageCode) => void;
 }) {
+  const { lang } = useLanguage();
+
   const NAV_ITEMS = [
-    { id: 'words',    Icon: Type,              label: lang.labels.words    },
-    { id: 'twisters', Icon: Zap,               label: lang.labels.twisters },
-    { id: 'warmup',   Icon: Flame,             label: lang.labels.warmup   },
-    { id: 'settings', Icon: SlidersHorizontal, label: 'Settings'           },
-    { id: 'about',    Icon: Info,              label: 'About'              },
+    { ...NAV_IDS[0], label: lang.labels.words    },
+    { ...NAV_IDS[1], label: lang.labels.twisters },
+    { ...NAV_IDS[2], label: lang.labels.warmup   },
+    { ...NAV_IDS[3], label: 'Settings'           },
+    { ...NAV_IDS[4], label: 'About'              },
   ];
 
   return (
+    // dir="ltr" keeps icons in their fixed positions for every language
     <div
-      className="absolute top-6 inset-x-0 z-20 flex items-center justify-center pointer-events-none"
+      dir="ltr"
+      className="absolute top-6 inset-x-0 z-20 flex justify-center pointer-events-none"
     >
       <div
         className="flex items-center gap-1 pointer-events-auto"
@@ -52,12 +59,6 @@ export function TopBar({
             </button>
           );
         })}
-      </div>
-      <div
-        className="absolute right-4 pointer-events-auto"
-        onClick={e => e.stopPropagation()}
-      >
-        <LanguageSwitcher current={lang.code} onChange={onLanguageSwitch} />
       </div>
     </div>
   );
