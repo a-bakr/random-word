@@ -87,6 +87,10 @@ export default function App() {
   const swipeStartXRef = useRef(0);
   const swipeDirRef = useRef<'h' | 'v' | null>(null);
 
+  // Word history for backward navigation (up to 20 words)
+  const wordHistoryRef = useRef<WordEntry[]>([]);
+  const historyPosRef = useRef<number>(-1);
+
   const sessionStartRef = useRef<number>(Date.now());
   const countersRef = useRef({ words: 0, twisters: 0, recordings: 0, mode_toggles: 0 });
   const sessionEndedRef = useRef(false);
@@ -138,13 +142,16 @@ export default function App() {
       }
     } else if (!isTwisterMode && !isWarmupMode && lastWordText) {
       const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setWords([{
+      const entry: WordEntry = {
         text: lang.generateWord(),
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         id: Date.now(),
         color: getRandomColor(dark),
-      }]);
+      };
+      wordHistoryRef.current = [entry];
+      historyPosRef.current = 0;
+      setWords([entry]);
       setHasClicked(true);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -234,12 +241,36 @@ export default function App() {
       return;
     }
 
+    // If navigated back into history, step forward through it first
+    const pos = historyPosRef.current;
+    const history = wordHistoryRef.current;
+    if (pos >= 0 && pos < history.length - 1) {
+      historyPosRef.current = pos + 1;
+      const newPos = historyPosRef.current;
+      const displayStart = Math.max(0, newPos - maxWords + 1);
+      setWords(history.slice(displayStart, newPos + 1));
+      setLastWordText(history[newPos].text);
+      rotateTips();
+      return;
+    }
+
     const word = lang.generateWord();
+    const newEntry: WordEntry = { text: word, x, y, id: Date.now(), color: getRandomColor(isDark) };
+
+    // Trim any leftover "future" entries (shouldn't happen here, but guard anyway)
+    let updatedHistory = pos >= 0 && pos < history.length - 1
+      ? history.slice(0, pos + 1)
+      : history;
+    updatedHistory = [...updatedHistory, newEntry].slice(-20);
+    wordHistoryRef.current = updatedHistory;
+    historyPosRef.current = updatedHistory.length - 1;
+
     setLastWordText(word);
     track('word_generated', { word });
     countersRef.current.words++;
     rotateTips();
-    setWords(prev => [...prev, { text: word, x, y, id: Date.now(), color: getRandomColor(isDark) }].slice(-maxWords));
+    const displayStart = Math.max(0, updatedHistory.length - maxWords);
+    setWords(updatedHistory.slice(displayStart));
   };
 
   const doGoBack = () => {
@@ -250,7 +281,6 @@ export default function App() {
       if (isSoundEnabled) playPopSound();
       return;
     }
-    if (isSoundEnabled) playPopSound();
     if (contentMode === 'twisters') {
       if (!twisterOrder.length) return;
       const currentId = twister?.entry.id ?? lastTwisterId ?? null;
@@ -258,18 +288,29 @@ export default function App() {
       const prevIdx = (currentIdx - 1 + twisterOrder.length) % twisterOrder.length;
       const prev = activeTwisters.find(t => t.id === twisterOrder[prevIdx]);
       if (!prev) return;
+      if (isSoundEnabled) playPopSound();
       stopTwister();
       setLastTwisterId(prev.id);
       setTwister({ entry: prev, key: Date.now() });
       return;
     }
-    // words: just generate a new random word
-    doGenerate();
+    // words: navigate backward through history
+    const pos = historyPosRef.current;
+    if (pos <= 0) return; // at beginning or no history
+    if (isSoundEnabled) playPopSound();
+    historyPosRef.current = pos - 1;
+    const newPos = historyPosRef.current;
+    const history = wordHistoryRef.current;
+    const displayStart = Math.max(0, newPos - maxWords + 1);
+    setWords(history.slice(displayStart, newPos + 1));
+    setLastWordText(history[newPos].text);
   };
 
   const handleScreenClick = (e: React.MouseEvent) => {
     if (holdFiredRef.current) { holdFiredRef.current = false; return; }
-    doGenerate(e.clientX, e.clientY);
+    const isRightSide = e.clientX > window.innerWidth / 2;
+    if (isRightSide) doGenerate(e.clientX, e.clientY);
+    else doGoBack();
   };
 
   const replayTwister = (e: React.MouseEvent) => {
