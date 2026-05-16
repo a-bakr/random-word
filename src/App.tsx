@@ -325,12 +325,14 @@ export default function App() {
     });
   };
 
+  const closeAllOverlays = () => { setSettingsOpen(false); setAdminOpen(false); setAboutOpen(false); };
+
   const handleMenuSelect = (id: string) => {
-    if (id === 'words') { stopTwister(); stopWarmup(); setIsTwisterMode(false); setIsWarmupMode(false); }
-    else if (id === 'twisters') { stopWarmup(); setIsTwisterMode(true); setIsWarmupMode(false); }
-    else if (id === 'warmup') { stopTwister(); setIsWarmupMode(true); setIsTwisterMode(false); }
-    else if (id === 'settings') setSettingsOpen(true);
-    else if (id === 'about') setAboutOpen(true);
+    if (id === 'words') { closeAllOverlays(); stopTwister(); stopWarmup(); setIsTwisterMode(false); setIsWarmupMode(false); }
+    else if (id === 'twisters') { closeAllOverlays(); stopWarmup(); setIsTwisterMode(true); setIsWarmupMode(false); }
+    else if (id === 'warmup') { closeAllOverlays(); stopTwister(); setIsWarmupMode(true); setIsTwisterMode(false); }
+    else if (id === 'settings') { setAdminOpen(false); setAboutOpen(false); setSettingsOpen(v => !v); }
+    else if (id === 'about') { setAdminOpen(false); setSettingsOpen(false); setAboutOpen(v => !v); }
   };
 
   const doStartRecording = async () => {
