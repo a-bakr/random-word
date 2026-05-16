@@ -12,7 +12,7 @@ import type { Twister } from '../twisters';
 
 interface ArabicWord { text: string; difficulty: WordDifficulty; }
 
-const ARABIC_WORDS: ArabicWord[] = [
+const ARABIC_WORDS_EASY: ArabicWord[] = [
   // ── EASY ─────────────────────────────────────────────────────────────────
   // family
   { text: 'أُمّ', difficulty: 'easy' },
@@ -621,7 +621,9 @@ const ARABIC_WORDS: ArabicWord[] = [
   { text: 'لَيْل',         difficulty: 'easy' },
   { text: 'صَوْت',         difficulty: 'easy' },
   { text: 'لَوْن',         difficulty: 'easy' },
+];
 
+const ARABIC_WORDS_MEDIUM: ArabicWord[] = [
   // ── MEDIUM ────────────────────────────────────────────────────────────────
   // professions
   { text: 'مُعَلِّم', difficulty: 'medium' },
@@ -1111,7 +1113,9 @@ const ARABIC_WORDS: ArabicWord[] = [
   { text: 'ذَاكِرَة', difficulty: 'medium' },
   { text: 'تَجْرِبَة', difficulty: 'medium' },
   { text: 'مَعْلُومَة', difficulty: 'medium' },
+];
 
+const ARABIC_WORDS_HARD: ArabicWord[] = [
   // ── HARD ──────────────────────────────────────────────────────────────────
   // abstract & philosophical
   { text: 'مَسْؤُولِيَّة', difficulty: 'hard' },
@@ -1338,6 +1342,8 @@ const ARABIC_WORDS: ArabicWord[] = [
   { text: 'تَدَيُّن', difficulty: 'hard' },
   { text: 'زُهْد', difficulty: 'hard' },
 ];
+
+const ARABIC_WORDS: ArabicWord[] = [...ARABIC_WORDS_EASY, ...ARABIC_WORDS_MEDIUM, ...ARABIC_WORDS_HARD];
 
 function generateArabicWord(opts?: { difficulty?: WordDifficulty }): string {
   const pool = opts?.difficulty
