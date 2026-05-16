@@ -16,7 +16,7 @@ import { playTwister, stopTwister, subscribeTwisterPlaying } from './lib/twister
 import { playWarmup, stopWarmup, subscribeWarmupPlaying } from './lib/warmupAudio';
 import { useWarmup } from './hooks/useWarmup';
 
-import { TopBar } from './components/TopBar';
+import { TopBar, type AppMode } from './components/TopBar';
 import { WordItem } from './components/WordItem';
 import { TwisterItem } from './components/TwisterItem';
 import { WarmupItem } from './components/WarmupItem';
@@ -28,9 +28,9 @@ import { HintOverlay } from './components/HintOverlay';
 import { TimerBar } from './components/TimerBar';
 import { CoachingTips } from './components/CoachingTips';
 import { TipOverlay } from './components/TipOverlay';
-import { AboutOverlay } from './components/AboutOverlay';
-import { SettingsOverlay } from './components/SettingsOverlay';
-import { AdminOverlay } from './components/AdminOverlay';
+import { SettingsScreen } from './components/SettingsScreen';
+import { AboutScreen } from './components/AboutScreen';
+import { AdminScreen } from './components/AdminScreen';
 import { useTips } from './hooks/useTips';
 import type { Tip } from './lib/tips';
 
@@ -48,7 +48,7 @@ export default function App() {
   const [lastTwisterId, setLastTwisterId] = useLocalStorageStr('lastTwisterId', '');
   const [lastWordText, setLastWordText] = useLocalStorageStr('lastWordText', '');
   const [twisterOrder, setTwisterOrder] = useState<string[]>([]);
-  const mode: 'words' | 'twisters' | 'warmup' = isWarmupMode ? 'warmup' : isTwisterMode ? 'twisters' : 'words';
+  const contentMode: 'words' | 'twisters' | 'warmup' = isWarmupMode ? 'warmup' : isTwisterMode ? 'twisters' : 'words';
 
   const [isDark, setIsDark] = useState(false);
   const [hasClicked, setHasClicked] = useState(false);
@@ -60,10 +60,10 @@ export default function App() {
   const [isWarmupPlaying, setIsWarmupPlaying] = useState(false);
   const [warmupHasAdvanced, setWarmupHasAdvanced] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
-  const [aboutOpen, setAboutOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
+  const [panel, setPanel] = useState<'settings' | 'about' | 'admin' | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const mode: AppMode = (panel === 'admin' ? 'settings' : panel) ?? contentMode;
 
   const { lang } = useLanguage();
   const activeTwisters = lang.twisters ?? englishTwisters;
@@ -177,10 +177,10 @@ export default function App() {
     if (langCodeRef.current === lang.code) return;
     langCodeRef.current = lang.code;
 
-    if (mode === 'words' && words.length > 0) {
+    if (contentMode === 'words' && words.length > 0) {
       const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setWords(prev => prev.map(w => ({ ...w, text: lang.generateWord(), color: getRandomColor(dark) })));
-    } else if (mode === 'twisters' && twister !== null) {
+    } else if (contentMode === 'twisters' && twister !== null) {
       const list = activeTwisters;
       const next = list[Math.floor(Math.random() * list.length)];
       setLastTwisterId(next.id);
@@ -190,13 +190,14 @@ export default function App() {
   }, [lang.code]);
 
   const doGenerate = (x = window.innerWidth / 2, y = window.innerHeight / 2) => {
+    if (panel !== null) return;
     if (openTip) { setOpenTip(null); return; }
     if (!hasClicked) {
       setHasClicked(true);
       track('hint_dismissed');
     }
 
-    if (mode === 'warmup') {
+    if (contentMode === 'warmup') {
       warmup.advance();
       stopWarmup();
       setWarmupHasAdvanced(true);
@@ -210,7 +211,7 @@ export default function App() {
       else setIsTimerRunning(true);
     }
 
-    if (mode === 'twisters') {
+    if (contentMode === 'twisters') {
       if (!twisterOrder.length) return;
       const currentId = twister?.entry.id ?? lastTwisterId ?? null;
       const currentIdx = currentId ? twisterOrder.indexOf(currentId) : -1;
@@ -242,14 +243,15 @@ export default function App() {
   };
 
   const doGoBack = () => {
-    if (mode === 'warmup') {
+    if (panel !== null) return;
+    if (contentMode === 'warmup') {
       warmup.goBack();
       stopWarmup();
       if (isSoundEnabled) playPopSound();
       return;
     }
     if (isSoundEnabled) playPopSound();
-    if (mode === 'twisters') {
+    if (contentMode === 'twisters') {
       if (!twisterOrder.length) return;
       const currentId = twister?.entry.id ?? lastTwisterId ?? null;
       const currentIdx = currentId ? twisterOrder.indexOf(currentId) : 0;
@@ -325,14 +327,12 @@ export default function App() {
     });
   };
 
-  const closeAllOverlays = () => { setSettingsOpen(false); setAdminOpen(false); setAboutOpen(false); };
-
   const handleMenuSelect = (id: string) => {
-    if (id === 'words') { closeAllOverlays(); stopTwister(); stopWarmup(); setIsTwisterMode(false); setIsWarmupMode(false); }
-    else if (id === 'twisters') { closeAllOverlays(); stopWarmup(); setIsTwisterMode(true); setIsWarmupMode(false); }
-    else if (id === 'warmup') { closeAllOverlays(); stopTwister(); setIsWarmupMode(true); setIsTwisterMode(false); }
-    else if (id === 'settings') { setAdminOpen(false); setAboutOpen(false); setSettingsOpen(v => !v); }
-    else if (id === 'about') { setAdminOpen(false); setSettingsOpen(false); setAboutOpen(v => !v); }
+    if (id === 'words')         { setPanel(null); stopTwister(); stopWarmup(); setIsTwisterMode(false); setIsWarmupMode(false); }
+    else if (id === 'twisters') { setPanel(null); stopWarmup(); setIsTwisterMode(true); setIsWarmupMode(false); }
+    else if (id === 'warmup')   { setPanel(null); stopTwister(); setIsWarmupMode(true); setIsTwisterMode(false); }
+    else if (id === 'settings') setPanel(p => p === 'settings' ? null : 'settings');
+    else if (id === 'about')    setPanel(p => p === 'about' ? null : 'about');
   };
 
   const doStartRecording = async () => {
@@ -478,7 +478,7 @@ export default function App() {
 
       <TopBar mode={mode} onMenuSelect={handleMenuSelect} />
 
-      {mode !== 'warmup' && <div
+      {panel === null && contentMode !== 'warmup' && <div
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2"
         onClick={e => e.stopPropagation()}
       >
@@ -501,10 +501,10 @@ export default function App() {
       </div>}
 
       <AnimatePresence>
-        {!openTip && mode === 'words' && words.map(word => (
+        {panel === null && !openTip && contentMode === 'words' && words.map(word => (
           <WordItem key={word.id} word={word} fontSize={fontSize} centered={centeredWord} />
         ))}
-        {!openTip && mode === 'twisters' && twister && (
+        {panel === null && !openTip && contentMode === 'twisters' && twister && (
           <TwisterItem
             key={twister.key}
             id={String(twister.key)}
@@ -515,7 +515,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {mode === 'warmup' && (
+      {panel === null && contentMode === 'warmup' && (
         <WarmupItem
           key={warmup.index}
           exercise={warmup.exercise}
@@ -524,7 +524,7 @@ export default function App() {
           hasAdvanced={warmupHasAdvanced}
         />
       )}
-      {mode === 'warmup' && (
+      {panel === null && contentMode === 'warmup' && (
         <WarmupProgress
           index={warmup.index}
           total={warmup.total}
@@ -535,7 +535,7 @@ export default function App() {
 
       <TranscriptOverlay text={voice.transcript} onDismiss={voice.clearTranscript} />
 
-      {mode !== 'warmup' && <RecordingArea
+      {panel === null && contentMode !== 'warmup' && <RecordingArea
         recordings={rec.recordings}
         isRecording={isRecording}
         playingId={rec.playingId}
@@ -548,8 +548,8 @@ export default function App() {
 
       <TranscriptCard recording={rec.selectedRecording} onClose={rec.clearSelection} />
 
-      {mode !== 'warmup' && <HintOverlay
-        visible={(mode === 'words' && words.length === 0) || (mode === 'twisters' && twister === null)}
+      {panel === null && contentMode !== 'warmup' && <HintOverlay
+        visible={(contentMode === 'words' && words.length === 0) || (contentMode === 'twisters' && twister === null)}
         fontSize={fontSize}
         isDark={isDark}
       />}
@@ -557,7 +557,7 @@ export default function App() {
       <CoachingTips
         tips={activeTips}
         onTipClick={setOpenTip}
-        visible={words.length > 0 && mode === 'words' && !openTip}
+        visible={panel === null && words.length > 0 && contentMode === 'words' && !openTip}
         wordX={centeredWord || !words.at(-1) ? window.innerWidth / 2 : words.at(-1)!.x}
         wordY={centeredWord || !words.at(-1) ? window.innerHeight / 2 : words.at(-1)!.y}
       />
@@ -568,7 +568,7 @@ export default function App() {
         onTryNow={doStartRecording}
       />
 
-      {mode !== 'warmup' && <TimerBar
+      {panel === null && contentMode !== 'warmup' && <TimerBar
         timerEnabled={timerEnabled}
         toggleTimerEnabled={toggleTimerEnabled}
         timerKey={timerKey}
@@ -576,39 +576,37 @@ export default function App() {
         isTimerRunning={isTimerRunning}
         onTimerStop={() => setIsTimerRunning(false)}
         onDurationChange={onDurationChange}
-        mode={mode as 'words' | 'twisters'}
+        mode={contentMode}
         onReplay={replayTwister}
         isTwisterPlaying={isTwisterPlaying}
       />}
 
-      <AboutOverlay
-        visible={aboutOpen}
-        onClose={() => setAboutOpen(false)}
-      />
+      {panel === 'settings' && (
+        <SettingsScreen
+          isDark={isDark}
+          onThemeToggle={() => setIsDark(v => !v)}
+          isSoundEnabled={isSoundEnabled}
+          onSoundToggle={() => setIsSoundEnabled(v => !v)}
+          centeredWord={centeredWord}
+          onCenteredWordToggle={() => setCenteredWord(!centeredWord)}
+          maxWords={maxWords}
+          onMaxWordsChange={onMaxWordsChange}
+          tipCount={tipCount}
+          onTipCountChange={n => { setTipCount(n); track('setting_changed', { key: 'tipCount', value: n }); }}
+          isAdmin={isAdmin}
+          onOpenDashboard={() => setPanel('admin')}
+        />
+      )}
 
-      <SettingsOverlay
-        visible={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        isDark={isDark}
-        onThemeToggle={() => setIsDark(v => !v)}
-        isSoundEnabled={isSoundEnabled}
-        onSoundToggle={() => setIsSoundEnabled(v => !v)}
-        centeredWord={centeredWord}
-        onCenteredWordToggle={() => setCenteredWord(!centeredWord)}
-        maxWords={maxWords}
-        onMaxWordsChange={onMaxWordsChange}
-        tipCount={tipCount}
-        onTipCountChange={n => { setTipCount(n); track('setting_changed', { key: 'tipCount', value: n }); }}
-        isAdmin={isAdmin}
-        onOpenDashboard={() => { setSettingsOpen(false); setAdminOpen(true); }}
-      />
+      {panel === 'about' && <AboutScreen />}
 
-      <AdminOverlay
-        visible={adminOpen}
-        onClose={() => setAdminOpen(false)}
-        isAdmin={isAdmin}
-        onLoginSuccess={() => setIsAdmin(true)}
-      />
+      {panel === 'admin' && (
+        <AdminScreen
+          isAdmin={isAdmin}
+          onLoginSuccess={() => setIsAdmin(true)}
+          onLogout={() => setPanel('settings')}
+        />
+      )}
     </div>
   );
 }
