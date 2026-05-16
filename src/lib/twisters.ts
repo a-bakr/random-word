@@ -5,31 +5,6 @@ export interface Twister {
   difficulty: 'easy' | 'medium' | 'hard' | 'very-hard';
 }
 
-export function getTwisterById(id: string): Twister | undefined {
-  return twisters.find(t => t.id === id);
-}
-
-export function allTwisterIds(): string[] {
-  return twisters.map(t => t.id);
-}
-
-// Fisher-Yates. Pure, returns a new array.
-export function shuffleAllIds(): string[] {
-  const ids = allTwisterIds();
-  for (let i = ids.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-  }
-  return ids;
-}
-
-export function getNextIdInOrder(order: string[], currentId: string | null): string {
-  if (!order.length) return '';
-  if (!currentId) return order[0];
-  const idx = order.indexOf(currentId);
-  if (idx === -1) return order[0];
-  return order[(idx + 1) % order.length];
-}
 
 export const twisters: Twister[] = [
   { id: '001', text: 'She sells seashells by the seashore. The shells she sells are seashells, I\'m sure. So if she sells shells on the seashore, I\'m sure she sells seashore shells.', sound: '/s/', difficulty: 'medium' },

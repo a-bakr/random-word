@@ -5,12 +5,13 @@ import { useLanguage } from './contexts/LanguageContext';
 import { AnimatePresence } from 'motion/react';
 
 import type { WordEntry } from './types';
-import { playPopSound, getRandomColor } from './lib/sounds';
+import { playPopSound } from './lib/sounds';
+import { shuffle, getRandomColor } from './lib/utils';
 import { track } from './lib/track';
 import { useLocalStorage, useLocalStorageBool, useLocalStorageStr } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
-import { getNextIdInOrder, twisters as englishTwisters, type Twister } from './lib/twisters';
+import { twisters as englishTwisters, type Twister } from './lib/twisters';
 import { playTwister, stopTwister, subscribeTwisterPlaying } from './lib/twisterAudio';
 import { playWarmup, stopWarmup, subscribeWarmupPlaying } from './lib/warmupAudio';
 import { useWarmup } from './hooks/useWarmup';
@@ -157,12 +158,7 @@ export default function App() {
       }
     } catch {}
     if (!order) {
-      const shuffled = [...allIds];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      order = shuffled;
+      order = shuffle(allIds);
       try { localStorage.setItem(storageKey, JSON.stringify(order)); } catch {}
     }
     setTwisterOrder(order);
@@ -214,14 +210,9 @@ export default function App() {
       const nextIdx = (currentIdx + 1) % twisterOrder.length;
       let order = twisterOrder;
       if (nextIdx === 0) {
-        const shuffled = [...twisterOrder];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        order = shuffled;
-        setTwisterOrder(shuffled);
-        try { localStorage.setItem(`twisterOrder_${lang.code}`, JSON.stringify(shuffled)); } catch {}
+        order = shuffle(twisterOrder);
+        setTwisterOrder(order);
+        try { localStorage.setItem(`twisterOrder_${lang.code}`, JSON.stringify(order)); } catch {}
       }
       const nextId = order[nextIdx];
       const next = activeTwisters.find(t => t.id === nextId);

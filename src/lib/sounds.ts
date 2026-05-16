@@ -43,12 +43,3 @@ export const playBeepSound = () => {
     osc.stop(start + 0.6);
   });
 };
-
-export const getRandomColor = (isDark: boolean) =>
-  `hsl(${Math.floor(Math.random() * 360)}, 70%, ${isDark ? 75 : 40}%)`;
-
-export const fmtDuration = (secs: number) => {
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-};

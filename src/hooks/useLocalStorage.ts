@@ -2,54 +2,32 @@
 
 import { useState, useCallback } from 'react';
 
-export function useLocalStorage(key: string, defaultValue: number): [number, (v: number) => void] {
-  const [value, setValue] = useState(() => {
-    const stored = localStorage.getItem(key);
-    return stored ? Number(stored) : defaultValue;
-  });
+function read<T>(key: string, defaultValue: T, parse: (s: string) => T): T {
+  if (typeof window === 'undefined') return defaultValue;
+  const stored = localStorage.getItem(key);
+  return stored !== null ? parse(stored) : defaultValue;
+}
 
-  const set = useCallback(
-    (v: number) => {
-      setValue(v);
-      localStorage.setItem(key, String(v));
-    },
-    [key],
-  );
+function identity(s: string): string { return s; }
+function parseBoolean(s: string): boolean { return s !== 'false'; }
 
+function useStorage<T>(key: string, defaultValue: T, parse: (s: string) => T, serialize: (v: T) => string): [T, (v: T) => void] {
+  const [value, setValue] = useState<T>(() => read(key, defaultValue, parse));
+  const set = useCallback((v: T) => {
+    setValue(v);
+    localStorage.setItem(key, serialize(v));
+  }, [key, serialize]);
   return [value, set];
+}
+
+export function useLocalStorage(key: string, defaultValue: number): [number, (v: number) => void] {
+  return useStorage(key, defaultValue, Number, String);
 }
 
 export function useLocalStorageStr(key: string, defaultValue: string): [string, (v: string) => void] {
-  const [value, setValue] = useState(() => {
-    if (typeof window === 'undefined') return defaultValue;
-    const stored = localStorage.getItem(key);
-    return stored ?? defaultValue;
-  });
-
-  const set = useCallback(
-    (v: string) => {
-      setValue(v);
-      localStorage.setItem(key, v);
-    },
-    [key],
-  );
-
-  return [value, set];
+  return useStorage(key, defaultValue, identity, identity);
 }
 
 export function useLocalStorageBool(key: string, defaultValue: boolean): [boolean, (v: boolean) => void] {
-  const [value, setValue] = useState(() => {
-    const stored = localStorage.getItem(key);
-    return stored !== null ? stored !== 'false' : defaultValue;
-  });
-
-  const set = useCallback(
-    (v: boolean) => {
-      setValue(v);
-      localStorage.setItem(key, String(v));
-    },
-    [key],
-  );
-
-  return [value, set];
+  return useStorage(key, defaultValue, parseBoolean, String);
 }
