@@ -42,7 +42,7 @@ export function TopBar({
     // dir="ltr" keeps icons in their fixed positions for every language
     <div
       dir="ltr"
-      className="absolute top-6 inset-x-0 z-20 flex justify-center pointer-events-none"
+      className="absolute top-6 inset-x-0 z-60 flex justify-center pointer-events-none"
     >
       <div
         className="flex items-center gap-1 pointer-events-auto"

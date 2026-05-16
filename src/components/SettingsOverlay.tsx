@@ -68,21 +68,26 @@ export function SettingsOverlay({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
-          className="absolute inset-0 z-50 bg-zinc-50 dark:bg-zinc-950 flex flex-col"
+          transition={{ duration: 0.2 }}
+          className="absolute inset-0 z-50 flex flex-col justify-end"
+          style={{ background: 'rgba(0,0,0,0.15)' }}
           onClick={(e) => { e.stopPropagation(); onClose(); }}
         >
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col px-8 pt-14 pb-10 max-w-lg mx-auto w-full"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col bg-zinc-50 dark:bg-zinc-950 rounded-t-3xl max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+            </div>
+            <div className="flex flex-col px-8 pt-4 pb-10 max-w-lg mx-auto w-full">
             <button
               onClick={onClose}
-              className={`absolute top-6 ${lang.direction === 'rtl' ? 'left-6' : 'right-6'} p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors`}
+              className={`absolute top-5 ${lang.direction === 'rtl' ? 'left-6' : 'right-6'} p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors`}
             >
               <X size={20} strokeWidth={1.5} />
             </button>
@@ -163,11 +168,8 @@ export function SettingsOverlay({
               </Row>
             )}
 
+            </div>
           </motion.div>
-
-          <p className="absolute bottom-6 inset-x-0 text-center text-xs text-zinc-300 dark:text-zinc-700 pointer-events-none">
-            {s.tapToClose}
-          </p>
         </motion.div>
       )}
     </AnimatePresence>
