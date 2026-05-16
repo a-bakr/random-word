@@ -5,7 +5,9 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { getAllLanguages } from '../lib/languages/registry';
 import type { LanguageCode } from '../lib/languages/registry';
 
-const NAV_IDS = [
+export type AppMode = 'words' | 'twisters' | 'warmup' | 'settings' | 'about';
+
+const NAV_ITEMS = [
   { id: 'words',    Icon: Type              },
   { id: 'twisters', Icon: Zap               },
   { id: 'warmup',   Icon: Flame             },
@@ -17,7 +19,7 @@ export function TopBar({
   mode,
   onMenuSelect,
 }: {
-  mode: 'words' | 'twisters' | 'warmup';
+  mode: AppMode;
   onMenuSelect: (id: string) => void;
 }) {
   const { lang, setLanguageCode } = useLanguage();
@@ -30,34 +32,23 @@ export function TopBar({
     setLanguageCode(next.code as LanguageCode);
   };
 
-  const NAV_ITEMS = [
-    { ...NAV_IDS[0], label: lang.labels.nav.words    },
-    { ...NAV_IDS[1], label: lang.labels.nav.twisters },
-    { ...NAV_IDS[2], label: lang.labels.nav.warmup   },
-    { ...NAV_IDS[3], label: 'Settings'               },
-    { ...NAV_IDS[4], label: 'About'                  },
-  ];
-
   return (
     // dir="ltr" keeps icons in their fixed positions for every language
     <div
       dir="ltr"
-      className="absolute top-6 inset-x-0 z-60 flex justify-center pointer-events-none"
+      className="absolute top-6 inset-x-0 z-20 flex justify-center pointer-events-none"
     >
       <div
         className="flex items-center gap-1 pointer-events-auto"
         onClick={e => e.stopPropagation()}
       >
-        {NAV_ITEMS.map(({ id, Icon, label }) => {
-          const active =
-            (id === 'words'    && mode === 'words') ||
-            (id === 'twisters' && mode === 'twisters') ||
-            (id === 'warmup'   && mode === 'warmup');
+        {NAV_ITEMS.map(({ id, Icon }) => {
+          const active = id === mode;
           return (
             <button
               key={id}
               onClick={e => { e.stopPropagation(); onMenuSelect(id); }}
-              aria-label={label}
+              aria-label={id}
               style={{ filter: 'url(#sketch)' }}
               className={`rounded-full p-3 transition-all duration-300 ${
                 active
