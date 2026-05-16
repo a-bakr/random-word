@@ -30,6 +30,7 @@ import { CoachingTips } from './components/CoachingTips';
 import { TipOverlay } from './components/TipOverlay';
 import { AboutOverlay } from './components/AboutOverlay';
 import { SettingsOverlay } from './components/SettingsOverlay';
+import { AdminOverlay } from './components/AdminOverlay';
 import { useTips } from './hooks/useTips';
 import type { Tip } from './lib/tips';
 
@@ -61,6 +62,7 @@ export default function App() {
   const [openTip, setOpenTip] = useState<Tip | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const { lang } = useLanguage();
@@ -511,7 +513,7 @@ export default function App() {
           key={warmup.index}
           exercise={warmup.exercise}
           isPlaying={isWarmupPlaying}
-          onTogglePlay={e => { e.stopPropagation(); isWarmupPlaying ? stopWarmup() : playWarmup(warmup.exercise.id); }}
+          onTogglePlay={e => { e.stopPropagation(); isWarmupPlaying ? stopWarmup() : playWarmup(warmup.exercise.audioId ?? warmup.exercise.id); }}
           hasAdvanced={warmupHasAdvanced}
         />
       )}
@@ -591,6 +593,14 @@ export default function App() {
         tipCount={tipCount}
         onTipCountChange={n => { setTipCount(n); track('setting_changed', { key: 'tipCount', value: n }); }}
         isAdmin={isAdmin}
+        onOpenDashboard={() => { setSettingsOpen(false); setAdminOpen(true); }}
+      />
+
+      <AdminOverlay
+        visible={adminOpen}
+        onClose={() => setAdminOpen(false)}
+        isAdmin={isAdmin}
+        onLoginSuccess={() => setIsAdmin(true)}
       />
     </div>
   );

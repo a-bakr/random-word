@@ -44,6 +44,7 @@ export function SettingsOverlay({
   tipCount: number;
   onTipCountChange: (n: number) => void;
   isAdmin: boolean;
+  onOpenDashboard: () => void;
 }) {
   const { lang } = useLanguage();
   const s = lang.labels.settings;
@@ -150,15 +151,14 @@ export function SettingsOverlay({
 
             {isAdmin && (
               <Row label={s.admin}>
-                <a
-                  href="/admin"
-                  onClick={e => e.stopPropagation()}
+                <button
+                  onClick={(e) => { e.stopPropagation(); onOpenDashboard(); }}
                   className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
                     text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <LayoutDashboard size={16} strokeWidth={1.5} />
                   <span className="text-sm">{s.dashboard}</span>
-                </a>
+                </button>
               </Row>
             )}
 

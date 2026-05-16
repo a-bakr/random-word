@@ -2,6 +2,7 @@ export type WarmupCategory = 'breathing' | 'physical' | 'resonance' | 'articulat
 
 export interface WarmupExercise {
   id: string;
+  audioId?: string; // if set, audio is fetched for this id instead of id
   category: WarmupCategory;
   title: string;
   instruction: string;
