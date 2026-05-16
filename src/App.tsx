@@ -63,7 +63,7 @@ export default function App() {
   const [panel, setPanel] = useState<'settings' | 'about' | 'admin' | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const mode: AppMode = panel ?? contentMode;
+  const mode: AppMode = (panel === 'admin' ? 'settings' : panel) ?? contentMode;
 
   const { lang } = useLanguage();
   const activeTwisters = lang.twisters ?? englishTwisters;
