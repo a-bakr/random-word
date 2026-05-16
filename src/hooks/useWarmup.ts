@@ -4,14 +4,7 @@ import { useEffect } from 'react';
 import { useLocalStorage, useLocalStorageStr } from './useLocalStorage';
 import { WARMUP_EXERCISES } from '../lib/warmup';
 import { useLanguage } from '../contexts/LanguageContext';
-
-function shuffle(arr: string[]): string[] {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
+import { shuffle } from '../lib/utils';
 
 export function useWarmup() {
   const { lang } = useLanguage();
@@ -24,7 +17,7 @@ export function useWarmup() {
 
   useEffect(() => {
     if (!orderStr) {
-      setOrderStr(JSON.stringify(shuffle([...allIds])));
+      setOrderStr(JSON.stringify(shuffle(allIds)));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -49,7 +42,7 @@ export function useWarmup() {
   const advance = () => {
     const nextIndex = (safeIndex + 1) % total;
     if (nextIndex === 0) {
-      setOrderStr(JSON.stringify(shuffle([...allIds])));
+      setOrderStr(JSON.stringify(shuffle(allIds)));
     }
     setOrderIndex(nextIndex);
   };
@@ -59,7 +52,7 @@ export function useWarmup() {
   };
 
   const reset = () => {
-    setOrderStr(JSON.stringify(shuffle([...allIds])));
+    setOrderStr(JSON.stringify(shuffle(allIds)));
     setOrderIndex(0);
   };
 

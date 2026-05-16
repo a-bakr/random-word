@@ -3,15 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { vocalTips, frameworkTips, archetypeTips, type Tip } from '../lib/tips';
 import { useLanguage } from '../contexts/LanguageContext';
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+import { shuffle } from '../lib/utils';
 
 function makeShuffleDeck<T>(items: T[]) {
   let deck: T[] = [];
@@ -28,7 +20,7 @@ function makeShuffleDeck<T>(items: T[]) {
 export function useTips(tipCount: number) {
   const { lang } = useLanguage();
 
-  const vocalDeck   = useRef(makeShuffleDeck(lang.tips?.vocal     ?? vocalTips));
+  const vocalDeck     = useRef(makeShuffleDeck(lang.tips?.vocal     ?? vocalTips));
   const frameworkDeck = useRef(makeShuffleDeck(lang.tips?.framework ?? frameworkTips));
   const archetypeDeck = useRef(makeShuffleDeck(lang.tips?.archetype ?? archetypeTips));
   const categoryOffsetRef = useRef(0);
@@ -45,7 +37,6 @@ export function useTips(tipCount: number) {
 
   const [activeTips, setActiveTips] = useState<Tip[]>(() => draw(tipCount, 0));
 
-  // Rebuild shuffle decks when the language changes
   useEffect(() => {
     vocalDeck.current     = makeShuffleDeck(lang.tips?.vocal     ?? vocalTips);
     frameworkDeck.current = makeShuffleDeck(lang.tips?.framework ?? frameworkTips);
