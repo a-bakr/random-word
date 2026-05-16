@@ -131,10 +131,15 @@ export default function App() {
     if (isTwisterMode && lastTwisterId) {
       const entry = activeTwisters.find(t => t.id === lastTwisterId);
       if (entry) { setTwister({ entry, key: 0 }); setHasClicked(true); }
+      else {
+        // Last twister was from a different language — pick one from current language
+        const list = activeTwisters;
+        if (list.length) { setTwister({ entry: list[Math.floor(Math.random() * list.length)], key: 0 }); setHasClicked(true); }
+      }
     } else if (!isTwisterMode && !isWarmupMode && lastWordText) {
       const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setWords([{
-        text: lastWordText,
+        text: lang.generateWord(),
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
         id: Date.now(),
