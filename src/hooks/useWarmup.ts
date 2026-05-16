@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocalStorage, useLocalStorageStr } from './useLocalStorage';
 import { WARMUP_EXERCISES } from '../lib/warmup';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -15,12 +15,16 @@ export function useWarmup() {
   const [orderIndex, setOrderIndex] = useLocalStorage('warmupOrderIndex', 0);
   const [orderStr, setOrderStr] = useLocalStorageStr('warmupOrder', '');
 
+  const prevLangRef = useRef(lang.code);
   useEffect(() => {
-    if (!orderStr) {
+    const langChanged = prevLangRef.current !== lang.code;
+    prevLangRef.current = lang.code;
+    if (!orderStr || langChanged) {
       setOrderStr(JSON.stringify(shuffle(allIds)));
+      if (langChanged) setOrderIndex(0);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [lang.code]);
 
   const order: string[] = (() => {
     if (orderStr) {

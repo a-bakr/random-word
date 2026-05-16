@@ -1475,31 +1475,31 @@ const arArchetypeTips: Tip[] = [
 
 const ARABIC_WARMUP: WarmupExercise[] = [
   // breathing
-  { id: 'ar-w001', audioId: 'w001', category: 'breathing',    title: 'التنفُّس المربَّع', instruction: 'تنفَّس ٤ عدَّات. أمسك ٤. أخرج ٤. أمسك ٤. أحسس بتوسُّع بطنك.',        example: 'واحد... اثنان... ثلاثة... أربعة...' },
-  { id: 'ar-w002', audioId: 'w002', category: 'breathing',    title: 'الزفير الصافر',    instruction: 'خذ نفساً عميقاً، ثم أخرجه ببطء على سسسس طويلة. اجعلها تدوم ١٠ ثوانٍ.', example: 'سسسسسسسسسسسس...' },
-  { id: 'ar-w003', audioId: 'w003', category: 'breathing',    title: 'الزفير المريح',    instruction: 'خذ نفساً ضخماً، ثم أخرجه على آهههه مريحة. دع كل شيء يهبط.',             example: 'آهههههههه...' },
-  { id: 'ar-w004', audioId: 'w004', category: 'breathing',    title: 'اهتزاز الشفتين',  instruction: 'أخرج الهواء عبر شفتين مرتخيتين لتحدث رفرفة. أبقِ فكَّك ناعماً.',        example: 'بررررررررر...' },
+  { id: 'ar-w001', category: 'breathing',    title: 'التنفُّس المربَّع', instruction: 'تنفَّس ٤ عدَّات. أمسك ٤. أخرج ٤. أمسك ٤. أحسس بتوسُّع بطنك.',        example: 'واحد... اثنان... ثلاثة... أربعة...' },
+  { id: 'ar-w002', category: 'breathing',    title: 'الزفير الصافر',    instruction: 'خذ نفساً عميقاً، ثم أخرجه ببطء على سسسس طويلة. اجعلها تدوم ١٠ ثوانٍ.', example: 'سسسسسسسسسسسس...' },
+  { id: 'ar-w003', category: 'breathing',    title: 'الزفير المريح',    instruction: 'خذ نفساً ضخماً، ثم أخرجه على آهههه مريحة. دع كل شيء يهبط.',             example: 'آهههههههه...' },
+  { id: 'ar-w004', category: 'breathing',    title: 'اهتزاز الشفتين',  instruction: 'أخرج الهواء عبر شفتين مرتخيتين لتحدث رفرفة. أبقِ فكَّك ناعماً.',        example: 'بررررررررر...' },
   // physical
-  { id: 'ar-w005', audioId: 'w005', category: 'physical',     title: 'تدوير الرقبة',    instruction: 'دوِّر رأسك ببطء في دائرة واسعة، اتجاهاً ثم الآخر. أحسس بالتمدُّد.' },
-  { id: 'ar-w006', audioId: 'w006', category: 'physical',     title: 'تدليك الفك',      instruction: 'ضع أطراف أصابعك على مفصل الفك ودوِّر ببطء. دع فمك ينفتح.' },
-  { id: 'ar-w007', audioId: 'w007', category: 'physical',     title: 'إخراج اللسان',    instruction: 'أخرج لسانك بأقصى ما يمكن. أمسك ٣ ثوانٍ، ثم اسحبه. كرِّر.' },
+  { id: 'ar-w005', category: 'physical',     title: 'تدوير الرقبة',    instruction: 'دوِّر رأسك ببطء في دائرة واسعة، اتجاهاً ثم الآخر. أحسس بالتمدُّد.' },
+  { id: 'ar-w006', category: 'physical',     title: 'تدليك الفك',      instruction: 'ضع أطراف أصابعك على مفصل الفك ودوِّر ببطء. دع فمك ينفتح.' },
+  { id: 'ar-w007', category: 'physical',     title: 'إخراج اللسان',    instruction: 'أخرج لسانك بأقصى ما يمكن. أمسك ٣ ثوانٍ، ثم اسحبه. كرِّر.' },
   // resonance
-  { id: 'ar-w008', audioId: 'w008', category: 'resonance',    title: 'الطنين الصدري',   instruction: 'أصدر همهمة بنبرة منخفضة مريحة. أحسس الاهتزاز في صدرك. ضع يدك هناك.',   example: 'مممممممممم...' },
-  { id: 'ar-w009', audioId: 'w009', category: 'resonance',    title: 'مـ-بَاه',          instruction: 'تناوب: همهمة طويلة مممممم، ثم انفجر في بَاه! دع الهمهمة تُطنِّن شفتيك.', example: 'مممممممم... بَاه! مممممممم... بَاه!' },
-  { id: 'ar-w010', audioId: 'w010', category: 'resonance',    title: 'تثاؤب وزفير',     instruction: 'افتح فمك بتثاؤب كبير، ثم تنهَّد نزولاً في آهههه طويلة. التثاؤب يفتح حلقك.', example: 'آهههههههه...' },
+  { id: 'ar-w008', category: 'resonance',    title: 'الطنين الصدري',   instruction: 'أصدر همهمة بنبرة منخفضة مريحة. أحسس الاهتزاز في صدرك. ضع يدك هناك.',   example: 'مممممممممم...' },
+  { id: 'ar-w009', category: 'resonance',    title: 'مـ-بَاه',          instruction: 'تناوب: همهمة طويلة مممممم، ثم انفجر في بَاه! دع الهمهمة تُطنِّن شفتيك.', example: 'مممممممم... بَاه! مممممممم... بَاه!' },
+  { id: 'ar-w010', category: 'resonance',    title: 'تثاؤب وزفير',     instruction: 'افتح فمك بتثاؤب كبير، ثم تنهَّد نزولاً في آهههه طويلة. التثاؤب يفتح حلقك.', example: 'آهههههههه...' },
   // articulation
-  { id: 'ar-w011', audioId: 'w011', category: 'articulation', title: 'فقاعات الشفتين',  instruction: 'أخرج هواء عبر شفتيك في بررررر طويل فقاعي. أبقِ رقبتك مرتخية.',          example: 'بررررررررر...' },
-  { id: 'ar-w012', audioId: 'w012', category: 'articulation', title: 'بَ-دَ-غَ',         instruction: 'كرِّر بَ-دَ-غَ، بَ-دَ-غَ ببطء، ثم أسرع وأسرع. أحسس كل حرف يتفجَّر.',   example: 'بَ-دَ-غَ، بَ-دَ-غَ، بَ-دَ-غَ!' },
-  { id: 'ar-w013', audioId: 'w013', category: 'articulation', title: 'كَيَّاك كَايِك',  instruction: 'قُل ببطء: كَيَّاك كَايِك. سرِّع. كَيَّاك كَايِك كَيَّاك. هيا!',        example: 'كَيَّاك كَايِك، كَيَّاك كَايِك!' },
-  { id: 'ar-w014', audioId: 'w014', category: 'articulation', title: 'لَا لَا لَا',      instruction: 'حرِّك لسانك بسرعة على لَا-لَا-لَا-لَا. أبقِ فكَّك ثابتاً ولسانك مرتخياً.', example: 'لَا-لَا-لَا-لَا-لَا!' },
+  { id: 'ar-w011', category: 'articulation', title: 'فقاعات الشفتين',  instruction: 'أخرج هواء عبر شفتيك في بررررر طويل فقاعي. أبقِ رقبتك مرتخية.',          example: 'بررررررررر...' },
+  { id: 'ar-w012', category: 'articulation', title: 'بَ-دَ-غَ',         instruction: 'كرِّر بَ-دَ-غَ، بَ-دَ-غَ ببطء، ثم أسرع وأسرع. أحسس كل حرف يتفجَّر.',   example: 'بَ-دَ-غَ، بَ-دَ-غَ، بَ-دَ-غَ!' },
+  { id: 'ar-w013', category: 'articulation', title: 'كَيَّاك كَايِك',  instruction: 'قُل ببطء: كَيَّاك كَايِك. سرِّع. كَيَّاك كَايِك كَيَّاك. هيا!',        example: 'كَيَّاك كَايِك، كَيَّاك كَايِك!' },
+  { id: 'ar-w014', category: 'articulation', title: 'لَا لَا لَا',      instruction: 'حرِّك لسانك بسرعة على لَا-لَا-لَا-لَا. أبقِ فكَّك ثابتاً ولسانك مرتخياً.', example: 'لَا-لَا-لَا-لَا-لَا!' },
   // pitch
-  { id: 'ar-w015', audioId: 'w015', category: 'pitch',        title: 'صافرة الصوت',     instruction: 'أنزلق بصوتك من أدنى نبرة لديك إلى أعلاها. كالصافرة.',                    example: 'مم ↑↑↑ مم ↓↓↓' },
-  { id: 'ar-w016', audioId: 'w016', category: 'pitch',        title: 'خمس درجات',       instruction: 'غنِّ مَا-مِي-مُو-مَا-مُو صعوداً بخمس درجات، ثم نزولاً. ارفع حنكك الناعم.', example: 'مَا-مِي-مُو-مَا-مُو' },
-  { id: 'ar-w017', audioId: 'w017', category: 'pitch',        title: 'قفزة الأوكتاف',   instruction: 'اختر نبرة مريحة. اقفز أوكتاف أعلى. ثم عُد. تناوب بانسيابية.' },
+  { id: 'ar-w015', category: 'pitch',        title: 'صافرة الصوت',     instruction: 'أنزلق بصوتك من أدنى نبرة لديك إلى أعلاها. كالصافرة.',                    example: 'مم ↑↑↑ مم ↓↓↓' },
+  { id: 'ar-w016', category: 'pitch',        title: 'خمس درجات',       instruction: 'غنِّ مَا-مِي-مُو-مَا-مُو صعوداً بخمس درجات، ثم نزولاً. ارفع حنكك الناعم.', example: 'مَا-مِي-مُو-مَا-مُو' },
+  { id: 'ar-w017', category: 'pitch',        title: 'قفزة الأوكتاف',   instruction: 'اختر نبرة مريحة. اقفز أوكتاف أعلى. ثم عُد. تناوب بانسيابية.' },
   // projection
-  { id: 'ar-w018', audioId: 'w018', category: 'projection',   title: 'هَا هَا هَا',      instruction: 'قُل هَا من بطنك لا من حلقك. قصيرة، حادة، قوية. هَا! هَا! هَا! مجدداً!', example: 'هَا! هَا! هَا!' },
-  { id: 'ar-w019', audioId: 'w019', category: 'projection',   title: 'عُدَّ عبر الغرفة', instruction: 'عُدَّ من واحد إلى عشرة وكأنك تنادي شخصاً في غرفة واسعة. أوصله إليه!',   example: 'وَاحِد! اثْنَان! ثَلَاثَة!' },
-  { id: 'ar-w020', audioId: 'w020', category: 'projection',   title: 'صَبَاح الخَيْر',   instruction: 'قُل تحية الصباح برنين ونية. صَبَاح الخَيْر! امتلك الغرفة! أعِدها!',      example: 'صَبَاح الخَيْر!' },
+  { id: 'ar-w018', category: 'projection',   title: 'هَا هَا هَا',      instruction: 'قُل هَا من بطنك لا من حلقك. قصيرة، حادة، قوية. هَا! هَا! هَا! مجدداً!', example: 'هَا! هَا! هَا!' },
+  { id: 'ar-w019', category: 'projection',   title: 'عُدَّ عبر الغرفة', instruction: 'عُدَّ من واحد إلى عشرة وكأنك تنادي شخصاً في غرفة واسعة. أوصله إليه!',   example: 'وَاحِد! اثْنَان! ثَلَاثَة!' },
+  { id: 'ar-w020', category: 'projection',   title: 'صَبَاح الخَيْر',   instruction: 'قُل تحية الصباح برنين ونية. صَبَاح الخَيْر! امتلك الغرفة! أعِدها!',      example: 'صَبَاح الخَيْر!' },
 ];
 
 // ─── Registration ─────────────────────────────────────────────────────────────
