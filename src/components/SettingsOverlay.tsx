@@ -30,6 +30,7 @@ export function SettingsOverlay({
   tipCount,
   onTipCountChange,
   isAdmin,
+  onOpenDashboard,
 }: {
   visible: boolean;
   onClose: () => void;
