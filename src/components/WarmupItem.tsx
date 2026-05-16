@@ -387,6 +387,12 @@ function Fig_w020() {
   );
 }
 
+// Strips a language prefix (e.g. 'ar-w001' → 'w001') so Arabic exercises
+// reuse the same SVG figures as their English counterparts.
+function baseFigureId(id: string): string {
+  return id.replace(/^[a-z]{2}-/, '');
+}
+
 const EXERCISE_FIGURES: Record<string, React.ReactNode> = {
   w001: <Fig_w001 />,
   w002: <Fig_w002 />,
@@ -443,7 +449,7 @@ export function WarmupItem({
       className="absolute inset-0 flex flex-col items-center justify-center gap-5 pointer-events-none select-none px-8"
     >
       <div className="opacity-75">
-        {EXERCISE_FIGURES[exercise.id]}
+        {EXERCISE_FIGURES[baseFigureId(exercise.id)]}
       </div>
 
       <span className={`text-xs font-mono tracking-[0.18em] border rounded-full px-3 py-1 ${style.color} ${style.border}`}>
@@ -457,6 +463,12 @@ export function WarmupItem({
       <p className="text-base text-zinc-500 dark:text-zinc-400 text-center max-w-xs leading-relaxed">
         {exercise.instruction}
       </p>
+
+      {exercise.example && (
+        <p className="text-sm font-mono text-zinc-400 dark:text-zinc-500 text-center max-w-xs">
+          {exercise.example}
+        </p>
+      )}
 
       <button
         onClick={onTogglePlay}

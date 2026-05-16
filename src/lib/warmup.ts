@@ -5,6 +5,7 @@ export interface WarmupExercise {
   category: WarmupCategory;
   title: string;
   instruction: string;
+  example?: string;
 }
 
 export const WARMUP_EXERCISES: WarmupExercise[] = [
