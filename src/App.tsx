@@ -33,6 +33,10 @@ import { AboutScreen } from './components/AboutScreen';
 import { AdminScreen } from './components/AdminScreen';
 import { useTips } from './hooks/useTips';
 import type { Tip } from './lib/tips';
+import { useAchievements } from './hooks/useAchievements';
+import { AchievementToast } from './components/AchievementToast';
+import { AchievementBadge } from './components/AchievementBadge';
+import { AchievementsPanel } from './components/AchievementsPanel';
 
 export default function App() {
   const [words, setWords] = useState<WordEntry[]>([]);
@@ -61,6 +65,7 @@ export default function App() {
   const [warmupHasAdvanced, setWarmupHasAdvanced] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
   const [panel, setPanel] = useState<'settings' | 'about' | 'admin' | null>(null);
+  const [showAchievements, setShowAchievements] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const mode: AppMode = (panel === 'admin' ? 'settings' : panel) ?? contentMode;
@@ -69,6 +74,7 @@ export default function App() {
   const activeTwisters = lang.twisters ?? englishTwisters;
   const { activeTips, rotateTips } = useTips(tipCount);
   const warmup = useWarmup();
+  const achievements = useAchievements();
 
   const voice = useVoiceRecognition(lang.speechRecognitionCode);
   const rec = useRecordings();
@@ -198,6 +204,7 @@ export default function App() {
 
   const doGenerate = (x = window.innerWidth / 2, y = window.innerHeight / 2) => {
     if (panel !== null) return;
+    if (showAchievements) return;
     if (openTip) { setOpenTip(null); return; }
     if (!hasClicked) {
       setHasClicked(true);
@@ -205,7 +212,10 @@ export default function App() {
     }
 
     if (contentMode === 'warmup') {
+      const isLastExercise = warmup.index === warmup.total - 1;
       warmup.advance();
+      achievements.increment('warmupExercises');
+      if (isLastExercise) achievements.increment('fullWarmups');
       stopWarmup();
       setWarmupHasAdvanced(true);
       if (isSoundEnabled) playPopSound();
@@ -234,6 +244,7 @@ export default function App() {
       if (!next) return;
       track('twister_generated', { id: next.id });
       countersRef.current.twisters++;
+      achievements.increment('twisters');
       setLastTwisterId(next.id);
       setTwister({ entry: next, key: Date.now() });
       playTwister(next.id);
@@ -268,6 +279,7 @@ export default function App() {
     setLastWordText(word);
     track('word_generated', { word });
     countersRef.current.words++;
+    achievements.increment('words');
     rotateTips();
     const displayStart = Math.max(0, updatedHistory.length - maxWords);
     setWords(updatedHistory.slice(displayStart));
@@ -412,6 +424,7 @@ export default function App() {
     const duration_ms = Date.now() - recordingStartRef.current;
     track('recording_stopped', { duration_ms });
     countersRef.current.recordings++;
+    achievements.increment('recordings');
     await voice.stop();
     mediaRecorderRef.current?.stop();
     isRecordingRef.current = false;
@@ -531,6 +544,7 @@ export default function App() {
         >
           <span className="text-base font-semibold leading-none select-none">a</span>
         </button>
+        <AchievementBadge earned={achievements.earned} onClick={() => setShowAchievements(true)} />
         <button
           onClick={e => { e.stopPropagation(); onFontSizeChange(Math.min(160, fontSize + 4)); }}
           className="rounded-full px-3 py-2 text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors duration-300"
@@ -540,6 +554,12 @@ export default function App() {
           <span className="text-2xl font-semibold leading-none select-none">A</span>
         </button>
       </div>}
+
+      {panel === null && contentMode === 'warmup' && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20" onClick={e => e.stopPropagation()}>
+          <AchievementBadge earned={achievements.earned} onClick={() => setShowAchievements(true)} />
+        </div>
+      )}
 
       <AnimatePresence>
         {panel === null && !openTip && contentMode === 'words' && words.map(word => (
@@ -597,7 +617,7 @@ export default function App() {
 
       <CoachingTips
         tips={activeTips}
-        onTipClick={setOpenTip}
+        onTipClick={tip => { setOpenTip(tip); achievements.addTipViewed(tip.label); }}
         visible={panel === null && words.length > 0 && contentMode === 'words' && !openTip}
         wordX={centeredWord || !words.at(-1) ? window.innerWidth / 2 : words.at(-1)!.x}
         wordY={centeredWord || !words.at(-1) ? window.innerHeight / 2 : words.at(-1)!.y}
@@ -648,6 +668,14 @@ export default function App() {
           onLogout={() => setPanel('settings')}
         />
       )}
+
+      <AchievementToast achievements={achievements.newlyUnlocked} onDismiss={achievements.dismissUnlocked} />
+
+      <AnimatePresence>
+        {showAchievements && (
+          <AchievementsPanel earned={achievements.earned} onClose={() => setShowAchievements(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
