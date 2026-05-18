@@ -308,9 +308,7 @@ export default function App() {
 
   const handleScreenClick = (e: React.MouseEvent) => {
     if (holdFiredRef.current) { holdFiredRef.current = false; return; }
-    const isRightSide = e.clientX > window.innerWidth / 2;
-    if (isRightSide) doGenerate(e.clientX, e.clientY);
-    else doGoBack();
+    doGenerate(e.clientX, e.clientY);
   };
 
   const replayTwister = (e: React.MouseEvent) => {
