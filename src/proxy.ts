@@ -13,12 +13,12 @@ export async function proxy(request: NextRequest) {
 
   const { response, user } = await getSession(request);
 
-  // Admin area: must be signed in as the admin email (Supabase Auth / Google).
-  if (isAdminPath && !isAdminEmail(user?.email)) {
-    if (pathname.startsWith('/api/admin')) {
-      return new NextResponse('Forbidden', { status: 403 });
-    }
-    return NextResponse.redirect(new URL('/', request.url));
+  // Admin API is the real security boundary: gate it by the admin email.
+  // The /admin *page* always renders — it self-gates client-side (showing the
+  // Google sign-in screen to signed-out / non-admin visitors), so it is not
+  // redirected here; otherwise signed-out admins could never reach sign-in.
+  if (pathname.startsWith('/api/admin') && !isAdminEmail(user?.email)) {
+    return new NextResponse('Forbidden', { status: 403 });
   }
 
   return response;

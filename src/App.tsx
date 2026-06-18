@@ -31,7 +31,6 @@ import { CoachingTips } from './components/CoachingTips';
 import { TipOverlay } from './components/TipOverlay';
 import { SettingsScreen } from './components/SettingsScreen';
 import { AboutScreen } from './components/AboutScreen';
-import { AdminScreen } from './components/AdminScreen';
 import { isAdminEmail } from './lib/admin';
 import { useTips } from './hooks/useTips';
 import type { Tip } from './lib/tips';
@@ -62,9 +61,9 @@ export default function App() {
   const [isWarmupPlaying, setIsWarmupPlaying] = useState(false);
   const [warmupHasAdvanced, setWarmupHasAdvanced] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
-  const [panel, setPanel] = useState<'settings' | 'about' | 'admin' | null>(null);
+  const [panel, setPanel] = useState<'settings' | 'about' | null>(null);
 
-  const mode: AppMode = (panel === 'admin' ? 'settings' : panel) ?? contentMode;
+  const mode: AppMode = panel ?? contentMode;
 
   const { lang } = useLanguage();
   const auth = useSupabaseUser();
@@ -100,7 +99,6 @@ export default function App() {
 
   useEffect(() => {
     setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if (new URLSearchParams(window.location.search).get('admin') === '1') setPanel('admin');
 
     const sendEnd = () => {
       if (sessionEndedRef.current) return;
@@ -659,7 +657,7 @@ export default function App() {
           tipCount={tipCount}
           onTipCountChange={n => { setTipCount(n); track('setting_changed', { key: 'tipCount', value: n }); }}
           isAdmin={isAdmin}
-          onOpenDashboard={() => setPanel('admin')}
+          onOpenDashboard={() => { window.location.href = '/admin'; }}
           account={{
             isRegistered: auth.isRegistered,
             email: auth.user?.email,
@@ -670,15 +668,6 @@ export default function App() {
       )}
 
       {panel === 'about' && <AboutScreen />}
-
-      {panel === 'admin' && (
-        <AdminScreen
-          isAdmin={isAdmin}
-          onSignIn={auth.signInGoogle}
-          onSignOut={auth.signOut}
-          onClose={() => setPanel(null)}
-        />
-      )}
     </div>
   );
 }
