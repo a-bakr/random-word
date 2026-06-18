@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   const window = req.nextUrl.searchParams.get('window') ?? '7d';
   const interval = intervalFor(window);
 
+  try {
   const [totals, list] = await Promise.all([
     sql`
       SELECT
@@ -64,4 +65,8 @@ export async function GET(req: NextRequest) {
     returning: users.filter(u => u.returning).length,
     users,
   });
+  } catch (err) {
+    console.error('[admin/users] query failed:', err);
+    return Response.json({ error: 'query_failed' }, { status: 500 });
+  }
 }

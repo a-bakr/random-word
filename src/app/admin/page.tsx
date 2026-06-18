@@ -26,17 +26,6 @@ export default function AdminPage() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // The main app hides body overflow (single-screen tap UI); the dashboard scrolls.
-  useEffect(() => {
-    const { overflow, height } = document.body.style;
-    document.body.style.overflow = 'auto';
-    document.body.style.height = 'auto';
-    return () => {
-      document.body.style.overflow = overflow;
-      document.body.style.height = height;
-    };
-  }, []);
-
   const signIn = () => {
     createClient().auth.signInWithOAuth({
       provider: 'google',
@@ -50,13 +39,18 @@ export default function AdminPage() {
 
   const cls = `${geist.variable} ${geistMono.variable}`;
 
+  // The app's globals.css pins html/body to overflow:hidden (single-screen tap
+  // UI). The dashboard is a tall page, so it owns its own full-height scroll
+  // container rather than fighting the global styles.
+  const scroller: React.CSSProperties = { height: '100dvh', overflowY: 'auto', overflowX: 'hidden' };
+
   // Avoid flashing the sign-in screen to an admin before the session resolves.
   if (!ready) {
-    return <div className={cls} style={{ minHeight: '100vh', background: '#09090b' }} />;
+    return <div className={cls} style={{ ...scroller, background: '#09090b' }} />;
   }
 
   return (
-    <div className={cls} style={{ minHeight: '100vh' }}>
+    <div className={cls} style={scroller}>
       <Dashboard
         isAdmin={isAdminEmail(user?.email)}
         signIn={signIn}

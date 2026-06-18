@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   const window = req.nextUrl.searchParams.get('window') ?? '7d';
   const interval = intervalFor(window);
 
+  try {
   const [funnel, byMode, byLang, depth] = await Promise.all([
     // Conversion funnel over distinct sessions: visit -> practice -> record.
     sql`
@@ -61,4 +62,8 @@ export async function GET(req: NextRequest) {
     by_language: byLang.map(r => ({ language: r.lang as string, n: Number(r.n) })),
     avg_events_per_session: Number(depth[0]?.avg_events ?? 0),
   });
+  } catch (err) {
+    console.error('[admin/funnels] query failed:', err);
+    return Response.json({ error: 'query_failed' }, { status: 500 });
+  }
 }

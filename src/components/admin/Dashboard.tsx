@@ -366,6 +366,7 @@ export function Dashboard({
   // ---------- signed-in ----------
   return (
     <div style={root}>
+      <div style={centerWrap}>
       <header style={headerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)' }} />
@@ -402,7 +403,7 @@ export function Dashboard({
         </button>
       </header>
 
-      <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', alignItems: 'flex-start', flex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', alignItems: 'stretch', flex: 1 }}>
         {/* nav */}
         {narrow ? (
           <nav style={topNavStyle}>
@@ -421,32 +422,29 @@ export function Dashboard({
           </nav>
         ) : (
           <nav style={sideNavStyle}>
-            {navDef.map(item => {
-              const active = section === item.k;
-              return (
-                <button
-                  key={item.k}
-                  onClick={() => { setSection(item.k); setSelectedUser(null); }}
-                  style={sideNavBtn(active)}
-                >
-                  <span>{item.label}</span>
-                  {item.count ? (
-                    <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--faint)' }}>
-                      {item.count}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-            <div style={navMetaStyle}>
-              <div>window · {win}</div>
-              <div>auto-refresh · 30s</div>
-              <div>tz · device local</div>
+            <div style={{ position: 'sticky', top: 53 }}>
+              {navDef.map(item => {
+                const active = section === item.k;
+                return (
+                  <button
+                    key={item.k}
+                    onClick={() => { setSection(item.k); setSelectedUser(null); }}
+                    style={sideNavBtn(active)}
+                  >
+                    <span>{item.label}</span>
+                    {item.count ? (
+                      <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--faint)' }}>
+                        {item.count}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
             </div>
           </nav>
         )}
 
-        <main style={{ flex: 1, minWidth: 0, width: '100%', padding: narrow ? '18px 16px 64px' : '24px 28px 72px', maxWidth: 1320 }}>
+        <main style={{ flex: 1, minWidth: 0, width: '100%', padding: narrow ? '18px 16px 64px' : '24px 28px 72px' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 18 }}>
             <h2 style={{ fontSize: 17, fontWeight: 600, letterSpacing: '-.01em', margin: 0 }}>
               {titleMap[section]}
@@ -497,8 +495,8 @@ export function Dashboard({
                 />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: narrow ? 'column' : 'row', gap: 14, marginBottom: 14, alignItems: 'stretch' }}>
-                <div style={{ ...panel, flex: 2, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: narrow ? '1fr' : 'repeat(3,1fr)', gap: 14, marginBottom: 14 }}>
+                <div style={{ ...panel, gridColumn: narrow ? 'auto' : 'span 2', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap', marginBottom: 8 }}>
                     <div>
                       <span style={kicker}>activity over time</span>
@@ -544,7 +542,7 @@ export function Dashboard({
                   </div>
                 </div>
 
-                <div style={{ ...panel, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ ...panel, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <span style={kicker}>live feed</span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--faint)' }}>
@@ -761,6 +759,7 @@ export function Dashboard({
           )}
         </main>
       </div>
+      </div>
     </div>
   );
 }
@@ -852,14 +851,20 @@ const liveStyle: CSSProperties = {
   fontSize: 11,
   color: 'var(--dim)',
 };
+const centerWrap: CSSProperties = {
+  width: '100%',
+  maxWidth: 1320,
+  margin: '0 auto',
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+};
 const sideNavStyle: CSSProperties = {
   width: 206,
   flex: 'none',
   borderRight: '1px solid var(--border)',
   padding: '18px 14px',
-  position: 'sticky',
-  top: 53,
-  alignSelf: 'flex-start',
+  alignSelf: 'stretch',
 };
 const topNavStyle: CSSProperties = {
   display: 'flex',
@@ -868,15 +873,6 @@ const topNavStyle: CSSProperties = {
   padding: '10px 12px',
   borderBottom: '1px solid var(--border)',
   overflowX: 'auto',
-};
-const navMetaStyle: CSSProperties = {
-  marginTop: 22,
-  paddingTop: 16,
-  borderTop: '1px solid var(--border)',
-  fontFamily: 'var(--mono)',
-  fontSize: 10,
-  lineHeight: 1.8,
-  color: 'var(--faint)',
 };
 const textBtn: CSSProperties = {
   fontFamily: 'var(--mono)',
