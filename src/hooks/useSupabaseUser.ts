@@ -54,12 +54,25 @@ export function useSupabaseUser() {
   /** Upgrade/link the user via Google OAuth. */
   const linkGoogle = useCallback(async () => {
     const supabase = createClient();
-    return supabase.auth.linkIdentity({
+    const redirectTo =
+      typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined;
+
+    // Preferred path: upgrade the anonymous user in place (preserves history).
+    // Requires "Manual linking" enabled in Supabase; if it isn't, this returns an
+    // error and does NOT redirect — so fall back to a plain OAuth sign-in.
+    try {
+      const linked = await supabase.auth.linkIdentity({
+        provider: 'google',
+        options: { redirectTo },
+      });
+      if (!linked.error) return linked;
+    } catch {
+      // fall through to plain OAuth sign-in
+    }
+
+    return supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo:
-          typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
-      },
+      options: { redirectTo },
     });
   }, []);
 

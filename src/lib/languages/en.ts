@@ -40,6 +40,7 @@ registerLanguage({
     },
     about: {
       createdBy: 'created by',
+      appName: 'Faseeh',
       bioSubtitle: 'AI Engineer · Cairo, Egypt',
       appTagline: 'Practice how you speak, one word at a time.',
       appDescription: "Coaching tips inspired by Vinh Giang's STAGE Academy — vocal foundations, storytelling frameworks, and speaking archetypes woven into your daily practice.",

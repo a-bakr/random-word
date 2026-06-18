@@ -1583,6 +1583,7 @@ registerLanguage({
     },
     about: {
       createdBy: 'من تصميم',
+      appName: 'Faseeh',
       bioSubtitle: 'مهندس ذكاء اصطناعي · القاهرة، مصر',
       appTagline: 'تدرَّب على طريقة حديثك، كلمةً كلمة.',
       appDescription: 'نصائح تدريبية مستوحاة من أكاديمية STAGE لـ Vinh Giang — أسس الصوت وأطر السرد وأساليب الخطابة مندمجة في ممارستك اليومية.',

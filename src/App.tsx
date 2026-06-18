@@ -663,7 +663,6 @@ export default function App() {
           account={{
             isRegistered: auth.isRegistered,
             email: auth.user?.email,
-            onLinkEmail: auth.linkEmail,
             onLinkGoogle: auth.linkGoogle,
             onSignOut: auth.signOut,
           }}

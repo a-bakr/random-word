@@ -10,7 +10,6 @@ const TIP_COUNTS = [0, 1, 2, 3];
 export interface AccountProps {
   isRegistered: boolean;
   email?: string | null;
-  onLinkEmail: (email: string) => Promise<unknown>;
   onLinkGoogle: () => void;
   onSignOut: () => void;
 }
@@ -24,11 +23,20 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="w-4 h-4" aria-hidden="true">
+      <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z" />
+      <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z" />
+      <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z" />
+      <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z" />
+    </svg>
+  );
+}
+
 function AccountSection({ account }: { account: AccountProps }) {
   const { lang } = useLanguage();
   const a = lang.labels.account;
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
 
   if (account.isRegistered) {
     return (
@@ -52,45 +60,14 @@ function AccountSection({ account }: { account: AccountProps }) {
     <div className="py-4 border-b border-zinc-100 dark:border-zinc-900">
       <p className="text-base text-zinc-600 dark:text-zinc-400">{a.syncCta}</p>
       <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1 mb-3">{a.syncDescription}</p>
-      {sent ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{a.checkEmail}</p>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <form
-            onSubmit={async e => {
-              e.preventDefault();
-              if (!email) return;
-              await account.onLinkEmail(email);
-              setSent(true);
-            }}
-            className="flex gap-2"
-          >
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder={a.emailPlaceholder}
-              className="flex-1 px-3 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900 text-sm
-                text-zinc-700 dark:text-zinc-300 outline-none"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-full bg-zinc-900 dark:bg-zinc-100 text-sm
-                text-zinc-50 dark:text-zinc-900 hover:opacity-90 transition-opacity whitespace-nowrap"
-            >
-              {a.continueWithEmail}
-            </button>
-          </form>
-          <button
-            onClick={account.onLinkGoogle}
-            className="px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900 text-sm
-              text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-          >
-            {a.continueWithGoogle}
-          </button>
-        </div>
-      )}
+      <button
+        onClick={account.onLinkGoogle}
+        className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900 text-sm
+          text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+      >
+        <GoogleIcon />
+        {a.continueWithGoogle}
+      </button>
     </div>
   );
 }

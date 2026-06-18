@@ -73,7 +73,7 @@ export function AboutOverlay({
               </svg>
 
               <p className="text-2xl text-zinc-500 dark:text-zinc-400 leading-snug max-w-sm mb-6">
-                Random Word
+                {a.appName}
               </p>
               <p className="text-lg text-zinc-400 dark:text-zinc-600 leading-relaxed max-w-sm mb-4 italic">
                 {a.appTagline}

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Random Word',
+  title: 'Faseeh',
   icons: {
     icon: '/favicon.svg',
   },

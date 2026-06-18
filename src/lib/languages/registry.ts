@@ -39,6 +39,7 @@ export interface LanguageLabels {
   };
   about: {
     createdBy: string;
+    appName: string;
     bioSubtitle: string;
     appTagline: string;
     appDescription: string;
