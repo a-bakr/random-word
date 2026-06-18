@@ -160,9 +160,9 @@ Supabase Postgres. Raw-SQL analytics queries use the `postgres` (porsager) drive
 `sessions`, `daily_stats`; RLS is enabled on all (analytics tables have no client-facing
 policies). Schema lives in **Supabase CLI migrations** under `supabase/migrations/` — apply
 with `supabase db push` (or paste into the dashboard SQL editor). Add a new migration with
-`supabase migration new <name>` rather than editing existing files. The legacy Neon
-migrations under `sql/` are historical only. **Anonymous sign-ins must be enabled** in the
-Supabase dashboard (Authentication → Providers), and Google OAuth configured if used.
+`supabase migration new <name>` rather than editing existing files. **Anonymous sign-ins
+must be enabled** in the Supabase dashboard (Authentication → Providers), and Google OAuth
+configured if used.
 
 ## Environment variables
 
