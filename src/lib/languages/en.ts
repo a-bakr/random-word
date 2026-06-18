@@ -46,6 +46,18 @@ registerLanguage({
       bioText: "Architect turned AI Engineer. Currently building AIDA — an enterprise multi-agent platform serving 10,000+ engineers at one of the world's largest consultancies.",
       tapToClose: 'tap anywhere to close',
     },
+    account: {
+      title: 'Account',
+      syncCta: 'Sign in to sync your progress',
+      syncDescription: 'Keep your history across devices. Optional — your practice works without it.',
+      emailPlaceholder: 'you@example.com',
+      continueWithEmail: 'Continue with email',
+      continueWithGoogle: 'Continue with Google',
+      checkEmail: 'Check your inbox to confirm.',
+      signedInAs: 'Signed in as',
+      guest: 'Guest',
+      signOut: 'Sign out',
+    },
     warmup: {
       tapToContinue: 'tap anywhere to continue →',
       resetExercise: 'Reset to first exercise',

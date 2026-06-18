@@ -1,7 +1,17 @@
 'use client';
 
 let _sid: string | null = null;
-let _uid: string | null = null;
+
+// Identity/context supplied by the app layer (auth hook + language context)
+// rather than a standalone localStorage UUID. user_id is the Supabase auth
+// user id (anonymous or registered).
+let _userId: string | null = null;
+let _language: string | null = null;
+
+export function setTrackContext(ctx: { userId?: string | null; language?: string | null }): void {
+  if ('userId' in ctx) _userId = ctx.userId ?? null;
+  if ('language' in ctx) _language = ctx.language ?? null;
+}
 
 function sid(): string {
   if (_sid) return _sid;
@@ -12,20 +22,6 @@ function sid(): string {
     _sid = crypto.randomUUID();
   }
   return _sid;
-}
-
-function uid(): string {
-  if (_uid) return _uid;
-  try {
-    _uid = localStorage.getItem('_uid');
-    if (!_uid) {
-      _uid = crypto.randomUUID();
-      localStorage.setItem('_uid', _uid);
-    }
-  } catch {
-    _uid = crypto.randomUUID();
-  }
-  return _uid;
 }
 
 function utmProps() {
@@ -53,7 +49,8 @@ export function track(name: string, props: Record<string, unknown> = {}): void {
     body: JSON.stringify({
       name,
       session_id: sid(),
-      user_id: uid(),
+      user_id: _userId,
+      language: _language,
       path: window.location.pathname,
       referrer: referrerDomain(),
       props,

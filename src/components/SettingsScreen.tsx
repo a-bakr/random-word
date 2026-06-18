@@ -1,16 +1,96 @@
 'use client';
 
+import { useState } from 'react';
 import { Volume2, VolumeX, Moon, Sun, LayoutDashboard } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const MAX_WORDS  = [1, 2, 3, 5, 10];
 const TIP_COUNTS = [0, 1, 2, 3];
 
+export interface AccountProps {
+  isRegistered: boolean;
+  email?: string | null;
+  onLinkEmail: (email: string) => Promise<unknown>;
+  onLinkGoogle: () => void;
+  onSignOut: () => void;
+}
+
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between py-4 border-b border-zinc-100 dark:border-zinc-900">
       <span className="text-base text-zinc-600 dark:text-zinc-400">{label}</span>
       {children}
+    </div>
+  );
+}
+
+function AccountSection({ account }: { account: AccountProps }) {
+  const { lang } = useLanguage();
+  const a = lang.labels.account;
+  const [email, setEmail] = useState('');
+  const [sent, setSent] = useState(false);
+
+  if (account.isRegistered) {
+    return (
+      <Row label={a.signedInAs}>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate max-w-[12rem]">
+            {account.email}
+          </span>
+          <button
+            onClick={account.onSignOut}
+            className="text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors underline underline-offset-2"
+          >
+            {a.signOut}
+          </button>
+        </div>
+      </Row>
+    );
+  }
+
+  return (
+    <div className="py-4 border-b border-zinc-100 dark:border-zinc-900">
+      <p className="text-base text-zinc-600 dark:text-zinc-400">{a.syncCta}</p>
+      <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1 mb-3">{a.syncDescription}</p>
+      {sent ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{a.checkEmail}</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <form
+            onSubmit={async e => {
+              e.preventDefault();
+              if (!email) return;
+              await account.onLinkEmail(email);
+              setSent(true);
+            }}
+            className="flex gap-2"
+          >
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder={a.emailPlaceholder}
+              className="flex-1 px-3 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900 text-sm
+                text-zinc-700 dark:text-zinc-300 outline-none"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-full bg-zinc-900 dark:bg-zinc-100 text-sm
+                text-zinc-50 dark:text-zinc-900 hover:opacity-90 transition-opacity whitespace-nowrap"
+            >
+              {a.continueWithEmail}
+            </button>
+          </form>
+          <button
+            onClick={account.onLinkGoogle}
+            className="px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900 text-sm
+              text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+          >
+            {a.continueWithGoogle}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -28,6 +108,7 @@ export function SettingsScreen({
   onTipCountChange,
   isAdmin,
   onOpenDashboard,
+  account,
 }: {
   isDark: boolean;
   onThemeToggle: () => void;
@@ -41,6 +122,7 @@ export function SettingsScreen({
   onTipCountChange: (n: number) => void;
   isAdmin: boolean;
   onOpenDashboard: () => void;
+  account: AccountProps;
 }) {
   const { lang } = useLanguage();
   const s = lang.labels.settings;
@@ -124,6 +206,8 @@ export function SettingsScreen({
             <span className="text-xs text-zinc-400">{s.tapToCycle}</span>
           </button>
         </Row>
+
+        <AccountSection account={account} />
 
         {isAdmin && (
           <Row label={s.admin}>

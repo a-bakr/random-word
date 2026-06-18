@@ -13,7 +13,10 @@ export async function GET(req: NextRequest) {
   const window = req.nextUrl.searchParams.get('window') ?? '7d';
   const interval = intervalFor(window);
 
-  const [now, today, period, usersToday, usersPeriod, events, countries, referrers] = await Promise.all([
+  const [
+    now, today, period, usersToday, usersPeriod,
+    events, countries, referrers, devices, browsers, oses, utmSources,
+  ] = await Promise.all([
     sql`SELECT count(distinct session_id) AS n FROM events WHERE ts > now() - INTERVAL '5 minutes'`,
     sql`SELECT count(distinct session_id) AS n FROM events WHERE ts >= current_date`,
     sql`SELECT count(distinct session_id) AS n FROM events WHERE ts > now() - ${interval}::interval`,
@@ -34,6 +37,26 @@ export async function GET(req: NextRequest) {
       WHERE ts > now() - ${interval}::interval AND referrer IS NOT NULL
       GROUP BY referrer ORDER BY n DESC LIMIT 8
     `,
+    sql`
+      SELECT device, count(distinct session_id) AS n FROM events
+      WHERE ts > now() - ${interval}::interval AND device IS NOT NULL
+      GROUP BY device ORDER BY n DESC
+    `,
+    sql`
+      SELECT browser, count(distinct session_id) AS n FROM events
+      WHERE ts > now() - ${interval}::interval AND browser IS NOT NULL
+      GROUP BY browser ORDER BY n DESC LIMIT 8
+    `,
+    sql`
+      SELECT os, count(distinct session_id) AS n FROM events
+      WHERE ts > now() - ${interval}::interval AND os IS NOT NULL
+      GROUP BY os ORDER BY n DESC LIMIT 8
+    `,
+    sql`
+      SELECT utm_source, count(distinct session_id) AS n FROM events
+      WHERE ts > now() - ${interval}::interval AND utm_source IS NOT NULL
+      GROUP BY utm_source ORDER BY n DESC LIMIT 8
+    `,
   ]);
 
   return Response.json({
@@ -45,5 +68,9 @@ export async function GET(req: NextRequest) {
     events:  events.map(r => ({ name: r.name as string, n: Number(r.n) })),
     countries: countries.map(r => ({ country: r.country as string, n: Number(r.n) })),
     referrers: referrers.map(r => ({ referrer: r.referrer as string, n: Number(r.n) })),
+    devices: devices.map(r => ({ device: r.device as string, n: Number(r.n) })),
+    browsers: browsers.map(r => ({ browser: r.browser as string, n: Number(r.n) })),
+    oses: oses.map(r => ({ os: r.os as string, n: Number(r.n) })),
+    utm_sources: utmSources.map(r => ({ utm_source: r.utm_source as string, n: Number(r.n) })),
   });
 }

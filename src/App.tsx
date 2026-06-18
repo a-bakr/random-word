@@ -7,7 +7,8 @@ import { AnimatePresence } from 'motion/react';
 import type { WordEntry } from './types';
 import { playPopSound } from './lib/sounds';
 import { shuffle, getRandomColor } from './lib/utils';
-import { track } from './lib/track';
+import { track, setTrackContext } from './lib/track';
+import { useSupabaseUser } from './hooks/useSupabaseUser';
 import { useLocalStorage, useLocalStorageBool, useLocalStorageStr } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
@@ -31,6 +32,7 @@ import { TipOverlay } from './components/TipOverlay';
 import { SettingsScreen } from './components/SettingsScreen';
 import { AboutScreen } from './components/AboutScreen';
 import { AdminScreen } from './components/AdminScreen';
+import { isAdminEmail } from './lib/admin';
 import { useTips } from './hooks/useTips';
 import type { Tip } from './lib/tips';
 
@@ -61,11 +63,12 @@ export default function App() {
   const [warmupHasAdvanced, setWarmupHasAdvanced] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
   const [panel, setPanel] = useState<'settings' | 'about' | 'admin' | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const mode: AppMode = (panel === 'admin' ? 'settings' : panel) ?? contentMode;
 
   const { lang } = useLanguage();
+  const auth = useSupabaseUser();
+  const isAdmin = isAdminEmail(auth.user?.email);
   const activeTwisters = lang.twisters ?? englishTwisters;
   const { activeTips, rotateTips } = useTips(tipCount);
   const warmup = useWarmup();
@@ -97,9 +100,7 @@ export default function App() {
 
   useEffect(() => {
     setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
-    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
-    track('pageview');
-    track('session_start');
+    if (new URLSearchParams(window.location.search).get('admin') === '1') setPanel('admin');
 
     const sendEnd = () => {
       if (sessionEndedRef.current) return;
@@ -117,6 +118,21 @@ export default function App() {
       window.removeEventListener('pagehide', sendEnd);
     };
   }, []);
+
+  // Keep analytics language dimension in sync.
+  useEffect(() => {
+    setTrackContext({ language: lang.code });
+  }, [lang.code]);
+
+  // Fire the first pageview/session_start only once the (anonymous) auth user
+  // is known, so these events carry a user_id.
+  const sessionStartedRef = useRef(false);
+  useEffect(() => {
+    if (!auth.user || sessionStartedRef.current) return;
+    sessionStartedRef.current = true;
+    track('pageview');
+    track('session_start');
+  }, [auth.user]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDark);
@@ -232,7 +248,7 @@ export default function App() {
       const nextId = order[nextIdx];
       const next = activeTwisters.find(t => t.id === nextId);
       if (!next) return;
-      track('twister_generated', { id: next.id });
+      track('twister_generated', { id: next.id, mode: 'twisters', language: lang.code });
       countersRef.current.twisters++;
       setLastTwisterId(next.id);
       setTwister({ entry: next, key: Date.now() });
@@ -266,7 +282,7 @@ export default function App() {
     historyPosRef.current = updatedHistory.length - 1;
 
     setLastWordText(word);
-    track('word_generated', { word });
+    track('word_generated', { word, mode: 'words', language: lang.code });
     countersRef.current.words++;
     rotateTips();
     const displayStart = Math.max(0, updatedHistory.length - maxWords);
@@ -377,6 +393,11 @@ export default function App() {
     else if (id === 'warmup')   { setPanel(null); stopTwister(); setIsWarmupMode(true); setIsTwisterMode(false); }
     else if (id === 'settings') setPanel(p => p === 'settings' ? null : 'settings');
     else if (id === 'about')    setPanel(p => p === 'about' ? null : 'about');
+
+    if ((id === 'words' || id === 'twisters' || id === 'warmup') && id !== contentMode) {
+      track('mode_changed', { mode: id, from: contentMode, language: lang.code });
+      countersRef.current.mode_toggles++;
+    }
   };
 
   const doStartRecording = async () => {
@@ -639,6 +660,13 @@ export default function App() {
           onTipCountChange={n => { setTipCount(n); track('setting_changed', { key: 'tipCount', value: n }); }}
           isAdmin={isAdmin}
           onOpenDashboard={() => setPanel('admin')}
+          account={{
+            isRegistered: auth.isRegistered,
+            email: auth.user?.email,
+            onLinkEmail: auth.linkEmail,
+            onLinkGoogle: auth.linkGoogle,
+            onSignOut: auth.signOut,
+          }}
         />
       )}
 
@@ -647,8 +675,9 @@ export default function App() {
       {panel === 'admin' && (
         <AdminScreen
           isAdmin={isAdmin}
-          onLoginSuccess={() => setIsAdmin(true)}
-          onLogout={() => setPanel('settings')}
+          onSignIn={auth.signInGoogle}
+          onSignOut={auth.signOut}
+          onClose={() => setPanel(null)}
         />
       )}
     </div>

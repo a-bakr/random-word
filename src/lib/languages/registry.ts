@@ -45,6 +45,18 @@ export interface LanguageLabels {
     bioText: string;
     tapToClose: string;
   };
+  account: {
+    title: string;
+    syncCta: string;
+    syncDescription: string;
+    emailPlaceholder: string;
+    continueWithEmail: string;
+    continueWithGoogle: string;
+    checkEmail: string;
+    signedInAs: string;
+    guest: string;
+    signOut: string;
+  };
   warmup: {
     tapToContinue: string;
     resetExercise: string;

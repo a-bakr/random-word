@@ -27,7 +27,9 @@ memory with a browser transcript (Web Speech API) and can be played back.
   CSS-first in `src/app/globals.css`).
 - **Turbopack** for dev/build (`next.config.ts` sets `turbopack.root`).
 - **motion** (Framer Motion successor) for animations.
-- **@neondatabase/serverless** — Postgres over HTTP for analytics.
+- **Supabase** — Postgres + Auth. `@supabase/ssr` / `@supabase/supabase-js` handle
+  auth/session (anonymous sign-in + optional account upgrade); the `postgres`
+  (porsager) driver runs the raw-SQL analytics queries against Supabase Postgres.
 - **random-words** — English word generator.
 - **lucide-react** — icons.
 - Package manager: **pnpm 10.5.2** (`packageManager` field). A `package-lock.json`
@@ -72,8 +74,10 @@ Server code lives only in the API route handlers under `src/app/api/`.
 - `src/types/` — shared types (`WordEntry`, etc.) and `speech.d.ts` (Web Speech API
   typings).
 - `src/proxy.ts` — **Next.js middleware** (this Next version names the middleware file
-  `proxy.ts` / exports `proxy`). Gates `/admin` and `/api/admin/*` behind HTTP Basic
-  auth using `ZEN_USER` / `ZEN_PASS`.
+  `proxy.ts` / exports `proxy`). Refreshes the Supabase session on navigations and gates
+  `/admin` and `/api/admin/*`: access requires being signed in as the admin email
+  (`isAdminEmail` in `src/lib/admin.ts`, default `abab231196@gmail.com`, override with
+  `NEXT_PUBLIC_ADMIN_EMAIL`). Non-admins get 403 (API) or a redirect to `/` (page).
 
 Path alias: `@/*` → `src/*` (see `tsconfig.json`). Within `src/App.tsx` and siblings,
 relative imports (`./lib/...`, `./components/...`) are also used.
@@ -119,40 +123,58 @@ history (for back navigation) is kept in refs in `App.tsx`, capped at 20 entries
 
 ## Backend & analytics
 
-A lightweight, first-party analytics pipeline (no third-party tracker):
+A first-party analytics pipeline (no third-party tracker), built on Supabase:
 
-1. **Client** — `src/lib/track.ts` exposes `track(name, props)`. It manages an
-   anonymous `user_id` (localStorage) and `session_id` (sessionStorage), attaches UTM +
-   referrer, and `POST`s to `/api/track` with `keepalive`. Call `track()` for new
-   meaningful events (existing names: `pageview`, `session_start`, `session_end`,
-   `word_generated`, `twister_generated`, `recording_started`, `recording_stopped`,
-   `setting_changed`, etc.).
+0. **Identity** — `src/hooks/useSupabaseUser.ts` establishes a Supabase auth session for
+   every visitor: it **signs in anonymously** on first load (zero-friction, no UI), so the
+   analytics `user_id` is a real `auth.users` uuid. Visitors can later **upgrade in place**
+   to a permanent account (email confirmation or Google) via the Account section in
+   Settings (`SettingsScreen` → `AccountSection`); the `auth.uid()` is preserved so history
+   carries over. `src/proxy.ts` refreshes the session cookie on navigations.
+1. **Client** — `src/lib/track.ts` exposes `track(name, props)` and `setTrackContext({
+   userId, language })`. The auth hook feeds it the current `user_id`; `App.tsx` feeds the
+   active `language`. It keeps a per-tab `session_id` (sessionStorage), attaches UTM +
+   referrer, and `POST`s to `/api/track` with `keepalive`. Existing event names:
+   `pageview`, `session_start`, `session_end`, `word_generated`, `twister_generated`,
+   `mode_changed`, `recording_started`, `recording_stopped`, `setting_changed`, etc.
+   `word_generated`/`twister_generated` carry `{ mode, language }` props.
 2. **Ingest** — `src/app/api/track/route.ts` (`runtime = 'nodejs'`) parses the
-   user-agent and Vercel geo headers, then writes to the `events` table and upserts the
-   `sessions` rollup.
+   user-agent and Vercel geo headers, then writes to the `events` table (incl. `language`,
+   `user_id::uuid`) and upserts the `sessions` rollup.
 3. **Aggregate** — `src/app/api/cron/aggregate/route.ts` rolls yesterday's events into
-   `daily_stats`. Triggered by the Vercel cron in `vercel.json` (`10 0 * * *`) and
-   guarded by `Authorization: Bearer ${CRON_SECRET}`.
-4. **Admin dashboard** — `/admin` page (`src/app/admin/page.tsx` + `AdminScreen.tsx`)
-   reads `/api/admin/summary`, `/api/admin/timeseries`, `/api/admin/feed`. All
-   `/admin` and `/api/admin/*` routes are protected by Basic auth in `src/proxy.ts`.
+   `daily_stats` (distinct users + per-mode / per-language word rollups). Triggered by the
+   Vercel cron in `vercel.json` (`10 0 * * *`), guarded by `Authorization: Bearer ${CRON_SECRET}`.
+4. **Admin dashboard** — `/admin` page (`src/app/admin/page.tsx` + `AdminScreen.tsx`) is a
+   tabbed monitoring UI (overview / users / funnels / acquisition) reading
+   `/api/admin/{summary,timeseries,feed,users,users/[id],funnels}`. All `/admin` and
+   `/api/admin/*` routes are gated in `src/proxy.ts` by the admin email (Supabase Auth /
+   Google sign-in — no password). The dashboard sign-in uses `signInWithOAuth`.
 
 ### Database
 
-Neon Postgres via `src/lib/db.ts` (`export const sql = neon(DATABASE_URL)`); throws at
-import if `DATABASE_URL` is unset. Schema lives in **plain SQL migrations** under
-`sql/` (`0001_init.sql`, `0002_user_id.sql`) — tables `events`, `sessions`,
-`daily_stats`. Apply migrations manually against the Neon database (run the SQL files in
-order); there is no migration runner. When adding columns/tables, add a new numbered
-`sql/NNNN_*.sql` file rather than editing existing ones.
+Supabase Postgres. Raw-SQL analytics queries use the `postgres` (porsager) driver via
+`src/lib/db.ts` (`export const sql = postgres(SUPABASE_DB_URL, { prepare: false, ssl:
+'require' })`); throws at import if `SUPABASE_DB_URL` is unset. It connects as the
+`postgres` owner, which **bypasses RLS** for ingest/admin queries. Tables: `profiles`
+(1:1 with `auth.users`, auto-created by a `handle_new_user` trigger), `events`,
+`sessions`, `daily_stats`; RLS is enabled on all (analytics tables have no client-facing
+policies). Schema lives in **Supabase CLI migrations** under `supabase/migrations/` — apply
+with `supabase db push` (or paste into the dashboard SQL editor). Add a new migration with
+`supabase migration new <name>` rather than editing existing files. The legacy Neon
+migrations under `sql/` are historical only. **Anonymous sign-ins must be enabled** in the
+Supabase dashboard (Authentication → Providers), and Google OAuth configured if used.
 
 ## Environment variables
 
-`.env.example` is empty; the variables the code expects are:
+See `.env.example`. The variables the code expects:
 
-- `DATABASE_URL` — Neon Postgres connection string (required for any API route).
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Supabase client (auth).
+- `SUPABASE_DB_URL` — Postgres connection string for `src/lib/db.ts` (direct for dev; the
+  Supavisor **transaction pooler** URL, port 6543 `?pgbouncer=true`, for Vercel/prod).
+- `SUPABASE_SECRET_KEY` — service/secret key (server-side supabase-js / admin-role checks).
 - `CRON_SECRET` — bearer token for the aggregate cron.
-- `ZEN_USER` / `ZEN_PASS` — HTTP Basic credentials for the admin area.
+- `NEXT_PUBLIC_ADMIN_EMAIL` — email granted admin access (Supabase Auth / Google).
+  Optional; defaults to the owner email in `src/lib/admin.ts`.
 - `GEMINI_API_KEY` or `GEMINI_API_KEYS` (comma-separated) — only for the local audio
   generation scripts, not the app runtime.
 
@@ -190,8 +212,12 @@ touch the DB pin `runtime = 'nodejs'`.
 - Any new user-visible string must be added to **every** language's `labels` block in
   `src/lib/languages/*.ts` (the `LanguageLabels` interface in `registry.ts` enforces
   the shape) — don't hardcode copy in components.
-- New analytics columns require both a `sql/NNNN_*.sql` migration and updates to the
-  insert in `api/track/route.ts` (and any reader in `api/admin/*`).
+- New analytics columns require a new `supabase migration new <name>` migration (under
+  `supabase/migrations/`, applied via `supabase db push`) plus updates to the insert in
+  `api/track/route.ts` (and any reader in `api/admin/*`).
+- `src/lib/db.ts` uses the `postgres` (porsager) driver: pass JS objects to `jsonb`
+  columns with an explicit `::jsonb` cast, and uuids with `::uuid`. `await sql\`...\``
+  returns an array of row objects (supports `.map` / `[0]`), like the old Neon client.
 - TypeScript is non-strict; still prefer typed code and run `pnpm build` to verify.
 
 ## Git / workflow

@@ -1589,6 +1589,18 @@ registerLanguage({
       bioText: 'مهندس بنية تحوَّل إلى مهندس ذكاء اصطناعي. يبني حالياً AIDA — منصة متعددة الوكلاء تخدم أكثر من ١٠٬٠٠٠ مهندس في إحدى أكبر شركات الاستشارات في العالم.',
       tapToClose: 'اضغط في أي مكان للإغلاق',
     },
+    account: {
+      title: 'الحساب',
+      syncCta: 'سجِّل الدخول لمزامنة تقدّمك',
+      syncDescription: 'احتفظ بسجلّك عبر أجهزتك. اختياري — تعمل تدريباتك من دونه.',
+      emailPlaceholder: 'you@example.com',
+      continueWithEmail: 'المتابعة بالبريد الإلكتروني',
+      continueWithGoogle: 'المتابعة عبر Google',
+      checkEmail: 'تحقّق من بريدك للتأكيد.',
+      signedInAs: 'مسجَّل الدخول باسم',
+      guest: 'ضيف',
+      signOut: 'تسجيل الخروج',
+    },
     warmup: {
       tapToContinue: 'اضغط في أي مكان للمتابعة',
       resetExercise: 'إعادة إلى التمرين الأول',

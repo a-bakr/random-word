@@ -27,7 +27,7 @@ function parseUA(ua: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, session_id, user_id, path, referrer, utm_source, utm_medium, utm_campaign, props } = body;
+    const { name, session_id, user_id, language, path, referrer, utm_source, utm_medium, utm_campaign, props } = body;
     if (!name || !session_id) return new Response('bad request', { status: 400 });
 
     const ua = req.headers.get('user-agent') ?? '';
@@ -42,25 +42,27 @@ export async function POST(req: NextRequest) {
       sql`
         INSERT INTO events
           (session_id, user_id, name, path, referrer, utm_source, utm_medium, utm_campaign,
-           country, region, city, device, browser, os, props)
+           country, region, city, device, browser, os, language, props)
         VALUES
-          (${session_id}, ${user_id ?? null}, ${name}, ${path ?? '/'}, ${referrer ?? null},
+          (${session_id}, ${user_id ?? null}::uuid, ${name}, ${path ?? '/'}, ${referrer ?? null},
            ${utm_source ?? null}, ${utm_medium ?? null}, ${utm_campaign ?? null},
-           ${country}, ${region}, ${city}, ${device}, ${browser}, ${os},
-           ${JSON.stringify(safeProps)})
+           ${country}, ${region}, ${city}, ${device}, ${browser}, ${os}, ${language ?? null},
+           ${JSON.stringify(safeProps)}::jsonb)
       `,
       sql`
         INSERT INTO sessions
-          (session_id, user_id, started_at, last_seen_at, country, device, browser, referrer, utm_source)
+          (session_id, user_id, started_at, last_seen_at, country, device, browser, referrer, utm_source, language)
         VALUES
-          (${session_id}, ${user_id ?? null}, now(), now(), ${country}, ${device}, ${browser},
-           ${referrer ?? null}, ${utm_source ?? null})
+          (${session_id}, ${user_id ?? null}::uuid, now(), now(), ${country}, ${device}, ${browser},
+           ${referrer ?? null}, ${utm_source ?? null}, ${language ?? null})
         ON CONFLICT (session_id) DO UPDATE SET
           last_seen_at = now(),
-          user_id    = COALESCE(sessions.user_id, EXCLUDED.user_id),
-          pageviews  = sessions.pageviews  + CASE WHEN ${name} = 'pageview'           THEN 1 ELSE 0 END,
-          words      = sessions.words      + CASE WHEN ${name} = 'word_generated'     THEN 1 ELSE 0 END,
-          recordings = sessions.recordings + CASE WHEN ${name} = 'recording_stopped'  THEN 1 ELSE 0 END
+          user_id      = COALESCE(sessions.user_id, EXCLUDED.user_id),
+          language     = COALESCE(EXCLUDED.language, sessions.language),
+          pageviews    = sessions.pageviews    + CASE WHEN ${name} = 'pageview'          THEN 1 ELSE 0 END,
+          words        = sessions.words        + CASE WHEN ${name} = 'word_generated'    THEN 1 ELSE 0 END,
+          recordings   = sessions.recordings   + CASE WHEN ${name} = 'recording_stopped' THEN 1 ELSE 0 END,
+          mode_changes = sessions.mode_changes + CASE WHEN ${name} = 'mode_changed'      THEN 1 ELSE 0 END
       `,
     ]);
 
