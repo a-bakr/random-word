@@ -4,7 +4,7 @@ Guidance for AI assistants working in this repository.
 
 ## What this is
 
-"Random Word" is a minimalist, mobile-first **speech & voice-coaching web app**. The
+"Faseeh" is a minimalist, mobile-first **speech & voice-coaching web app**. The
 core interaction is tap-anywhere: each tap generates new practice content. It has
 three content modes plus voice recording, coaching tips, multi-language support, and a
 privacy-light analytics backend with an admin dashboard.
