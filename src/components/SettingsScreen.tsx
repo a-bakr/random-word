@@ -47,7 +47,8 @@ function AccountSection({ account }: { account: AccountProps }) {
           </span>
           <button
             onClick={account.onSignOut}
-            className="text-xs text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors underline underline-offset-2"
+            className="px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 text-xs
+              text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
           >
             {a.signOut}
           </button>
