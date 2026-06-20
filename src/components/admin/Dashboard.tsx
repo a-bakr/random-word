@@ -7,6 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
+import { readCache, writeCache } from '../../lib/statsCache';
 import { BarList } from './BarList';
 import { LineChart, Sparkline, type SeriesKey } from './charts';
 import {
@@ -182,27 +183,40 @@ export function Dashboard({
   const [funnels, setFunnels] = useState<Funnels | null>(null);
   const [userDetail, setUserDetail] = useState<UserDetail | null>(null);
 
+  // Hydrate from the last cached payload so a window/section switch paints
+  // instantly, then the fetch below overwrites it with fresh data.
   const load = useCallback(async (w: Win) => {
+    const cs = readCache<Summary>(`admin_summary_${w}`);
+    const cts = readCache<Point[]>(`admin_points_${w}`);
+    const cf = readCache<FeedItem[]>('admin_feed');
+    if (cs) setSummary(cs);
+    if (cts) setPoints(cts);
+    if (cf) setFeed(cf);
+
     const [s, ts, f] = await Promise.all([
       getJSON<Summary>(`/api/admin/summary?window=${w}`),
       getJSON<Point[]>(`/api/admin/timeseries?window=${w}`),
       getJSON<FeedItem[]>('/api/admin/feed'),
     ]);
-    if (s) setSummary(s);
-    if (ts) setPoints(Array.isArray(ts) ? ts : []);
-    if (f) setFeed(Array.isArray(f) ? f : []);
+    if (s) { setSummary(s); writeCache(`admin_summary_${w}`, s); }
+    if (ts) { const arr = Array.isArray(ts) ? ts : []; setPoints(arr); writeCache(`admin_points_${w}`, arr); }
+    if (f) { const arr = Array.isArray(f) ? f : []; setFeed(arr); writeCache('admin_feed', arr); }
     setLoadError(s && ts && f ? null : 'Some data failed to load — retrying on next refresh.');
     setRefreshedAt(Date.now());
   }, []);
   const loadUsers = useCallback(async (w: Win) => {
+    const cu = readCache<UsersData>(`admin_users_${w}`);
+    if (cu) setUsersData(cu);
     const u = await getJSON<UsersData>(`/api/admin/users?window=${w}`);
-    if (u) setUsersData(u);
+    if (u) { setUsersData(u); writeCache(`admin_users_${w}`, u); }
     setLoadError(u ? null : 'Users failed to load — retrying on next refresh.');
     setRefreshedAt(Date.now());
   }, []);
   const loadFunnels = useCallback(async (w: Win) => {
+    const cfn = readCache<Funnels>(`admin_funnels_${w}`);
+    if (cfn) setFunnels(cfn);
     const fn = await getJSON<Funnels>(`/api/admin/funnels?window=${w}`);
-    if (fn) setFunnels(fn);
+    if (fn) { setFunnels(fn); writeCache(`admin_funnels_${w}`, fn); }
     setLoadError(fn ? null : 'Funnels failed to load — retrying on next refresh.');
     setRefreshedAt(Date.now());
   }, []);

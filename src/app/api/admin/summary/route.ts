@@ -84,6 +84,10 @@ export async function GET(req: NextRequest) {
     browsers: browsers.map(r => ({ browser: r.browser as string, n: Number(r.n) })),
     oses: oses.map(r => ({ os: r.os as string, n: Number(r.n) })),
     utm_sources: utmSources.map(r => ({ utm_source: r.utm_source as string, n: Number(r.n) })),
+  }, {
+    // Dashboard auto-refreshes every 30s; let repeat opens reuse a recent copy
+    // and revalidate in the background rather than re-running the scan each time.
+    headers: { 'Cache-Control': 'private, max-age=20, stale-while-revalidate=40' },
   });
   } catch (err) {
     console.error('[admin/summary] query failed:', err);

@@ -3,7 +3,10 @@
 import { useEffect, useState } from 'react';
 import { Flame, Play } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { readCache, writeCache } from '../lib/statsCache';
 import type { Recording } from '../types';
+
+const STATS_CACHE_KEY = 'me_stats_cache';
 
 type Stats = {
   streak: number;
@@ -24,14 +27,21 @@ function isoDaysAgo(n: number): string {
 export function PracticeScreen({ recordings }: { recordings: Recording[] }) {
   const { lang } = useLanguage();
   const p = lang.labels.practice;
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Paint instantly from the last known stats, then revalidate in the
+  // background — no blank → spinner → data flash on every open.
+  const [stats, setStats] = useState<Stats | null>(() => readCache<Stats>(STATS_CACHE_KEY));
+  const [loading, setLoading] = useState(() => readCache<Stats>(STATS_CACHE_KEY) == null);
 
   useEffect(() => {
     let active = true;
     fetch('/api/me/stats')
       .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (active && d && !d.error) setStats(d); })
+      .then(d => {
+        if (active && d && !d.error) {
+          setStats(d);
+          writeCache(STATS_CACHE_KEY, d);
+        }
+      })
       .catch(() => {})
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };

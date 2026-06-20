@@ -17,41 +17,44 @@ export async function GET() {
   if (!userId) return Response.json({ error: 'unauthorized' }, { status: 401 });
 
   try {
-    const [totals] = await sql`
+    // Single round-trip: word/clip counts + distinct active days from `events`,
+    // practice minutes from the `sessions` rollup. Collapsing the three queries
+    // into one CTE cuts pooler latency to a single hop.
+    const [row] = await sql`
+      WITH ev AS (
+        SELECT name, (ts AT TIME ZONE 'UTC')::date::text AS d
+        FROM events
+        WHERE user_id = ${userId}::uuid
+      )
       SELECT
-        count(*) FILTER (WHERE name IN ('word_generated', 'twister_generated')) AS words,
-        count(*) FILTER (WHERE name = 'recording_stopped')                      AS clips
-      FROM events
-      WHERE user_id = ${userId}::uuid
+        (SELECT count(*) FILTER (WHERE name IN ('word_generated', 'twister_generated')) FROM ev) AS words,
+        (SELECT count(*) FILTER (WHERE name = 'recording_stopped') FROM ev)                      AS clips,
+        (SELECT array_agg(DISTINCT d ORDER BY d) FROM ev)                                        AS days,
+        (
+          SELECT COALESCE(round(sum(extract(epoch FROM (last_seen_at - started_at))) / 60), 0)
+          FROM sessions
+          WHERE user_id = ${userId}::uuid
+        ) AS minutes
     `;
 
-    const [duration] = await sql`
-      SELECT COALESCE(
-        round(sum(extract(epoch FROM (last_seen_at - started_at))) / 60),
-        0
-      ) AS minutes
-      FROM sessions
-      WHERE user_id = ${userId}::uuid
-    `;
-
-    const days = await sql`
-      SELECT DISTINCT (ts AT TIME ZONE 'UTC')::date::text AS d
-      FROM events
-      WHERE user_id = ${userId}::uuid
-      ORDER BY d
-    `;
-
-    const activeDays: string[] = days.map(r => r.d);
+    const activeDays: string[] = row?.days ?? [];
     const { streak, bestStreak } = computeStreaks(activeDays);
 
-    return Response.json({
-      streak,
-      bestStreak,
-      words: Number(totals?.words ?? 0),
-      minutes: Number(duration?.minutes ?? 0),
-      clips: Number(totals?.clips ?? 0),
-      activeDays,
-    });
+    return Response.json(
+      {
+        streak,
+        bestStreak,
+        words: Number(row?.words ?? 0),
+        minutes: Number(row?.minutes ?? 0),
+        clips: Number(row?.clips ?? 0),
+        activeDays,
+      },
+      {
+        // Per-user data → private. Serve instantly from cache for a few seconds,
+        // then allow a stale copy while revalidating in the background.
+        headers: { 'Cache-Control': 'private, max-age=15, stale-while-revalidate=60' },
+      },
+    );
   } catch (err) {
     console.error('[me/stats] query failed:', err);
     return Response.json({ error: 'query_failed' }, { status: 500 });
