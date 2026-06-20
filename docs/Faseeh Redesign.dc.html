@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @keyframes fsh-in { from { opacity:0; transform:scale(0.96); filter:blur(8px); } to { opacity:1; transform:scale(1); filter:blur(0); } }
+  @keyframes fsh-pulse { 0%,100% { transform:scale(1); opacity:0.9; } 50% { transform:scale(1.2); opacity:0.35; } }
+  @keyframes fsh-fade { from { opacity:0; } to { opacity:1; } }
+</style>
+</helmet>
+<div style="min-height:100vh; box-sizing:border-box; padding:44px 24px; background:#e7e5df; display:flex; flex-direction:column; align-items:center; gap:22px; font-family:'Onest',system-ui,sans-serif;">
+
+  <div style="text-align:center; max-width:520px;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.24em; text-transform:uppercase; color:#a8a29e; margin-bottom:9px;">Faseeh · Working Prototype</div>
+    <div style="font-size:14px; line-height:1.55; color:#78716c;">Tap the screen — it's live. Switch modes up top, record yourself, open Settings. The first-run tour points at the real buttons.</div>
+  </div>
+
+  <div style="position:relative; width:330px; height:700px; background:#0b0b0d; border-radius:46px; padding:11px; box-shadow:0 30px 70px -18px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.05); flex:none;">
+    <div style="position:relative; width:100%; height:100%; border-radius:35px; overflow:hidden;">
+
+      <!-- ================= APP SCREEN ================= -->
+      <div dir="ltr" style="position:absolute; inset:0; background:{{ p.bg }}; font-family:{{ fontFam }}; transition:background 0.6s ease;">
+
+        <svg width="0" height="0" style="position:absolute;">
+          <filter id="fsh-sketch"><feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="7" result="noise"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="noise" scale="1.4" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter>
+        </svg>
+
+        <!-- TAP LAYER (the soul of the app) -->
+        <div onClick="{{ onTap }}" style="position:absolute; inset:0; z-index:5; cursor:pointer;"></div>
+
+        <!-- ============ WORDS ============ -->
+        <sc-if value="{{ isWords }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute; inset:0; z-index:10; pointer-events:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px; padding:0 20px;">
+            <sc-if value="{{ hasWord }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; flex-direction:column; align-items:center; gap:28px;" key="{{ wordSeq }}">
+                <div style="border:1.5px dashed {{ tagColor }}; color:{{ tagColor }}; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; padding:6px 11px; border-radius:8px; filter:url(#fsh-sketch); animation:fsh-in 0.6s cubic-bezier(0.16,1,0.3,1) both;">{{ tagText }}</div>
+                <div style="font-weight:800; font-size:{{ wordPx }}px; color:{{ wordColor }}; letter-spacing:-0.03em; text-align:center; line-height:1; animation:fsh-in 0.7s cubic-bezier(0.16,1,0.3,1) both;">{{ wordText }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noWord }}" hint-placeholder-val="{{ true }}">
+              <div style="font-weight:800; font-size:60px; color:{{ p.hint }}; letter-spacing:-0.03em;">{{ L.tapMe }}</div>
+            </sc-if>
+            <sc-if value="{{ showPill }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ onOpenTip }}" style="pointer-events:auto; cursor:pointer; position:absolute; top:148px; right:30px; border:1.4px dashed {{ pillColor }}; color:{{ pillColor }}; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em; padding:5px 10px; border-radius:7px; filter:url(#fsh-sketch); animation:fsh-fade 0.8s ease both;">{{ pillText }}</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <!-- ============ TWISTERS ============ -->
+        <sc-if value="{{ isTwisters }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:10; pointer-events:none; display:flex; align-items:center; justify-content:center; padding:0 32px;">
+            <div style="font-weight:800; font-size:{{ twPx }}px; color:{{ p.fg }}; letter-spacing:-0.02em; line-height:1.2; text-align:center; animation:fsh-in 0.7s cubic-bezier(0.16,1,0.3,1) both;" key="{{ tIdx }}">{{ twisterText }}</div>
+          </div>
+        </sc-if>
+
+        <!-- ============ WARM-UP ============ -->
+        <sc-if value="{{ isWarmup }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:10; pointer-events:none; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:96px 30px 84px; text-align:center;">
+            <div style="display:flex; flex-direction:column; align-items:center;" key="{{ wIdx }}">
+              <svg width="148" height="76" viewBox="0 0 162 78" fill="none" stroke="{{ p.dim }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="filter:url(#fsh-sketch); margin-bottom:32px; animation:fsh-in 0.7s cubic-bezier(0.16,1,0.3,1) both;"><circle cx="32" cy="39" r="27"></circle><path d="M20 47 q 6 5 12 0 t 12 0"></path><path d="M22 33 h6"></path><path d="M38 33 h6"></path><path d="M66 39 h17"></path><path d="M79 34 l5 5 l-5 5"></path><circle cx="120" cy="39" r="27"></circle><circle cx="120" cy="46" r="6"></circle><circle cx="112" cy="33" r="1.4" fill="{{ p.dim }}"></circle><circle cx="128" cy="33" r="1.4" fill="{{ p.dim }}"></circle></svg>
+              <div style="display:inline-flex; align-items:center; gap:6px; border:1.5px solid {{ stepColor }}; border-radius:100px; padding:6px 13px; margin-bottom:22px; filter:url(#fsh-sketch); animation:fsh-in 0.6s cubic-bezier(0.16,1,0.3,1) both;"><span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; color:{{ stepColor }};">{{ stepCat }}</span></div>
+              <div style="font-size:40px; font-weight:800; color:{{ p.fg }}; letter-spacing:-0.02em; margin-bottom:16px; animation:fsh-in 0.7s cubic-bezier(0.16,1,0.3,1) both;">{{ stepTitle }}</div>
+              <div style="font-size:15px; color:{{ p.sub }}; line-height:1.55; max-width:256px; margin-bottom:18px;">{{ stepInstr }}</div>
+              <sc-if value="{{ hasEx }}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:{{ p.dim }}; margin-bottom:22px;">{{ stepEx }}</div>
+              </sc-if>
+              <div onClick="{{ onReplay }}" style="pointer-events:auto; cursor:pointer; display:flex; align-items:center; gap:9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ p.sub }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg><span style="font-family:'JetBrains Mono',monospace; font-size:14px; color:{{ p.sub }};">{{ L.play }}</span></div>
+            </div>
+          </div>
+          <div style="position:absolute; bottom:30px; left:0; right:0; z-index:10; pointer-events:none; text-align:center;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; color:{{ p.faint }}; margin-bottom:16px;">{{ L.tapContinue }}</div>
+            <div style="display:flex; align-items:center; justify-content:center; gap:10px;"><span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:{{ p.sub }};">{{ progressText }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:{{ stepColor }};">{{ milestone }}</span><span onClick="{{ onReset }}" style="pointer-events:auto; cursor:pointer; display:inline-flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ p.dim }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg></span></div>
+          </div>
+        </sc-if>
+
+        <!-- ============ LIVE TRANSCRIPT ============ -->
+        <sc-if value="{{ showTranscript }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; bottom:120px; left:0; right:0; z-index:34; pointer-events:none; text-align:center; padding:0 36px;"><span style="font-size:14px; font-style:italic; color:{{ p.dim }}; line-height:1.5;">{{ transcriptText }}</span></div>
+        </sc-if>
+
+        <!-- ============ CLIPS (bottom-left) ============ -->
+        <sc-if value="{{ hasClips }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; bottom:84px; left:22px; z-index:34; display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ clips }}" as="clip" hint-placeholder-count="0">
+              <div style="display:flex; align-items:center; gap:8px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ p.sub }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:{{ p.sub }};">{{ clip.tr }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:{{ p.faint }};">{{ clip.dur }}</span></div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- ============ TOP BAR (always LTR) ============ -->
+        <div style="position:absolute; top:0; left:0; right:0; z-index:40; display:flex; justify-content:center; align-items:center; gap:4px; padding-top:46px;">
+          <div onClick="{{ onWords }}" style="width:37px; height:37px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ wBg }}; filter:url(#fsh-sketch);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ wFg }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg></div>
+          <div onClick="{{ onTwisters }}" style="width:37px; height:37px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ tBg }}; filter:url(#fsh-sketch);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ tFg }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
+          <div onClick="{{ onWarmup }}" style="width:37px; height:37px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ fBg }}; filter:url(#fsh-sketch);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ fFg }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></div>
+          <div onClick="{{ onSettings }}" style="width:37px; height:37px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ sBg }}; filter:url(#fsh-sketch);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ sFg }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="4" x2="14" y2="4"></line><line x1="10" y1="4" x2="3" y2="4"></line><line x1="21" y1="12" x2="12" y2="12"></line><line x1="8" y1="12" x2="3" y2="12"></line><line x1="21" y1="20" x2="16" y2="20"></line><line x1="12" y1="20" x2="3" y2="20"></line><line x1="14" y1="2" x2="14" y2="6"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="16" y1="18" x2="16" y2="22"></line></svg></div>
+          <div onClick="{{ onAbout }}" style="width:37px; height:37px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ aBg }}; filter:url(#fsh-sketch);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ aFg }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></div>
+          <div onClick="{{ onLang }}" style="width:37px; height:37px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; background:{{ lBg }}; filter:url(#fsh-sketch);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ lFg }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"></path><path d="m4 14 6-6 2-3"></path><path d="M2 5h12"></path><path d="M7 2h1"></path><path d="m22 22-5-10-5 10"></path><path d="M14 18h6"></path></svg></div>
+        </div>
+
+        <!-- ============ BOTTOM CONTROLS ============ -->
+        <sc-if value="{{ showControls }}" hint-placeholder-val="{{ true }}">
+          <div style="position:absolute; bottom:0; left:0; right:0; z-index:40; height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 22px;">
+            <div onClick="{{ onRecord }}" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:42px; height:42px;">
+              <sc-if value="{{ isRec }}" hint-placeholder-val="{{ false }}">
+                <div style="position:relative; width:40px; height:40px; border-radius:50%; border:2px solid #ef4444; display:flex; align-items:center; justify-content:center;"><div style="position:absolute; inset:-3px; border-radius:50%; border:2px solid #ef4444; animation:fsh-pulse 1.4s ease-in-out infinite;"></div><div style="width:13px; height:13px; border-radius:3px; background:#ef4444;"></div></div>
+              </sc-if>
+              <sc-if value="{{ notRec }}" hint-placeholder-val="{{ true }}">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{ p.sub }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="filter:url(#fsh-sketch);"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+              </sc-if>
+            </div>
+            <div style="display:flex; align-items:flex-end; gap:14px;"><span onClick="{{ onFontDown }}" style="cursor:pointer; font-size:15px; font-weight:600; color:{{ p.dim }};">a</span><span onClick="{{ onFontUp }}" style="cursor:pointer; font-size:23px; font-weight:700; color:{{ p.fg2 }};">A</span></div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <sc-if value="{{ showReplay }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ onReplay }}" style="cursor:pointer; display:flex;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ p.sub }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg></div>
+              </sc-if>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:14px; color:{{ timerColor }};">{{ timerText }}</span>
+              <div onClick="{{ onTimer }}" style="cursor:pointer; width:34px; height:34px; border-radius:50%; background:{{ timerBg }}; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ timerIcon }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ SETTINGS PANEL ============ -->
+        <sc-if value="{{ pSettings }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:30; background:{{ p.bg }}; overflow-y:auto; animation:fsh-fade 0.4s ease both;">
+            <div style="padding:104px 26px 40px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; color:{{ p.dim }}; margin-bottom:6px;">{{ L.preferences }}</div>
+              <div style="font-size:34px; font-weight:800; color:{{ p.fg }}; letter-spacing:-0.03em; margin-bottom:24px;">{{ L.settings }}</div>
+              <div style="display:flex; flex-direction:column;">
+                <div onClick="{{ onToggleTheme }}" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:15px 0; border-bottom:1px solid {{ p.hair }};"><span style="font-size:15px; color:{{ p.fg2 }};">{{ L.theme }}</span><div style="display:flex; align-items:center; gap:7px; background:{{ p.pill }}; border-radius:100px; padding:7px 14px;"><span style="font-size:13px; font-weight:600; color:{{ p.fg }};">{{ themeLabel }}</span></div></div>
+                <div onClick="{{ onToggleSound }}" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:15px 0; border-bottom:1px solid {{ p.hair }};"><span style="font-size:15px; color:{{ p.fg2 }};">{{ L.sound }}</span><div style="background:{{ p.pill }}; border-radius:100px; padding:7px 14px;"><span style="font-size:13px; font-weight:600; color:{{ p.fg }};">{{ soundLabel }}</span></div></div>
+                <div onClick="{{ onCycleWords }}" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:15px 0; border-bottom:1px solid {{ p.hair }};"><span style="font-size:15px; color:{{ p.fg2 }};">{{ L.wordsOnScreen }}</span><div style="background:{{ p.pill }}; border-radius:100px; padding:7px 14px;"><span style="font-size:13px; font-weight:700; color:{{ p.fg }};">{{ wordsLabel }}</span></div></div>
+                <div onClick="{{ onToggleDisplay }}" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:15px 0; border-bottom:1px solid {{ p.hair }};"><span style="font-size:15px; color:{{ p.fg2 }};">{{ L.wordDisplay }}</span><div style="background:{{ p.pill }}; border-radius:100px; padding:7px 14px;"><span style="font-size:13px; font-weight:600; color:{{ p.fg }};">{{ displayLabel }}</span></div></div>
+                <div onClick="{{ onCycleTips }}" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:15px 0; border-bottom:1px solid {{ p.hair }};"><span style="font-size:15px; color:{{ p.fg2 }};">{{ L.coachingTips }}</span><div style="background:{{ p.pill }}; border-radius:100px; padding:7px 14px;"><span style="font-size:13px; font-weight:700; color:{{ p.fg }};">{{ tipsLabel }}</span></div></div>
+                <div onClick="{{ onOpenPaywall }}" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:15px 0; border-bottom:1px solid {{ p.hair }};"><span style="font-size:15px; color:{{ p.fg2 }};">{{ L.plan }}</span><div style="display:flex; align-items:center; gap:6px; background:{{ p.amberBg }}; border-radius:100px; padding:7px 14px;"><span style="font-size:13px; font-weight:600; color:{{ p.amber }};">{{ L.freeUpgrade }}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ p.amber }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div></div>
+                <div onClick="{{ onOpenAccount }}" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; padding:15px 0;"><div><span style="font-size:15px; color:{{ p.fg2 }};">{{ L.signedIn }}</span><div style="font-size:12px; color:{{ p.dim }}; margin-top:2px;">abab231196@gmail.com</div></div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ p.dim }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ ABOUT PANEL ============ -->
+        <sc-if value="{{ pAbout }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:30; background:{{ p.bg }}; overflow-y:auto; animation:fsh-fade 0.4s ease both;">
+            <div style="padding:104px 26px 40px;">
+              <div style="width:72px; height:72px; border-radius:50%; background:{{ p.avatar }}; border:1px solid {{ p.border }}; display:flex; align-items:center; justify-content:center; margin-bottom:22px;"><span style="font-size:24px; font-weight:700; color:{{ p.sub }}; letter-spacing:-0.02em;">AB</span></div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; color:{{ p.dim }}; margin-bottom:8px;">{{ L.createdBy }}</div>
+              <div style="font-size:34px; font-weight:800; color:{{ p.fg }}; letter-spacing:-0.03em; line-height:1;">Abdallah Bakr</div>
+              <div style="font-size:14px; color:{{ p.dim }}; margin-top:8px;">{{ L.role }}</div>
+              <svg width="170" height="14" viewBox="0 0 180 14" fill="none" style="filter:url(#fsh-sketch); margin:22px 0;"><path d="M2 8 Q 20 2 38 8 T 74 8 T 110 8 T 146 8 T 178 7" stroke="{{ p.faint }}" stroke-width="2" stroke-linecap="round"></path></svg>
+              <div style="font-size:22px; font-weight:700; color:{{ p.fg2 }}; margin-bottom:10px;">Faseeh</div>
+              <div style="font-size:15px; font-style:italic; color:{{ p.sub }}; margin-bottom:16px;">{{ L.appTagline }}</div>
+              <div style="font-size:14px; color:{{ p.dim }}; line-height:1.6; margin-bottom:24px;">{{ L.aboutBody }}</div>
+              <div style="display:flex; gap:20px;"><span style="font-size:13px; color:{{ p.sub }}; text-decoration:underline; text-underline-offset:3px;">bakrai.com</span><span style="font-size:13px; color:{{ p.sub }}; text-decoration:underline; text-underline-offset:3px;">linkedin</span><span style="font-size:13px; color:{{ p.sub }}; text-decoration:underline; text-underline-offset:3px;">github</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ ACCOUNT / HISTORY PANEL ============ -->
+        <sc-if value="{{ pAccount }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:50; background:{{ p.bg }}; overflow-y:auto; animation:fsh-fade 0.4s ease both;">
+            <div onClick="{{ onClosePanel }}" style="position:absolute; top:50px; right:22px; z-index:2; cursor:pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ p.dim }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+            <div style="padding:74px 26px 40px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; color:{{ p.dim }}; margin-bottom:14px;">{{ L.yourPractice }}</div>
+              <div style="display:flex; align-items:flex-end; gap:14px; margin-bottom:4px;"><div style="font-size:64px; font-weight:800; color:{{ p.fg }}; letter-spacing:-0.04em; line-height:0.9;">7</div><div style="display:flex; align-items:center; gap:7px; padding-bottom:8px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg><span style="font-size:17px; font-weight:600; color:{{ p.fg2 }};">{{ L.dayStreak }}</span></div></div>
+              <div style="font-size:13px; color:{{ p.dim }}; margin-bottom:24px;">{{ L.bestStreak }}</div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
+                <sc-for list="{{ weekDays }}" as="d" hint-placeholder-count="7">
+                  <div style="display:flex; flex-direction:column; align-items:center; gap:8px;"><div style="width:30px; height:30px; border-radius:9px; background:{{ d.bg }}; border:{{ d.border }};"></div><span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:{{ d.lc }};">{{ d.label }}</span></div>
+                </sc-for>
+              </div>
+              <div style="display:flex; gap:10px; margin-bottom:30px;">
+                <div style="flex:1; background:{{ p.surf }}; border:1px solid {{ p.border }}; border-radius:14px; padding:14px;"><div style="font-size:22px; font-weight:700; color:{{ p.fg }};">142</div><div style="font-size:11px; color:{{ p.dim }}; margin-top:2px;">{{ L.wordsStat }}</div></div>
+                <div style="flex:1; background:{{ p.surf }}; border:1px solid {{ p.border }}; border-radius:14px; padding:14px;"><div style="font-size:22px; font-weight:700; color:{{ p.fg }};">18m</div><div style="font-size:11px; color:{{ p.dim }}; margin-top:2px;">{{ L.practicedStat }}</div></div>
+                <div style="flex:1; background:{{ p.surf }}; border:1px solid {{ p.border }}; border-radius:14px; padding:14px;"><div style="font-size:22px; font-weight:700; color:{{ p.fg }};">23</div><div style="font-size:11px; color:{{ p.dim }}; margin-top:2px;">{{ L.clipsStat }}</div></div>
+              </div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.16em; color:{{ p.dim }}; margin-bottom:6px;">{{ L.recent }}</div>
+              <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; align-items:center; gap:13px; padding:12px 0; border-bottom:1px solid {{ p.hair }};"><div style="width:30px; height:30px; border-radius:50%; border:1px solid {{ p.faint }}; display:flex; align-items:center; justify-content:center; flex:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ p.sub }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg></div><div style="flex:1; font-size:14px; color:{{ p.fg2 }};">she sells sea shells…</div><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:{{ p.dim }};">0:12</span></div>
+                <div style="display:flex; align-items:center; gap:13px; padding:12px 0; border-bottom:1px solid {{ p.hair }};"><div style="width:30px; height:30px; border-radius:50%; border:1px solid {{ p.faint }}; display:flex; align-items:center; justify-content:center; flex:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ p.sub }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg></div><div style="flex:1; font-size:14px; color:{{ p.fg2 }};">red lorry, yellow…</div><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:{{ p.dim }};">0:08</span></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ PAYWALL ============ -->
+        <sc-if value="{{ pPaywall }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:50; background:{{ p.bg }}; overflow-y:auto; animation:fsh-fade 0.4s ease both;">
+            <div onClick="{{ onClosePanel }}" style="position:absolute; top:50px; right:22px; z-index:2; cursor:pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ p.dim }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+            <div style="padding:74px 28px 120px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; color:{{ p.amber }}; margin-bottom:14px;">{{ L.premium }}</div>
+              <div style="font-size:32px; font-weight:800; color:{{ p.fg }}; letter-spacing:-0.03em; line-height:1.05; margin-bottom:26px;">{{ L.premiumTitle }}</div>
+              <div style="display:flex; flex-direction:column; gap:15px; margin-bottom:30px;">
+                <sc-for list="{{ feats }}" as="f" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:center; gap:13px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ p.amber }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span style="font-size:14px; color:{{ p.fg2 }};">{{ f.t }}</span></div>
+                </sc-for>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:11px;">
+                <div style="position:relative; border:1.5px solid {{ p.amber }}; border-radius:16px; padding:15px 17px; display:flex; align-items:center; justify-content:space-between; background:{{ p.amberBg }};"><div><div style="font-size:15px; font-weight:600; color:{{ p.fg }};">{{ L.yearly }}</div><div style="font-size:12px; color:{{ p.dim }}; margin-top:1px;">{{ L.perMonthBilled }}</div></div><div style="font-size:15px; font-weight:700; color:{{ p.fg }};">$39.99</div><div style="position:absolute; top:-9px; left:16px; background:{{ p.amber }}; border-radius:5px; padding:2px 7px; font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.1em; color:{{ p.amberInk }};">{{ L.save }}</div></div>
+                <div style="border:1px solid {{ p.border }}; border-radius:16px; padding:15px 17px; display:flex; align-items:center; justify-content:space-between;"><div style="font-size:15px; font-weight:600; color:{{ p.fg2 }};">{{ L.monthly }}</div><div style="font-size:15px; font-weight:700; color:{{ p.fg2 }};">$4.99</div></div>
+              </div>
+            </div>
+            <div style="position:absolute; bottom:0; left:0; right:0; background:{{ p.bg }}; padding:18px 28px 26px; border-top:1px solid {{ p.hair }};">
+              <div onClick="{{ onClosePanel }}" style="cursor:pointer; background:{{ p.cta }}; border-radius:100px; padding:15px; text-align:center; font-size:15px; font-weight:600; color:{{ p.ctaInk }}; margin-bottom:12px;">{{ L.startTrial }}</div>
+              <div style="display:flex; align-items:center; justify-content:center; gap:14px;"><span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:{{ p.dim }};">{{ L.trialSub }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:{{ p.sub }}; text-decoration:underline;">{{ L.restore }}</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ COACHING TIP OVERLAY ============ -->
+        <sc-if value="{{ hasTip }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0; z-index:70; background:{{ p.bg }}; animation:fsh-fade 0.4s ease both;">
+            <div onClick="{{ onCloseTip }}" style="position:absolute; top:50px; right:22px; cursor:pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ p.dim }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+            <div style="padding:92px 30px 0;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; color:{{ tip.color }}; margin-bottom:18px;">{{ tip.label }}</div>
+              <div style="font-size:52px; font-weight:800; color:{{ p.fg }}; letter-spacing:-0.03em; line-height:1; margin-bottom:24px;">{{ tip.title }}</div>
+              <svg width="170" height="14" viewBox="0 0 180 14" fill="none" style="filter:url(#fsh-sketch); margin-bottom:26px;"><path d="M2 8 Q 20 2 38 8 T 74 8 T 110 8 T 146 8 T 178 7" stroke="{{ p.faint }}" stroke-width="2" stroke-linecap="round"></path></svg>
+              <div style="font-size:16px; color:{{ p.sub }}; line-height:1.6; margin-bottom:18px;">{{ tip.body }}</div>
+              <div style="font-size:15px; font-style:italic; color:{{ p.dim }}; line-height:1.5;">{{ tip.instr }}</div>
+            </div>
+            <div style="position:absolute; bottom:34px; left:30px; right:30px; display:flex; align-items:center; justify-content:space-between;">
+              <span onClick="{{ onCloseTip }}" style="cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:12px; color:{{ p.dim }};">{{ L.tapDismiss }}</span>
+              <div onClick="{{ onTryNow }}" style="cursor:pointer; display:flex; align-items:center; gap:8px; background:{{ p.cta }}; border-radius:100px; padding:11px 20px;"><span style="font-size:14px; font-weight:600; color:{{ p.ctaInk }};">{{ L.tryNow }}</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ p.ctaInk }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ ONBOARDING COACH-MARKS ============ -->
+        <sc-if value="{{ onbActive }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ onAdvance }}" style="position:absolute; inset:0; z-index:90; cursor:pointer; animation:fsh-fade 0.3s ease both;">
+            <div style="position:absolute; top:0; left:0; right:0; height:{{ onbTop }}px; background:rgba(0,0,0,0.74); pointer-events:none; transition:all 0.4s cubic-bezier(0.16,1,0.3,1);"></div>
+            <div style="position:absolute; top:{{ onbBottomY }}px; left:0; right:0; bottom:0; background:rgba(0,0,0,0.74); pointer-events:none; transition:all 0.4s cubic-bezier(0.16,1,0.3,1);"></div>
+            <div style="position:absolute; top:{{ onbTop }}px; left:0; width:{{ onbLeft }}px; height:{{ onbH }}px; background:rgba(0,0,0,0.74); pointer-events:none; transition:all 0.4s cubic-bezier(0.16,1,0.3,1);"></div>
+            <div style="position:absolute; top:{{ onbTop }}px; left:{{ onbRightX }}px; right:0; height:{{ onbH }}px; background:rgba(0,0,0,0.74); pointer-events:none; transition:all 0.4s cubic-bezier(0.16,1,0.3,1);"></div>
+            <div style="position:absolute; top:{{ onbTop }}px; left:{{ onbLeft }}px; width:{{ onbW }}px; height:{{ onbH }}px; border-radius:{{ onbRad }}px; border:2px solid rgba(250,250,250,0.9); pointer-events:none; transition:all 0.4s cubic-bezier(0.16,1,0.3,1);"></div>
+            <div style="position:absolute; top:{{ onbCardTop }}px; left:24px; right:24px; pointer-events:none;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; color:#71717a; margin-bottom:12px;">{{ onbCounter }}</div>
+              <div style="font-size:25px; font-weight:800; color:#fafafa; letter-spacing:-0.02em; line-height:1.12; margin-bottom:10px;">{{ onbTitle }}</div>
+              <div style="font-size:14px; color:#a1a1aa; line-height:1.55; margin-bottom:22px;">{{ onbBody }}</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; pointer-events:auto;">
+                <span onClick="{{ onSkip }}" style="cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:12px; color:#71717a;">{{ L.skip }}</span>
+                <div onClick="{{ onAdvance }}" style="cursor:pointer; display:flex; align-items:center; gap:8px; background:#fafafa; border-radius:100px; padding:11px 20px;"><span style="font-size:14px; font-weight:600; color:#0a0a0b;">{{ onbNextLabel }}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0a0a0b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+
+      <!-- notch -->
+      <div style="position:absolute; top:13px; left:50%; transform:translateX(-50%); width:92px; height:25px; background:#0b0b0d; border-radius:14px; z-index:100;"></div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:820},&quot;startTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark'|'light'&quot;},&quot;startLang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;ar&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'ar'&quot;},&quot;showOnboarding&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.WORDS = ['Nearest','Vivid','Resonance','Clarity','Gather','Threshold','Luminous','Cadence','Velvet','Murmur','Echo','Brisk','Quiver','Sonorous','Whisper','Anchor','Drift','Crisp','Bloom','Kindle'];
+    this.AR_WORDS = ['واضِح','صَدى','نَبْض','هَمْس','بَريق','رَنين','إيقاع','سُكون','تَدَفُّق','نَبْرَة'];
+    this.TWISTERS = ["Lily ladles little Letty's lentil soup.","She sells sea shells by the sea shore.","The quick brown fox jumps over the lazy dog.","Red lorry, yellow lorry, red lorry, yellow lorry.","Peter Piper picked a peck of pickled peppers.","How much wood would a woodchuck chuck?","Six slippery snails slid slowly seaward.","Fresh fried fish, fish fresh fried."];
+    this.AR_TWISTERS = ["خَيطُ حَريرٍ على حائِطِ خَليلٍ.","شَرَطَ شارِبٌ شُرباً سَريعاً.","بائعُ البُرتقالِ باعَ البُرتقالَ بِبُرتقالةٍ."];
+    this.STEPS = [
+      {cat:'BREATHING', col:'sky',   title:'Belly Breath',    instr:'Hand on your belly. Inhale for 4 and feel it rise; exhale for 6 and feel it fall.'},
+      {cat:'BREATHING', col:'sky',   title:'Straw Breath',    instr:'Exhale slowly through pursed lips, as if breathing out through a straw. Long and steady.'},
+      {cat:'PHYSICAL',  col:'orange',title:'Jaw Release',     instr:'Massage the hinge of your jaw, then let it hang loose and waggle it gently side to side.'},
+      {cat:'PHYSICAL',  col:'orange',title:'Shoulder Roll',   instr:'Roll your shoulders back five times, then drop them down and away from your ears.'},
+      {cat:'ARTICULATION', col:'emerald', title:'Lip Trills', instr:'Blow a steady raspberry and glide it up and down in pitch.', ex:'brrrrrr —'},
+      {cat:'ARTICULATION', col:'emerald', title:'Crisp Pops', instr:'Repeat the consonants, popping each one cleanly. A little faster each round.', ex:'puh — tuh — kuh'},
+      {cat:'RESONANCE', col:'violet',title:'Hum & Buzz',      instr:'Hum a comfortable note. Feel it buzz on your lips and the front of your face.'},
+      {cat:'RESONANCE', col:'violet',title:'Mmm-Bah',         instr:'Long mmmmmm, then pop into bah! Let the hum carry into the open vowel.', ex:'mmmm — bah!'},
+      {cat:'PITCH',     col:'amber', title:'Sirens',          instr:'Glide ooo from your lowest note to your highest and back down, smooth like a siren.', ex:'ooooo ↗↘'},
+      {cat:'PITCH',     col:'amber', title:'Octave Jumps',    instr:'Sing a low note, then jump up an octave. Keep your throat relaxed as you leap.', ex:'low — ya!'},
+      {cat:'PROJECTION',col:'rose',  title:'Count the Room',  instr:'Count one to five, sending each number a little further across the room.'},
+      {cat:'PROJECTION',col:'rose',  title:'Call Out',        instr:'Say hey! as if greeting a friend across the street — full and warm, never strained.', ex:'hey!'},
+      {cat:'ARTICULATION', col:'emerald', title:'Consonant Drill', instr:'Run the sounds on repeat, keeping every edge crisp and even.', ex:'buh-duh-guh'},
+      {cat:'BREATHING', col:'sky',   title:'Hiss Control',    instr:'Inhale, then exhale on a long, even sss. Keep the airflow steady right to the end.', ex:'sssssss'},
+      {cat:'RESONANCE', col:'violet',title:'Open Vowels',     instr:'Cycle through the vowels, keeping the tone forward and bright.', ex:'ah — eh — ee — oh — oo'},
+      {cat:'PHYSICAL',  col:'orange',title:'Face Stretch',    instr:'Scrunch your whole face tight, then open it as wide as you can. Repeat a few times.'},
+      {cat:'PITCH',     col:'amber', title:'Glissando',       instr:'Slide a single word up your range and back down again, all on one breath.'},
+      {cat:'PROJECTION',col:'rose',  title:'Sustained Vowel', instr:'Hold ahhh full and steady for a slow count of eight. Even from start to finish.', ex:'ahhhhhhhh'},
+      {cat:'ARTICULATION', col:'emerald', title:'Twister', instr:'Slowly at first, then speed up while staying clean.', ex:'red leather, yellow leather'},
+      {cat:'BREATHING', col:'sky',   title:'Reset Breath',    instr:'One last slow breath. In for 4, hold for 2, out for 6. You are warm and ready.'}
+    ];
+    this.TIPS = [
+      {label:'VOCAL', col:'violet', title:'Pace & Pause', body:'A pause is not empty space — it is emphasis. Slow down before the word that matters most, and let the silence carry its weight.', instr:'Try it: read the word, then pause for two full beats before the next.'},
+      {label:'FRAMEWORK', col:'amber', title:'Rule of Three', body:'Ideas land harder in threes. Group your point into three beats and the listener feels a satisfying, complete shape.', instr:'Try it: say one idea as three short, rising phrases.'},
+      {label:'ARCHETYPE', col:'emerald', title:'The Sage', body:'The Sage speaks slowly and leaves room to think. Lower your pace and your pitch, and trust the quiet.', instr:'Try it: deliver the word as if sharing hard-won wisdom.'}
+    ];
+    this.WC_DARK  = ['#8b5cf6','#f59e0b','#14b8a6','#fb7185','#38bdf8','#34d399','#e879f9'];
+    this.WC_LIGHT = ['#7c3aed','#b45309','#0f766e','#e11d48','#0284c7','#047857','#a21caf'];
+    this.TAGS_EN = ['STORY','VOCAL','RESONATE','CADENCE','PROJECT'];
+    this.TAGS_AR = ['نَبْرَة','وُضوح','رَنين','إيقاع','حُضور'];
+    this.PHRASES = ['the quick brown…','she sells sea…','red lorry yellow…','peter piper picked…','so the nearest thing…','how much wood would…'];
+
+    const dark = (props.startTheme || 'dark') !== 'light';
+    const onb = props.showOnboarding === false;
+    this.ONB = [
+      {key:'tap',    t:236, l:44,  w:220, h:150, rad:26, card:404},
+      {key:'modes',  t:40,  l:24,  w:260, h:52,  rad:30, card:118},
+      {key:'record', t:606, l:12,  w:56,  h:56,  rad:18, card:392},
+      {key:'pace',   t:606, l:234, w:62,  h:56,  rad:18, card:392}
+    ];
+    this.state = {
+      theme: dark ? 'dark' : 'light',
+      lang: props.startLang || 'en',
+      mode: 'words', panel: null,
+      onbStep: onb ? -1 : 0,
+      word: null, wordSeq: 0,
+      tIdx: 0, wIdx: 0,
+      fontSize: 58,
+      recording: false, recSec: 0, clips: [],
+      showTranscript: false, transcript: '',
+      timerOn: true, timerLeft: 60, started: false,
+      tip: null,
+      soundOn: true, wordsOnScreen: 1, centered: true, tipsCount: 1
+    };
+  }
+
+  componentDidMount() {
+    this._iv = setInterval(() => {
+      this.setState(s => {
+        const n = {};
+        if (s.recording) n.recSec = s.recSec + 1;
+        if (s.timerOn && s.started && !s.recording && !s.panel && !s.tip && s.timerLeft > 0) n.timerLeft = s.timerLeft - 1;
+        return n;
+      });
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this._iv); }
+
+  rnd(a) { return a[Math.floor(Math.random() * a.length)]; }
+
+  nextWord() {
+    const ar = this.state.lang === 'ar';
+    const list = ar ? this.AR_WORDS : this.WORDS;
+    this.setState(s => ({
+      word: { text: this.rnd(list), ci: Math.floor(Math.random()*7), ti: Math.floor(Math.random()*5) },
+      wordSeq: s.wordSeq + 1, started: true, timerLeft: 60
+    }));
+  }
+
+  onTap(e) {
+    const m = this.state.mode;
+    if (this.state.panel || this.state.tip) return;
+    if (m === 'words') { this.nextWord(); return; }
+    let right = true;
+    try { const r = e.currentTarget.getBoundingClientRect(); right = (e.clientX - r.left) > r.width/2; } catch (_) {}
+    if (m === 'twisters') this.setState(s => ({ tIdx: (s.tIdx + (right?1:s.tIdx>0?-1:0)) % 999, started:true, timerLeft:60 }));
+    else this.setState(s => ({ wIdx: Math.max(0, Math.min(19, s.wIdx + (right?1:-1))) }));
+  }
+
+  setMode(m) { this.setState({ mode: m, panel: null, tip: null }); }
+  openPanel(p) { this.setState(s => ({ panel: s.panel === p ? null : p, tip: null })); }
+  closePanel() { this.setState({ panel: null }); }
+  cycleLang() {
+    this.setState(s => {
+      const lang = s.lang === 'en' ? 'ar' : 'en';
+      let word = s.word;
+      if (word && s.mode === 'words') word = { ...word, text: this.rnd(lang==='ar'?this.AR_WORDS:this.WORDS) };
+      return { lang, word };
+    });
+  }
+
+  toggleRec() {
+    this.setState(s => {
+      if (s.recording) {
+        const dur = '0:' + String(Math.max(1, s.recSec)).padStart(2,'0');
+        return { recording:false, showTranscript:false, clips:[{ tr:this.rnd(this.PHRASES), dur }, ...s.clips].slice(0,3) };
+      }
+      return { recording:true, recSec:0, showTranscript:true, transcript:this.rnd(this.PHRASES), started:true };
+    });
+  }
+
+  fontUp() { this.setState(s => ({ fontSize: Math.min(150, s.fontSize + 14) })); }
+  fontDown() { this.setState(s => ({ fontSize: Math.max(22, s.fontSize - 14) })); }
+  toggleTimer() { this.setState(s => ({ timerOn: !s.timerOn })); }
+  replay() { /* audio cue (no-op in mock) */ }
+  resetWarmup() { this.setState({ wIdx: 0 }); }
+
+  openTip() { this.setState({ tip: this.rnd(this.TIPS) }); }
+  closeTip() { this.setState({ tip: null }); }
+  tryNow() { this.setState({ tip:null, recording:true, recSec:0, showTranscript:true, transcript:this.rnd(this.PHRASES), started:true }); }
+
+  toggleTheme() { this.setState(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })); }
+  toggleSound() { this.setState(s => ({ soundOn: !s.soundOn })); }
+  cycleWords() { const seq=[1,2,3,5,'∞']; this.setState(s => { const i=seq.indexOf(s.wordsOnScreen); return { wordsOnScreen: seq[(i+1)%seq.length] }; }); }
+  toggleDisplay() { this.setState(s => ({ centered: !s.centered })); }
+  cycleTips() { this.setState(s => ({ tipsCount: (s.tipsCount + 1) % 4 })); }
+
+  onbAdvance() {
+    const step = this.ONB[this.state.onbStep];
+    if (step && step.key === 'tap' && this.state.mode === 'words') this.nextWord();
+    this.setState(s => { const n = s.onbStep + 1; return { onbStep: n >= this.ONB.length ? -1 : n }; });
+  }
+  onbSkip() { this.setState({ onbStep: -1 }); }
+
+  pal() {
+    if (this.state.theme === 'light') return {
+      bg:'#fafafa', surf:'#ffffff', border:'#eceae5', hair:'#ecebe7', fg:'#18181b', fg2:'#3f3f46',
+      sub:'#57534e', dim:'#a1a1aa', faint:'#d6d3d1', pill:'#eeece7', hint:'#dcdad4',
+      amber:'#b45309', amberBg:'#fdf2e3', amberInk:'#ffffff', cta:'#18181b', ctaInk:'#fafafa',
+      avatar:'linear-gradient(145deg,#e7e5e4,#d6d3d1)'
+    };
+    return {
+      bg:'#0a0a0b', surf:'#111113', border:'#1f1f23', hair:'#18181b', fg:'#fafafa', fg2:'#e4e4e7',
+      sub:'#a1a1aa', dim:'#52525b', faint:'#3f3f46', pill:'#1c1c1f', hint:'#26262a',
+      amber:'#fbbf24', amberBg:'rgba(217,119,6,0.14)', amberInk:'#1a1205', cta:'#fafafa', ctaInk:'#0a0a0b',
+      avatar:'linear-gradient(145deg,#3f3f46,#18181b)'
+    };
+  }
+
+  catColor(col) {
+    const d = this.state.theme === 'dark';
+    const map = {
+      sky:    d?'#38bdf8':'#0284c7', orange: d?'#fb923c':'#ea580c', violet: d?'#8b5cf6':'#7c3aed',
+      emerald:d?'#34d399':'#047857', amber:  d?'#fbbf24':'#b45309', rose:   d?'#fb7185':'#e11d48'
+    };
+    return map[col] || map.violet;
+  }
+
+  STR(lang) {
+    const en = {
+      tapMe:'tap me', play:'play', tapContinue:'tap anywhere to continue →',
+      preferences:'PREFERENCES', settings:'Settings', theme:'Theme', sound:'Sound effects',
+      wordsOnScreen:'Words on screen', wordDisplay:'Word display', coachingTips:'Coaching tips',
+      plan:'Plan', freeUpgrade:'Free · Upgrade', signedIn:'Signed in',
+      createdBy:'CREATED BY', role:'AI Engineer · Cairo, Egypt', appTagline:'Practice how you speak, one word at a time.',
+      aboutBody:'Coaching tips inspired by Vinh Giang\u2019s STAGE Academy — vocal foundations, storytelling frameworks and speaking archetypes, woven into your daily practice.',
+      yourPractice:'YOUR PRACTICE', dayStreak:'day streak', bestStreak:'Best: 12 days · keep it going today',
+      wordsStat:'words', practicedStat:'practiced', clipsStat:'clips', recent:'RECENT RECORDINGS',
+      premium:'FASEEH PREMIUM', premiumTitle:'Practice without limits',
+      yearly:'Yearly', monthly:'Monthly', perMonthBilled:'$3.33 / month, billed yearly', save:'SAVE 33%',
+      startTrial:'Start 7-day free trial', trialSub:'then $39.99/yr · cancel anytime', restore:'restore',
+      tryNow:'try now', tapDismiss:'tap to dismiss', skip:'skip', next:'next', start:'Start practicing',
+      light:'Light', dark:'Dark', on:'On', off:'Off', centered:'Centered', random:'Random',
+      feats:['Save recordings & build a history','Streaks, stats & progress tracking','Every warm-up, twister & coaching tip','Sync across all your devices'],
+      milestones:['',' · halfway',' · final stretch',' · going again'], ofWord:'of'
+    };
+    const ar = {
+      tapMe:'انْقُر', play:'تشغيل', tapContinue:'انقر في أي مكان للمتابعة →',
+      preferences:'التَّفْضِيلَات', settings:'الإعدادات', theme:'المظهر', sound:'المؤثرات الصوتية',
+      wordsOnScreen:'الكلمات على الشاشة', wordDisplay:'عرض الكلمة', coachingTips:'نصائح التدريب',
+      plan:'الخطة', freeUpgrade:'مجاني · ترقية', signedIn:'مُسجَّل الدخول',
+      createdBy:'صُنِع بواسطة', role:'مهندس ذكاء اصطناعي · القاهرة، مصر', appTagline:'تدرّب على طريقة كلامك، كلمةً كلمة.',
+      aboutBody:'نصائح تدريبية مستوحاة من أكاديمية STAGE لـ فينه جيانغ — أسس الصوت وأطر سرد القصة وأنماط المتحدثين، منسوجة في تدريبك اليومي.',
+      yourPractice:'تدريبك', dayStreak:'يوم متتالٍ', bestStreak:'الأفضل: ١٢ يوماً · واصِل اليوم',
+      wordsStat:'كلمة', practicedStat:'تدرّبت', clipsStat:'مقطع', recent:'التسجيلات الأخيرة',
+      premium:'فصيح بريميوم', premiumTitle:'تدرّب بلا حدود',
+      yearly:'سنوي', monthly:'شهري', perMonthBilled:'٣٫٣٣$ شهرياً، تُدفع سنوياً', save:'وفّر ٣٣٪',
+      startTrial:'ابدأ تجربة ٧ أيام مجاناً', trialSub:'ثم ٣٩٫٩٩$ سنوياً · ألغِ في أي وقت', restore:'استعادة',
+      tryNow:'جرّب الآن', tapDismiss:'انقر للإغلاق', skip:'تخطّي', next:'التالي', start:'ابدأ التدريب',
+      light:'فاتح', dark:'داكن', on:'تشغيل', off:'إيقاف', centered:'في المنتصف', random:'عشوائي',
+      feats:['احفظ التسجيلات وكوّن سجلّاً','سلاسل ونِسب وتتبّع للتقدّم','كل تمارين الإحماء والعِبارات والنصائح','مزامنة عبر كل أجهزتك'],
+      milestones:['',' · المنتصف',' · المرحلة الأخيرة',' · جولة جديدة'], ofWord:'من'
+    };
+    return lang === 'ar' ? ar : en;
+  }
+
+  toNum(n) {
+    if (this.state.lang !== 'ar') return String(n);
+    return String(n).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const p = this.pal();
+    const ar = s.lang === 'ar';
+    const L0 = this.STR(s.lang);
+    L0.theme; // keep
+    const L = { ...L0 };
+    const fontFam = ar ? "'IBM Plex Sans Arabic','Onest',sans-serif" : "'Onest',system-ui,sans-serif";
+
+    // top bar icon styles
+    const onC = p.fg, dimC = p.dim, pill = p.pill;
+    const mk = on => on ? { bg: pill, fg: onC } : { bg: 'transparent', fg: dimC };
+    const W = mk(s.mode==='words' && !s.panel), T = mk(s.mode==='twisters' && !s.panel), F = mk(s.mode==='warmup' && !s.panel);
+    const S = mk(s.panel==='settings'), A = mk(s.panel==='about'), Lg = mk(false);
+
+    // words
+    const wc = (s.theme==='dark'?this.WC_DARK:this.WC_LIGHT);
+    const hasWord = s.mode==='words' && !!s.word;
+    const wordColor = s.word ? wc[s.word.ci] : p.fg;
+    const tags = ar ? this.TAGS_AR : this.TAGS_EN;
+    const tagText = s.word ? tags[s.word.ti] : '';
+    const tagColor = s.word ? wc[s.word.ti] : p.dim;
+
+    // twisters
+    const tList = ar ? this.AR_TWISTERS : this.TWISTERS;
+    const twisterText = tList[((s.tIdx % tList.length)+tList.length)%tList.length];
+    const twPx = Math.max(24, Math.min(Math.round(s.fontSize*0.62), 40));
+
+    // warmup
+    const step = this.STEPS[s.wIdx] || this.STEPS[0];
+    const stepColor = this.catColor(step.col);
+    const milestoneIdx = s.wIdx===19?2 : (s.wIdx===10?1:0);
+    const milestone = L.milestones ? L.milestones[milestoneIdx] : '';
+    const progressText = this.toNum(s.wIdx+1) + ' ' + L.ofWord + ' ' + this.toNum(20);
+
+    // timer
+    const tt = s.timerLeft;
+    const timerText = s.recording ? ('0:'+String(s.recSec).padStart(2,'0')) : (Math.floor(tt/60)+':'+String(tt%60).padStart(2,'0'));
+    const showControls = !s.panel && !s.tip && s.mode!=='warmup';
+
+    // onboarding
+    const ob = s.onbStep>=0 ? this.ONB[s.onbStep] : null;
+    let onbTitle='', onbBody='';
+    if (ob) {
+      const map = {
+        tap:   { t:'The whole screen is a button', b:'Every tap gives you a fresh word to say out loud. Go on — tap to try it.' },
+        modes: { t:'Three ways to practice', b:'Words, Twisters and a guided Warm-up. Switch between them up here, any time.' },
+        record:{ t:'Record your voice', b:'Tap the mic — or press and hold anywhere — then play yourself back.' },
+        pace:  { t:'Find your pace', b:'A 60-second timer keeps a session moving, and a / A resize the text.' }
+      };
+      onbTitle = map[ob.key].t; onbBody = map[ob.key].b;
+    }
+
+    // week heatmap
+    const heat = s.theme==='dark'
+      ? ['#f97316','#c2580f','#f97316','#7c3a0c','#f97316','#f97316', null]
+      : ['#f97316','#fdba74','#f97316','#fed7aa','#f97316','#f97316', null];
+    const dayL = ['M','T','W','T','F','S','S'];
+    const weekDays = dayL.map((d,i)=>({
+      label:d,
+      bg: heat[i] || (s.theme==='dark'?'#1c1c1f':'#eeece7'),
+      border: heat[i] ? '0' : ('1px dashed '+p.faint),
+      lc: heat[i] ? p.dim : p.sub
+    }));
+
+    const tip = s.tip ? { ...s.tip, color: this.catColor(s.tip.col) } : { label:'', title:'', body:'', instr:'', color:p.dim };
+    const feats = (L.feats||[]).map(t=>({ t }));
+
+    return {
+      p, L, fontFam, dir:'ltr',
+      wBg:W.bg, wFg:W.fg, tBg:T.bg, tFg:T.fg, fBg:F.bg, fFg:F.fg, sBg:S.bg, sFg:S.fg, aBg:A.bg, aFg:A.fg, lBg:Lg.bg, lFg:Lg.fg,
+      onWords:()=>this.setMode('words'), onTwisters:()=>this.setMode('twisters'), onWarmup:()=>this.setMode('warmup'),
+      onSettings:()=>this.openPanel('settings'), onAbout:()=>this.openPanel('about'), onLang:()=>this.cycleLang(),
+      onTap:(e)=>this.onTap(e),
+      isWords:s.mode==='words', isTwisters:s.mode==='twisters', isWarmup:s.mode==='warmup',
+      hasWord, noWord: s.mode==='words' && !s.word, wordText:s.word?s.word.text:'', wordColor, wordPx:s.fontSize, wordSeq:s.wordSeq,
+      tagText, tagColor,
+      showPill: hasWord && s.tipsCount>0, pillText:(ar?'صَدى':'RESONATE'), pillColor: wc[4], onOpenTip:()=>this.openTip(),
+      twisterText, twPx, tIdx:s.tIdx,
+      stepCat:step.cat, stepColor, stepTitle:step.title, stepInstr:step.instr, stepEx:step.ex||'', hasEx:!!step.ex,
+      progressText, milestone, wIdx:s.wIdx, onReset:()=>this.resetWarmup(),
+      showControls, isRec:s.recording, notRec:!s.recording, onRecord:()=>this.toggleRec(),
+      onFontUp:()=>this.fontUp(), onFontDown:()=>this.fontDown(),
+      onTimer:()=>this.toggleTimer(), onReplay:()=>this.replay(), showReplay:s.mode==='twisters',
+      timerText, timerColor: s.recording?'#ef4444':(s.timerOn?p.dim:p.faint),
+      timerBg: s.timerOn?p.pill:'transparent', timerIcon: s.timerOn?p.sub:p.faint,
+      showTranscript:s.showTranscript, transcriptText:'so the '+s.transcript,
+      hasClips:s.clips.length>0, clips:s.clips,
+      pSettings:s.panel==='settings', pAbout:s.panel==='about', pPaywall:s.panel==='paywall', pAccount:s.panel==='account',
+      onClosePanel:()=>this.closePanel(),
+      themeLabel: s.theme==='dark'?L.dark:L.light, soundLabel:s.soundOn?L.on:L.off,
+      wordsLabel:String(s.wordsOnScreen), displayLabel:s.centered?L.centered:L.random, tipsLabel: s.tipsCount===0?L.off:this.toNum(s.tipsCount),
+      onToggleTheme:()=>this.toggleTheme(), onToggleSound:()=>this.toggleSound(), onCycleWords:()=>this.cycleWords(),
+      onToggleDisplay:()=>this.toggleDisplay(), onCycleTips:()=>this.cycleTips(),
+      onOpenPaywall:()=>this.openPanel('paywall'), onOpenAccount:()=>this.openPanel('account'),
+      weekDays, feats,
+      hasTip:!!s.tip, tip, onCloseTip:()=>this.closeTip(), onTryNow:()=>this.tryNow(),
+      onbActive: s.onbStep>=0, onbTop: ob?ob.t:0, onbLeft: ob?ob.l:0, onbW: ob?ob.w:0, onbH: ob?ob.h:0, onbRad: ob?ob.rad:0, onbCardTop: ob?ob.card:0,
+      onbBottomY: ob?(ob.t+ob.h):0, onbRightX: ob?(ob.l+ob.w):0,
+      onbTitle, onbBody, onbCounter: ob?((s.onbStep+1)+' / '+this.ONB.length):'',
+      onbNextLabel: (s.onbStep===this.ONB.length-1)?L.start:L.next,
+      onAdvance:()=>this.onbAdvance(), onSkip:()=>this.onbSkip()
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -38,6 +38,8 @@ export interface LanguageLabels {
     dashboard: string;
     plan: string;
     planFree: string;
+    planPremium: string;
+    planExpires: string;
   };
   premium: {
     eyebrow: string;
@@ -52,6 +54,8 @@ export interface LanguageLabels {
     startTrial: string;
     trialNote: string;
     restore: string;
+    subscribe: string;
+    processing: string;
   };
   onboarding: {
     skip: string;
@@ -102,6 +106,17 @@ export interface LanguageLabels {
     archetype: string;
     tapToDismiss: string;
     tryNow: string;
+  };
+  practice: {
+    title: string;
+    dayStreak: string;
+    bestStreak: string;
+    weekdayLetters: string[];
+    words: string;
+    practiced: string;
+    clips: string;
+    recent: string;
+    empty: string;
   };
   ui: {
     noTranscript: string;

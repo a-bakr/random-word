@@ -107,6 +107,8 @@ export function SettingsScreen({
   isAdmin,
   onOpenDashboard,
   onOpenPaywall,
+  isPremium,
+  subscriptionEnd,
   account,
 }: {
   isDark: boolean;
@@ -122,10 +124,18 @@ export function SettingsScreen({
   isAdmin: boolean;
   onOpenDashboard: () => void;
   onOpenPaywall: () => void;
+  isPremium: boolean;
+  subscriptionEnd: string | null;
   account: AccountProps;
 }) {
   const { lang } = useLanguage();
   const s = lang.labels.settings;
+
+  const planText = isPremium
+    ? subscriptionEnd
+      ? `${s.planPremium} · ${s.planExpires} ${new Date(subscriptionEnd).toLocaleDateString(lang.code)}`
+      : s.planPremium
+    : s.planFree;
 
   const cycleMaxWords = () => {
     const idx = MAX_WORDS.indexOf(maxWords);
@@ -212,11 +222,14 @@ export function SettingsScreen({
         <Row label={s.plan}>
           <button
             onClick={onOpenPaywall}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-500/15 dark:bg-amber-500/15
-              text-amber-700 dark:text-amber-400 hover:bg-amber-500/25 dark:hover:bg-amber-500/25 transition-colors"
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-colors ${
+              isPremium
+                ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800'
+                : 'bg-amber-500/15 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/25 dark:hover:bg-amber-500/25'
+            }`}
           >
-            <span className="text-sm font-medium">{s.planFree}</span>
-            <ChevronRight size={14} strokeWidth={2.4} />
+            <span className="text-sm font-medium">{planText}</span>
+            {!isPremium && <ChevronRight size={14} strokeWidth={2.4} />}
           </button>
         </Row>
 

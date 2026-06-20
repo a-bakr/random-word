@@ -1,16 +1,17 @@
 'use client';
 
-import { Type, Zap, Flame, SlidersHorizontal, Info, Languages } from 'lucide-react';
+import { Type, Zap, Flame, BarChart3, SlidersHorizontal, Info, Languages } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getAllLanguages } from '../lib/languages/registry';
 import type { LanguageCode } from '../lib/languages/registry';
 
-export type AppMode = 'words' | 'twisters' | 'warmup' | 'settings' | 'about';
+export type AppMode = 'words' | 'twisters' | 'warmup' | 'practice' | 'settings' | 'about';
 
 const NAV_ITEMS = [
   { id: 'words',    Icon: Type              },
   { id: 'twisters', Icon: Zap               },
   { id: 'warmup',   Icon: Flame             },
+  { id: 'practice', Icon: BarChart3         },
   { id: 'settings', Icon: SlidersHorizontal },
   { id: 'about',    Icon: Info              },
 ];

@@ -9,6 +9,9 @@ import { playPopSound } from './lib/sounds';
 import { shuffle, getRandomColor } from './lib/utils';
 import { track, setTrackContext } from './lib/track';
 import { useSupabaseUser } from './hooks/useSupabaseUser';
+import { useEntitlement } from './hooks/useEntitlement';
+import { useSubscription } from './hooks/useSubscription';
+import type { PlanId } from './lib/billing';
 import { useLocalStorage, useLocalStorageBool, useLocalStorageStr } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
@@ -31,6 +34,7 @@ import { CoachingTips } from './components/CoachingTips';
 import { TipOverlay } from './components/TipOverlay';
 import { SettingsScreen } from './components/SettingsScreen';
 import { AboutScreen } from './components/AboutScreen';
+import { PracticeScreen } from './components/PracticeScreen';
 import { PaywallScreen } from './components/PaywallScreen';
 import { Onboarding } from './components/Onboarding';
 import { isAdminEmail } from './lib/admin';
@@ -63,7 +67,7 @@ export default function App() {
   const [isWarmupPlaying, setIsWarmupPlaying] = useState(false);
   const [warmupHasAdvanced, setWarmupHasAdvanced] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
-  const [panel, setPanel] = useState<'settings' | 'about' | null>(null);
+  const [panel, setPanel] = useState<'settings' | 'about' | 'practice' | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [onboarded, setOnboarded] = useLocalStorageBool('onboarded', false);
 
@@ -72,6 +76,30 @@ export default function App() {
   const { lang } = useLanguage();
   const auth = useSupabaseUser();
   const isAdmin = isAdminEmail(auth.user?.email);
+  // Freemium gating: trial is derived from the signup date; `isPremium` comes from
+  // the user's active Paymob subscription.
+  const sub = useSubscription(auth.user?.id);
+  const entitlement = useEntitlement(auth.user?.created_at, sub.isPremium);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const startCheckout = async (plan: PlanId) => {
+    if (checkoutLoading) return;
+    setCheckoutLoading(true);
+    track('checkout_started', { plan });
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      });
+      if (!res.ok) throw new Error(`checkout ${res.status}`);
+      const { url } = await res.json();
+      window.location.assign(url);
+    } catch (err) {
+      console.error('[checkout]', err);
+      setCheckoutLoading(false);
+    }
+  };
   const activeTwisters = lang.twisters ?? englishTwisters;
   const { activeTips, rotateTips } = useTips(tipCount);
   const warmup = useWarmup();
@@ -221,10 +249,25 @@ export default function App() {
     }
 
     if (contentMode === 'warmup') {
+      if (!entitlement.tryConsume('warmups')) { setShowPaywall(true); return; }
       warmup.advance();
       stopWarmup();
       setWarmupHasAdvanced(true);
       if (isSoundEnabled) playPopSound();
+      return;
+    }
+
+    // Free-tier daily caps. Back-navigation goes through doGoBack (never counted), and
+    // stepping forward through already-generated word history re-views existing words,
+    // so it isn't counted either — only genuinely new content consumes quota.
+    const steppingForward =
+      historyPosRef.current >= 0 && historyPosRef.current < wordHistoryRef.current.length - 1;
+    if (contentMode === 'twisters' && !entitlement.tryConsume('twisters')) {
+      setShowPaywall(true);
+      return;
+    }
+    if (contentMode === 'words' && !steppingForward && !entitlement.tryConsume('words')) {
+      setShowPaywall(true);
       return;
     }
 
@@ -388,9 +431,11 @@ export default function App() {
   };
 
   const handleMenuSelect = (id: string) => {
+    setShowPaywall(false);
     if (id === 'words')         { setPanel(null); stopTwister(); stopWarmup(); setIsTwisterMode(false); setIsWarmupMode(false); }
     else if (id === 'twisters') { setPanel(null); stopWarmup(); setIsTwisterMode(true); setIsWarmupMode(false); }
     else if (id === 'warmup')   { setPanel(null); stopTwister(); setIsWarmupMode(true); setIsTwisterMode(false); }
+    else if (id === 'practice') setPanel(p => p === 'practice' ? null : 'practice');
     else if (id === 'settings') setPanel(p => p === 'settings' ? null : 'settings');
     else if (id === 'about')    setPanel(p => p === 'about' ? null : 'about');
 
@@ -660,6 +705,8 @@ export default function App() {
           isAdmin={isAdmin}
           onOpenDashboard={() => { window.location.href = '/admin'; }}
           onOpenPaywall={() => setShowPaywall(true)}
+          isPremium={sub.isPremium}
+          subscriptionEnd={sub.currentPeriodEnd}
           account={{
             isRegistered: auth.isRegistered,
             email: auth.user?.email,
@@ -673,8 +720,15 @@ export default function App() {
 
       {panel === 'about' && <AboutScreen />}
 
+      {panel === 'practice' && <PracticeScreen recordings={rec.recordings} />}
+
       <AnimatePresence>
-        {showPaywall && <PaywallScreen onClose={() => setShowPaywall(false)} />}
+        {showPaywall && (
+          <PaywallScreen
+            onSubscribe={startCheckout}
+            loading={checkoutLoading}
+          />
+        )}
       </AnimatePresence>
 
       {!onboarded && panel === null && !openTip && contentMode !== 'warmup' && (
