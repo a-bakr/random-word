@@ -1,30 +1,41 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { PlanId } from '../lib/billing';
 
 export function PaywallScreen({
+  onBack,
   onSubscribe,
   loading = false,
 }: {
+  onBack: () => void;
   onSubscribe: (plan: PlanId) => void;
   loading?: boolean;
 }) {
   const { lang } = useLanguage();
   const p = lang.labels.premium;
+  const BackIcon = lang.direction === 'rtl' ? ChevronRight : ChevronLeft;
 
   return (
     <motion.div
       dir={lang.direction}
-      className="absolute inset-0 z-[15] overflow-y-auto bg-zinc-50 dark:bg-zinc-950"
+      className="absolute inset-0 overflow-y-auto bg-zinc-50 dark:bg-zinc-950"
       onClick={e => e.stopPropagation()}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
     >
+      <button
+        onClick={e => { e.stopPropagation(); onBack(); }}
+        className="absolute top-6 start-4 z-10 rounded-full p-3 text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+        aria-label="Back"
+      >
+        <BackIcon size={22} strokeWidth={2.5} />
+      </button>
+
       <div className="flex flex-col px-8 pt-20 pb-40 max-w-lg mx-auto w-full">
         <p className="text-xs tracking-[0.2em] uppercase text-amber-600 dark:text-amber-400 mb-3">
           {p.eyebrow}

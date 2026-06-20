@@ -5,7 +5,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { getAllLanguages } from '../lib/languages/registry';
 import type { LanguageCode } from '../lib/languages/registry';
 
-export type AppMode = 'words' | 'twisters' | 'warmup' | 'practice' | 'settings' | 'about';
+export type AppMode = 'words' | 'twisters' | 'warmup' | 'practice' | 'settings' | 'about' | 'paywall';
 
 const NAV_ITEMS = [
   { id: 'words',    Icon: Type              },

@@ -36,6 +36,7 @@ import { SettingsScreen } from './components/SettingsScreen';
 import { AboutScreen } from './components/AboutScreen';
 import { PracticeScreen } from './components/PracticeScreen';
 import { PaywallScreen } from './components/PaywallScreen';
+import { LoginScreen } from './components/LoginScreen';
 import { Onboarding } from './components/Onboarding';
 import { isAdminEmail } from './lib/admin';
 import { useTips } from './hooks/useTips';
@@ -569,6 +570,14 @@ export default function App() {
     pullYRef.current = 0;
     swipeDirRef.current = null;
   };
+
+  // Login gate: require a (non-anonymous) Google sign-in before any content.
+  if (auth.loading) {
+    return <div className="h-dvh w-dvw bg-zinc-50 dark:bg-zinc-950" />;
+  }
+  if (!auth.isRegistered) {
+    return <LoginScreen onSignIn={auth.signInGoogle} />;
+  }
 
   return (
     <div
