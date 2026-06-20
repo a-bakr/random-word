@@ -39,6 +39,7 @@ export function TopBar({
       className="absolute top-6 inset-x-0 z-20 flex justify-center pointer-events-none"
     >
       <div
+        data-onb="modes"
         className="flex items-center gap-1 pointer-events-auto"
         onClick={e => e.stopPropagation()}
       >

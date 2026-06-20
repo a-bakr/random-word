@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { Volume2, VolumeX, Moon, Sun, LayoutDashboard } from 'lucide-react';
+import { Volume2, VolumeX, Moon, Sun, LayoutDashboard, User, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const MAX_WORDS  = [1, 2, 3, 5, 10];
@@ -10,6 +9,8 @@ const TIP_COUNTS = [0, 1, 2, 3];
 export interface AccountProps {
   isRegistered: boolean;
   email?: string | null;
+  name?: string | null;
+  avatarUrl?: string | null;
   onLinkGoogle: () => void;
   onSignOut: () => void;
 }
@@ -34,41 +35,60 @@ function GoogleIcon() {
   );
 }
 
-function AccountSection({ account }: { account: AccountProps }) {
+function ProfileHeader({ account }: { account: AccountProps }) {
   const { lang } = useLanguage();
   const a = lang.labels.account;
 
-  if (account.isRegistered) {
-    return (
-      <Row label={a.signedInAs}>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate max-w-[12rem]">
-            {account.email}
-          </span>
-          <button
-            onClick={account.onSignOut}
-            className="px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 text-xs
-              text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-          >
-            {a.signOut}
-          </button>
-        </div>
-      </Row>
-    );
-  }
+  const avatar = account.isRegistered && account.avatarUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={account.avatarUrl}
+      alt=""
+      referrerPolicy="no-referrer"
+      className="h-14 w-14 rounded-full object-cover border border-zinc-200 dark:border-zinc-800"
+    />
+  ) : (
+    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+      <User size={24} strokeWidth={1.8} className="text-zinc-400 dark:text-zinc-500" />
+    </div>
+  );
 
   return (
-    <div className="py-4 border-b border-zinc-100 dark:border-zinc-900">
-      <p className="text-base text-zinc-600 dark:text-zinc-400">{a.syncCta}</p>
-      <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-1 mb-3">{a.syncDescription}</p>
-      <button
-        onClick={account.onLinkGoogle}
-        className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900 text-sm
-          text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-      >
-        <GoogleIcon />
-        {a.continueWithGoogle}
-      </button>
+    <div className="flex items-center gap-4 mb-8 pb-6 border-b border-zinc-100 dark:border-zinc-900">
+      {avatar}
+      <div className="min-w-0 flex-1">
+        {account.isRegistered ? (
+          <>
+            <div className="text-base font-medium text-zinc-900 dark:text-zinc-50 truncate">
+              {account.name || account.email}
+            </div>
+            <div className="text-xs text-zinc-400 dark:text-zinc-600 truncate">{account.email}</div>
+          </>
+        ) : (
+          <>
+            <div className="text-base font-medium text-zinc-900 dark:text-zinc-50">{a.guest}</div>
+            <div className="text-xs text-zinc-400 dark:text-zinc-600">{a.syncCta}</div>
+          </>
+        )}
+      </div>
+      {account.isRegistered ? (
+        <button
+          onClick={account.onSignOut}
+          className="flex-shrink-0 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 text-xs
+            text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+        >
+          {a.signOut}
+        </button>
+      ) : (
+        <button
+          onClick={account.onLinkGoogle}
+          className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-100 dark:bg-zinc-900 text-xs
+            text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+        >
+          <GoogleIcon />
+          {a.continueWithGoogle}
+        </button>
+      )}
     </div>
   );
 }
@@ -86,6 +106,7 @@ export function SettingsScreen({
   onTipCountChange,
   isAdmin,
   onOpenDashboard,
+  onOpenPaywall,
   account,
 }: {
   isDark: boolean;
@@ -100,6 +121,7 @@ export function SettingsScreen({
   onTipCountChange: (n: number) => void;
   isAdmin: boolean;
   onOpenDashboard: () => void;
+  onOpenPaywall: () => void;
   account: AccountProps;
 }) {
   const { lang } = useLanguage();
@@ -125,9 +147,11 @@ export function SettingsScreen({
         <p className="text-xs tracking-[0.2em] uppercase text-zinc-400 dark:text-zinc-600 mb-2">
           {s.preferences}
         </p>
-        <h2 className="text-[clamp(36px,8vw,64px)] leading-none font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-10">
+        <h2 className="text-[clamp(36px,8vw,64px)] leading-none font-medium tracking-tight text-zinc-900 dark:text-zinc-50 mb-8">
           {s.title}
         </h2>
+
+        <ProfileHeader account={account} />
 
         <Row label={s.theme}>
           <button
@@ -185,7 +209,16 @@ export function SettingsScreen({
           </button>
         </Row>
 
-        <AccountSection account={account} />
+        <Row label={s.plan}>
+          <button
+            onClick={onOpenPaywall}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-amber-500/15 dark:bg-amber-500/15
+              text-amber-700 dark:text-amber-400 hover:bg-amber-500/25 dark:hover:bg-amber-500/25 transition-colors"
+          >
+            <span className="text-sm font-medium">{s.planFree}</span>
+            <ChevronRight size={14} strokeWidth={2.4} />
+          </button>
+        </Row>
 
         {isAdmin && (
           <Row label={s.admin}>

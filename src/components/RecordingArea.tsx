@@ -78,19 +78,24 @@ export function RecordingArea({
 
       <div className="flex items-center">
         <button
+          data-onb="record"
           onClick={onToggleRecord}
-          className={`rounded-full p-3 transition-all duration-500 ${isRecording
+          className={`flex items-center justify-center rounded-full p-2.5 transition-all duration-500 ${isRecording
             ? 'text-zinc-900 dark:text-zinc-50'
             : 'text-zinc-500 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-zinc-50'
             }`}
           aria-label={isRecording ? 'Stop recording' : 'Start recording'}
         >
-          <span className="relative flex" style={{ filter: 'url(#sketch)' }}>
-            {isRecording && (
-              <span className="absolute inset-0 rounded-full bg-red-400/40 dark:bg-red-400/30 animate-ping" />
-            )}
-            {isRecording ? <Square size={20} strokeWidth={2.5} /> : <Mic size={20} strokeWidth={2.5} />}
-          </span>
+          {isRecording ? (
+            <span className="relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-red-500">
+              <span className="absolute -inset-[3px] rounded-full border-2 border-red-500 animate-ping" />
+              <span className="h-3 w-3 rounded-[3px] bg-red-500" />
+            </span>
+          ) : (
+            <span className="flex" style={{ filter: 'url(#sketch)' }}>
+              <Mic size={21} strokeWidth={2.1} />
+            </span>
+          )}
         </button>
       </div>
     </div>

@@ -31,6 +31,8 @@ import { CoachingTips } from './components/CoachingTips';
 import { TipOverlay } from './components/TipOverlay';
 import { SettingsScreen } from './components/SettingsScreen';
 import { AboutScreen } from './components/AboutScreen';
+import { PaywallScreen } from './components/PaywallScreen';
+import { Onboarding } from './components/Onboarding';
 import { isAdminEmail } from './lib/admin';
 import { useTips } from './hooks/useTips';
 import type { Tip } from './lib/tips';
@@ -62,6 +64,8 @@ export default function App() {
   const [warmupHasAdvanced, setWarmupHasAdvanced] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
   const [panel, setPanel] = useState<'settings' | 'about' | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [onboarded, setOnboarded] = useLocalStorageBool('onboarded', false);
 
   const mode: AppMode = panel ?? contentMode;
 
@@ -542,6 +546,7 @@ export default function App() {
       <TopBar mode={mode} onMenuSelect={handleMenuSelect} />
 
       {panel === null && contentMode !== 'warmup' && <div
+        data-onb="pace"
         className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2"
         onClick={e => e.stopPropagation()}
       >
@@ -658,9 +663,12 @@ export default function App() {
           onTipCountChange={n => { setTipCount(n); track('setting_changed', { key: 'tipCount', value: n }); }}
           isAdmin={isAdmin}
           onOpenDashboard={() => { window.location.href = '/admin'; }}
+          onOpenPaywall={() => setShowPaywall(true)}
           account={{
             isRegistered: auth.isRegistered,
             email: auth.user?.email,
+            name: auth.user?.user_metadata?.full_name ?? auth.user?.user_metadata?.name,
+            avatarUrl: auth.user?.user_metadata?.avatar_url ?? auth.user?.user_metadata?.picture,
             onLinkGoogle: auth.linkGoogle,
             onSignOut: auth.signOut,
           }}
@@ -668,6 +676,17 @@ export default function App() {
       )}
 
       {panel === 'about' && <AboutScreen />}
+
+      <AnimatePresence>
+        {showPaywall && <PaywallScreen onClose={() => setShowPaywall(false)} />}
+      </AnimatePresence>
+
+      {!onboarded && panel === null && !openTip && contentMode !== 'warmup' && (
+        <Onboarding
+          onAdvanceStep={step => { if (step === 0) doGenerate(); }}
+          onDone={() => setOnboarded(true)}
+        />
+      )}
     </div>
   );
 }

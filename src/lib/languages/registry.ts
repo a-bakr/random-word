@@ -36,6 +36,28 @@ export interface LanguageLabels {
     off: string;
     admin: string;
     dashboard: string;
+    plan: string;
+    planFree: string;
+  };
+  premium: {
+    eyebrow: string;
+    title: string;
+    features: string[];
+    yearly: string;
+    yearlyPrice: string;
+    monthly: string;
+    monthlyPrice: string;
+    perMonth: string;
+    save: string;
+    startTrial: string;
+    trialNote: string;
+    restore: string;
+  };
+  onboarding: {
+    skip: string;
+    next: string;
+    start: string;
+    steps: { title: string; body: string }[];
   };
   about: {
     createdBy: string;
