@@ -85,6 +85,7 @@ registerLanguage({
     },
     account: {
       title: 'Account',
+      loginPrompt: 'Sign in to start practicing',
       syncCta: 'Sign in to sync your progress',
       syncDescription: 'Keep your history across devices. Optional — your practice works without it.',
       emailPlaceholder: 'you@example.com',

@@ -74,6 +74,7 @@ export interface LanguageLabels {
   };
   account: {
     title: string;
+    loginPrompt: string;
     syncCta: string;
     syncDescription: string;
     emailPlaceholder: string;

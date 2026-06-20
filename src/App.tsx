@@ -67,8 +67,10 @@ export default function App() {
   const [isWarmupPlaying, setIsWarmupPlaying] = useState(false);
   const [warmupHasAdvanced, setWarmupHasAdvanced] = useState(false);
   const [openTip, setOpenTip] = useState<Tip | null>(null);
-  const [panel, setPanel] = useState<'settings' | 'about' | 'practice' | null>(null);
-  const [showPaywall, setShowPaywall] = useState(false);
+  const [panel, setPanel] = useState<'settings' | 'about' | 'practice' | 'paywall' | null>(null);
+  // Where the paywall was opened from, so its back arrow returns there
+  // ('settings' → back to Settings; 'app' → back to the practice screen).
+  const [paywallFrom, setPaywallFrom] = useState<'settings' | 'app'>('app');
   const [onboarded, setOnboarded] = useLocalStorageBool('onboarded', false);
 
   const mode: AppMode = panel ?? contentMode;
@@ -100,6 +102,10 @@ export default function App() {
       setCheckoutLoading(false);
     }
   };
+
+  const openPaywall = (from: 'settings' | 'app') => { setPaywallFrom(from); setPanel('paywall'); };
+  const closePaywall = () => setPanel(paywallFrom === 'settings' ? 'settings' : null);
+
   const activeTwisters = lang.twisters ?? englishTwisters;
   const { activeTips, rotateTips } = useTips(tipCount);
   const warmup = useWarmup();
@@ -249,7 +255,7 @@ export default function App() {
     }
 
     if (contentMode === 'warmup') {
-      if (!entitlement.tryConsume('warmups')) { setShowPaywall(true); return; }
+      if (!entitlement.tryConsume('warmups')) { openPaywall('app'); return; }
       warmup.advance();
       stopWarmup();
       setWarmupHasAdvanced(true);
@@ -263,11 +269,11 @@ export default function App() {
     const steppingForward =
       historyPosRef.current >= 0 && historyPosRef.current < wordHistoryRef.current.length - 1;
     if (contentMode === 'twisters' && !entitlement.tryConsume('twisters')) {
-      setShowPaywall(true);
+      openPaywall('app');
       return;
     }
     if (contentMode === 'words' && !steppingForward && !entitlement.tryConsume('words')) {
-      setShowPaywall(true);
+      openPaywall('app');
       return;
     }
 
@@ -431,7 +437,6 @@ export default function App() {
   };
 
   const handleMenuSelect = (id: string) => {
-    setShowPaywall(false);
     if (id === 'words')         { setPanel(null); stopTwister(); stopWarmup(); setIsTwisterMode(false); setIsWarmupMode(false); }
     else if (id === 'twisters') { setPanel(null); stopWarmup(); setIsTwisterMode(true); setIsWarmupMode(false); }
     else if (id === 'warmup')   { setPanel(null); stopTwister(); setIsWarmupMode(true); setIsTwisterMode(false); }
@@ -704,7 +709,7 @@ export default function App() {
           onTipCountChange={n => { setTipCount(n); track('setting_changed', { key: 'tipCount', value: n }); }}
           isAdmin={isAdmin}
           onOpenDashboard={() => { window.location.href = '/admin'; }}
-          onOpenPaywall={() => setShowPaywall(true)}
+          onOpenPaywall={() => openPaywall('settings')}
           isPremium={sub.isPremium}
           subscriptionEnd={sub.currentPeriodEnd}
           account={{
@@ -723,8 +728,9 @@ export default function App() {
       {panel === 'practice' && <PracticeScreen recordings={rec.recordings} />}
 
       <AnimatePresence>
-        {showPaywall && (
+        {panel === 'paywall' && (
           <PaywallScreen
+            onBack={closePaywall}
             onSubscribe={startCheckout}
             loading={checkoutLoading}
           />

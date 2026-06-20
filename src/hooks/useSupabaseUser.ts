@@ -6,12 +6,11 @@ import { createClient } from '@/utils/supabase/client';
 import { setTrackContext } from '@/lib/track';
 
 /**
- * Establishes a Supabase auth session for every visitor.
+ * Tracks the Supabase auth session for the current visitor.
  *
- * On first load with no session, signs in anonymously (zero-friction — no UI).
- * The resulting auth user id becomes the analytics `user_id` (via track context).
- * Visitors can later upgrade the anonymous user in place to a permanent account
- * (email confirmation or Google) without losing their history.
+ * Login is mandatory: the app gates all content behind a Google sign-in (see
+ * `LoginScreen` in `App.tsx`), so there is no anonymous session. The signed-in
+ * user id becomes the analytics `user_id` (via track context).
  */
 export function useSupabaseUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -23,8 +22,11 @@ export function useSupabaseUser() {
 
     (async () => {
       const { data } = await supabase.auth.getSession();
-      if (active && !data.session) {
-        await supabase.auth.signInAnonymously();
+      if (active) {
+        const u = data.session?.user ?? null;
+        setUser(u);
+        setTrackContext({ userId: u?.id ?? null });
+        setLoading(false);
       }
     })();
 
@@ -91,8 +93,7 @@ export function useSupabaseUser() {
   const signOut = useCallback(async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    // Re-establish an anonymous session so tracking continues.
-    await supabase.auth.signInAnonymously();
+    // No anonymous fallback — the app gates behind the login screen.
   }, []);
 
   return { user, loading, isAnonymous, isRegistered, linkEmail, linkGoogle, signInGoogle, signOut };

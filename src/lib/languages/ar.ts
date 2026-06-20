@@ -1628,6 +1628,7 @@ registerLanguage({
     },
     account: {
       title: 'الحساب',
+      loginPrompt: 'سجِّل الدخول لبدء التدريب',
       syncCta: 'سجِّل الدخول لمزامنة تقدّمك',
       syncDescription: 'احتفظ بسجلّك عبر أجهزتك. اختياري — تعمل تدريباتك من دونه.',
       emailPlaceholder: 'you@example.com',
