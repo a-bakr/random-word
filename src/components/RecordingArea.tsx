@@ -92,8 +92,8 @@ export function RecordingArea({
               <span className="h-3 w-3 rounded-[3px] bg-red-500" />
             </span>
           ) : (
-            <span className="flex" style={{ filter: 'url(#sketch)' }}>
-              <Mic size={21} strokeWidth={2.1} />
+            <span className="flex h-10 w-10 items-center justify-center" style={{ filter: 'url(#sketch)' }}>
+              <Mic size={22} strokeWidth={2.1} />
             </span>
           )}
         </button>

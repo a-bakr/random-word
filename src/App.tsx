@@ -79,8 +79,6 @@ export default function App() {
   const voice = useVoiceRecognition(lang.speechRecognitionCode);
   const rec = useRecordings();
 
-  const PULL_THRESHOLD = 80;
-
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartRef = useRef<number>(0);
@@ -455,6 +453,7 @@ export default function App() {
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (panel !== null) return;
     if ((e.target as Element).closest('button, a, [role="button"]')) return;
     pullStartYRef.current = e.clientY;
     swipeStartXRef.current = e.clientX;
@@ -469,6 +468,7 @@ export default function App() {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    if (panel !== null) return;
     const deltaX = e.clientX - swipeStartXRef.current;
     const deltaY = e.clientY - pullStartYRef.current;
 
@@ -489,6 +489,7 @@ export default function App() {
   };
 
   const handlePointerUp = async (e: React.PointerEvent) => {
+    if (panel !== null) return;
     if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null; }
     if (holdFiredRef.current && isRecordingRef.current) { await doStopRecording(); }
 
@@ -506,11 +507,6 @@ export default function App() {
 
     if (isPullingRef.current) {
       isPullingRef.current = false;
-      if (pullYRef.current >= PULL_THRESHOLD) {
-        holdFiredRef.current = true;
-        window.location.reload();
-        return;
-      }
       pullYRef.current = 0;
     }
   };
@@ -527,7 +523,7 @@ export default function App() {
   return (
     <div
       dir={lang.direction}
-      className="relative h-dvh w-dvw cursor-pointer overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700 select-none touch-none"
+      className={`relative h-dvh w-dvw overflow-hidden bg-zinc-50 dark:bg-zinc-950 transition-colors duration-700 select-none touch-none ${panel === null ? 'cursor-pointer' : 'cursor-default'}`}
       onClick={handleScreenClick}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
