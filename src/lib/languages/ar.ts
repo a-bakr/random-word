@@ -1576,6 +1576,8 @@ registerLanguage({
       wordRandom: 'عشوائي',
       timer: 'المؤقت',
       coachingTips: 'نصائح التدريب',
+      tutorial: 'الجولة التعريفية',
+      replay: 'إعادة',
       on: 'مفعَّل',
       off: 'مُعطَّل',
       admin: 'المشرف',

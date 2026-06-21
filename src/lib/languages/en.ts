@@ -33,6 +33,8 @@ registerLanguage({
       wordRandom: 'Random',
       timer: 'Timer',
       coachingTips: 'Coaching tips',
+      tutorial: 'Tutorial',
+      replay: 'Replay',
       on: 'On',
       off: 'Off',
       admin: 'Admin',

@@ -1,6 +1,6 @@
 'use client';
 
-import { Volume2, VolumeX, Moon, Sun, LayoutDashboard, User, ChevronRight } from 'lucide-react';
+import { Volume2, VolumeX, Moon, Sun, LayoutDashboard, User, ChevronRight, GraduationCap } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const MAX_WORDS  = [1, 2, 3, 5, 10];
@@ -107,6 +107,7 @@ export function SettingsScreen({
   isAdmin,
   onOpenDashboard,
   onOpenPaywall,
+  onReplayOnboarding,
   isPremium,
   subscriptionEnd,
   account,
@@ -124,6 +125,7 @@ export function SettingsScreen({
   isAdmin: boolean;
   onOpenDashboard: () => void;
   onOpenPaywall: () => void;
+  onReplayOnboarding: () => void;
   isPremium: boolean;
   subscriptionEnd: string | null;
   account: AccountProps;
@@ -216,6 +218,17 @@ export function SettingsScreen({
           >
             <span className="text-sm font-medium">{tipCount === 0 ? s.off : tipCount}</span>
             <span className="text-xs text-zinc-400">{s.tapToCycle}</span>
+          </button>
+        </Row>
+
+        <Row label={s.tutorial}>
+          <button
+            onClick={onReplayOnboarding}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-100 dark:bg-zinc-900
+              text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <GraduationCap size={16} strokeWidth={1.5} />
+            <span className="text-sm">{s.replay}</span>
           </button>
         </Row>
 

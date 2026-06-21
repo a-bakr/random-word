@@ -32,6 +32,8 @@ export interface LanguageLabels {
     wordRandom: string;
     timer: string;
     coachingTips: string;
+    tutorial: string;
+    replay: string;
     on: string;
     off: string;
     admin: string;

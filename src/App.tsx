@@ -768,6 +768,7 @@ export default function App() {
           isAdmin={isAdmin}
           onOpenDashboard={() => { window.location.href = '/admin'; }}
           onOpenPaywall={() => openPaywall('settings')}
+          onReplayOnboarding={() => { setPanel(null); setOnboarded(false); }}
           isPremium={sub.isPremium}
           subscriptionEnd={sub.currentPeriodEnd}
           account={{
