@@ -41,7 +41,7 @@ export function TimerBar({
           {isTwisterPlaying ? <Square size={20} strokeWidth={2.5} /> : <Play size={20} strokeWidth={2.5} />}
         </button>
       )}
-      <div className="flex items-center gap-3">
+      <div data-onb="timer" className="flex items-center gap-3">
         {timerEnabled && (
           <Timer
             key={timerKey}

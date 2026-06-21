@@ -70,8 +70,10 @@ export interface LanguageLabels {
       body: string;
       how?: string;
       mode?: 'words' | 'twisters' | 'warmup';
-      icon?: 'spark' | 'words' | 'twisters' | 'warmup' | 'tips' | 'mic';
+      icon?: 'spark' | 'words' | 'twisters' | 'warmup' | 'tips' | 'mic' | 'controls' | 'text' | 'timer';
       accent?: 'zinc' | 'sky' | 'emerald' | 'violet' | 'amber' | 'rose';
+      /** When set, the step highlights the real on-screen control carrying this `data-onb` value. */
+      spotlight?: 'modes' | 'record' | 'timer' | 'pace';
     }[];
   };
   about: {
