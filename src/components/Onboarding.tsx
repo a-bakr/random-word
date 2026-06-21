@@ -40,9 +40,8 @@ function measure(step: number): Rect {
   return { top: (vh - h) / 2, left: (vw - w) / 2, width: w, height: h };
 }
 
-function toArabicNum(n: number, ar: boolean): string {
-  if (!ar) return String(n);
-  return String(n).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[+d]);
+function toArabicNum(n: number, _ar: boolean): string {
+  return String(n);
 }
 
 export function Onboarding({

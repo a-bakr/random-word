@@ -384,7 +384,7 @@ export function Dashboard({
       <header style={headerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 9, height: 9, borderRadius: 2, background: 'var(--accent)' }} />
-          <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: '-.01em' }}>Faseeh</span>
+          <a href="/" style={{ fontWeight: 600, fontSize: 15, letterSpacing: '-.01em', color: 'inherit', textDecoration: 'none', cursor: 'pointer' }}>Faseeh</a>
           {!narrow && <span style={badgeStyle}>admin</span>}
         </div>
         <div style={{ flex: 1 }} />

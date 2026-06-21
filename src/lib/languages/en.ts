@@ -54,7 +54,7 @@ registerLanguage({
       yearly: 'Yearly',
       yearlyPrice: 'EGP 299',
       monthly: 'Monthly',
-      monthlyPrice: 'EGP 30',
+      monthlyPrice: 'EGP 29',
       perMonth: 'EGP 25 / month, billed yearly',
       save: 'SAVE 17%',
       startTrial: 'Start 7-day free trial',
