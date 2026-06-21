@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLanguage } from './contexts/LanguageContext';
 import { AnimatePresence } from 'motion/react';
 
@@ -451,6 +451,55 @@ export default function App() {
     }
   };
 
+  // Seed a single preview word (no quota consumption) so the Words screen isn't empty
+  // during onboarding. Independent of contentMode so it works right after a mode switch.
+  const seedPreviewWord = () => {
+    if (words.length > 0) return;
+    const word = lang.generateWord();
+    const entry: WordEntry = {
+      text: word,
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+      id: Date.now(),
+      color: getRandomColor(isDark),
+    };
+    wordHistoryRef.current = [...wordHistoryRef.current, entry].slice(-20);
+    historyPosRef.current = wordHistoryRef.current.length - 1;
+    setLastWordText(word);
+    setWords([entry]);
+    setHasClicked(true);
+  };
+
+  // Onboarding drives the live mode behind its card. Switches mode + seeds preview
+  // content without touching the free-tier quota or the paywall.
+  const onboardingEnterStep = useCallback((m: 'words' | 'twisters' | 'warmup') => {
+    if (m === 'twisters') {
+      setIsTwisterMode(true); setIsWarmupMode(false); stopWarmup();
+      if (!twister && twisterOrder.length) {
+        const first = activeTwisters.find(t => t.id === twisterOrder[0]);
+        if (first) {
+          setLastTwisterId(first.id);
+          setTwister({ entry: first, key: Date.now() });
+          playTwister(first.id);
+        }
+      }
+      setHasClicked(true);
+    } else if (m === 'warmup') {
+      setIsWarmupMode(true); setIsTwisterMode(false); stopTwister();
+      setHasClicked(true);
+    } else {
+      setIsTwisterMode(false); setIsWarmupMode(false); stopTwister(); stopWarmup();
+      seedPreviewWord();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [twister, twisterOrder, activeTwisters, words.length, isDark, lang]);
+
+  const finishOnboarding = () => {
+    setIsTwisterMode(false); setIsWarmupMode(false); stopTwister(); stopWarmup();
+    seedPreviewWord();
+    setOnboarded(true);
+  };
+
   const doStartRecording = async () => {
     let stream: MediaStream;
     try {
@@ -746,10 +795,10 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {!onboarded && panel === null && !openTip && contentMode !== 'warmup' && (
+      {!onboarded && panel === null && !openTip && (
         <Onboarding
-          onAdvanceStep={step => { if (step === 0) doGenerate(); }}
-          onDone={() => setOnboarded(true)}
+          onEnterStep={onboardingEnterStep}
+          onDone={finishOnboarding}
         />
       )}
     </div>

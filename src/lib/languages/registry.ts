@@ -60,8 +60,17 @@ export interface LanguageLabels {
   onboarding: {
     skip: string;
     next: string;
+    back: string;
     start: string;
-    steps: { title: string; body: string }[];
+    steps: {
+      eyebrow?: string;
+      title: string;
+      body: string;
+      how?: string;
+      mode?: 'words' | 'twisters' | 'warmup';
+      icon?: 'spark' | 'words' | 'twisters' | 'warmup' | 'tips' | 'mic';
+      accent?: 'zinc' | 'sky' | 'emerald' | 'violet' | 'amber' | 'rose';
+    }[];
   };
   about: {
     createdBy: string;
