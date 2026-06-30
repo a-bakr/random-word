@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  BILLING_ENABLED,
   FREE_LIMITS,
   resolveTier,
   todayKey,
@@ -57,6 +58,8 @@ export function useEntitlement(createdAt: string | undefined, isPremium = false)
    */
   const tryConsume = useCallback(
     (quota: Quota): boolean => {
+      // Billing off → unlimited, never trip the paywall.
+      if (!BILLING_ENABLED) return true;
       if (tier !== 'free') return true;
 
       const today = todayKey();
