@@ -2,6 +2,7 @@
 
 import { Volume2, VolumeX, Moon, Sun, LayoutDashboard, User, ChevronRight, GraduationCap } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { BILLING_ENABLED } from '../lib/billing';
 
 const MAX_WORDS  = [1, 2, 3, 5, 10];
 const TIP_COUNTS = [0, 1, 2, 3];
@@ -232,19 +233,21 @@ export function SettingsScreen({
           </button>
         </Row>
 
-        <Row label={s.plan}>
-          <button
-            onClick={onOpenPaywall}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-colors ${
-              isPremium
-                ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800'
-                : 'bg-amber-500/15 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/25 dark:hover:bg-amber-500/25'
-            }`}
-          >
-            <span className="text-sm font-medium">{planText}</span>
-            {!isPremium && <ChevronRight size={14} strokeWidth={2.4} />}
-          </button>
-        </Row>
+        {BILLING_ENABLED && (
+          <Row label={s.plan}>
+            <button
+              onClick={onOpenPaywall}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-colors ${
+                isPremium
+                  ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800'
+                  : 'bg-amber-500/15 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/25 dark:hover:bg-amber-500/25'
+              }`}
+            >
+              <span className="text-sm font-medium">{planText}</span>
+              {!isPremium && <ChevronRight size={14} strokeWidth={2.4} />}
+            </button>
+          </Row>
+        )}
 
         {isAdmin && (
           <Row label={s.admin}>

@@ -8,6 +8,13 @@
 // The actual payment integration (Paymob / Paddle) is layered on top: it only needs
 // to flip `isPremium` true. Everything else here is provider-agnostic.
 
+// Master switch for the whole freemium/subscription layer. Kept OFF until the
+// payment methods (Paymob etc.) are wired up. While off, the app is fully
+// unlimited for everyone: no paywall is ever shown, daily quotas aren't
+// enforced, and the plan/upgrade UI is hidden. Flip back to `true` to re-enable
+// gating once checkout works end-to-end.
+export const BILLING_ENABLED = false;
+
 export type Tier = 'trial' | 'free' | 'premium';
 
 /** What the free tier may generate per local-calendar day. */
