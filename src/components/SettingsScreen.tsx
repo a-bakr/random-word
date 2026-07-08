@@ -111,6 +111,7 @@ export function SettingsScreen({
   onReplayOnboarding,
   isPremium,
   subscriptionEnd,
+  requestPending,
   account,
 }: {
   isDark: boolean;
@@ -129,6 +130,7 @@ export function SettingsScreen({
   onReplayOnboarding: () => void;
   isPremium: boolean;
   subscriptionEnd: string | null;
+  requestPending: boolean;
   account: AccountProps;
 }) {
   const { lang } = useLanguage();
@@ -138,7 +140,9 @@ export function SettingsScreen({
     ? subscriptionEnd
       ? `${s.planPremium} · ${s.planExpires} ${new Date(subscriptionEnd).toLocaleDateString(lang.code)}`
       : s.planPremium
-    : s.planFree;
+    : requestPending
+      ? s.planPending
+      : s.planFree;
 
   const cycleMaxWords = () => {
     const idx = MAX_WORDS.indexOf(maxWords);

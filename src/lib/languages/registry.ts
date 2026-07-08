@@ -42,6 +42,7 @@ export interface LanguageLabels {
     planFree: string;
     planPremium: string;
     planExpires: string;
+    planPending: string;
   };
   premium: {
     eyebrow: string;
@@ -58,6 +59,25 @@ export interface LanguageLabels {
     restore: string;
     subscribe: string;
     processing: string;
+  };
+  manualPay: {
+    payTitle: string;
+    payBody: string;
+    amountLabel: string;
+    sendTo: string;
+    copy: string;
+    copied: string;
+    walletUsed: string;
+    instapay: string;
+    vodafoneCash: string;
+    uploadProof: string;
+    changeImage: string;
+    submit: string;
+    submitting: string;
+    submitError: string;
+    pendingTitle: string;
+    pendingBody: string;
+    rejectedNote: string;
   };
   onboarding: {
     skip: string;

@@ -7,7 +7,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
 
   try {
-  const [profile, sessions, events] = await Promise.all([
+  const [profile, sessions, events, subscription] = await Promise.all([
     sql`SELECT id, is_anonymous, email, display_name, country, created_at, last_seen_at FROM profiles WHERE id = ${id}::uuid`,
     sql`
       SELECT session_id, started_at, last_seen_at, country, device, browser, language,
@@ -20,12 +20,17 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       FROM events WHERE user_id = ${id}::uuid
       ORDER BY ts DESC LIMIT 100
     `,
+    sql`
+      SELECT provider, plan, status, current_period_end
+      FROM subscriptions WHERE user_id = ${id}::uuid
+    `,
   ]);
 
   return Response.json({
     profile: profile[0] ?? null,
     sessions,
     events,
+    subscription: subscription[0] ?? null,
   });
   } catch (err) {
     console.error('[admin/users/[id]] query failed:', err);
