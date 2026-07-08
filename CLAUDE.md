@@ -145,10 +145,25 @@ A first-party analytics pipeline (no third-party tracker), built on Supabase:
    `daily_stats` (distinct users + per-mode / per-language word rollups). Triggered by the
    Vercel cron in `vercel.json` (`10 0 * * *`), guarded by `Authorization: Bearer ${CRON_SECRET}`.
 4. **Admin dashboard** — `/admin` page (`src/app/admin/page.tsx` + `AdminScreen.tsx`) is a
-   tabbed monitoring UI (overview / users / funnels / acquisition) reading
-   `/api/admin/{summary,timeseries,feed,users,users/[id],funnels}`. All `/admin` and
-   `/api/admin/*` routes are gated in `src/proxy.ts` by the admin email (Supabase Auth /
+   tabbed monitoring UI (overview / users / subscriptions / funnels / acquisition) reading
+   `/api/admin/{summary,timeseries,feed,users,users/[id],funnels,subscriptions}`. All `/admin`
+   and `/api/admin/*` routes are gated in `src/proxy.ts` by the admin email (Supabase Auth /
    Google sign-in — no password). The dashboard sign-in uses `signInWithOAuth`.
+
+### Manual subscriptions (billing)
+
+`BILLING_ENABLED` in `src/lib/billing.ts` gates the whole freemium layer (trial /
+free-tier daily quotas / paywall). Payments are collected **manually**: the paywall
+(`PaywallScreen.tsx`) shows the owner's wallet number (`NEXT_PUBLIC_PAYMENT_WALLET_NUMBER`),
+the user transfers via InstaPay / Vodafone Cash and uploads a screenshot, which
+`POST /api/subscription-request` stores in the private `payment-proofs` Storage bucket
+(uploaded server-side via `src/lib/supabaseAdmin.ts`) plus a `pending` row in
+`subscription_requests` (RLS select-own; read client-side by `useSubscriptionRequest`).
+The admin reviews requests in the dashboard's Subscriptions tab
+(`/api/admin/subscriptions` list + signed screenshot URLs, `.../review` approve/reject,
+`.../manage` grant/revoke for any user); approval upserts the `subscriptions` row
+(provider `manual`) that `useSubscription` reads. The Paymob checkout/webhook routes
+remain in the tree but are dormant.
 
 ### Database
 
@@ -157,8 +172,10 @@ Supabase Postgres. Raw-SQL analytics queries use the `postgres` (porsager) drive
 'require' })`); throws at import if `SUPABASE_DB_URL` is unset. It connects as the
 `postgres` owner, which **bypasses RLS** for ingest/admin queries. Tables: `profiles`
 (1:1 with `auth.users`, auto-created by a `handle_new_user` trigger), `events`,
-`sessions`, `daily_stats`; RLS is enabled on all (analytics tables have no client-facing
-policies). Schema lives in **Supabase CLI migrations** under `supabase/migrations/` — apply
+`sessions`, `daily_stats`, plus billing: `subscriptions` (select-own), `payments`
+(Paymob ledger, dormant), `subscription_requests` (select-own; manual-payment reviews).
+RLS is enabled on all (analytics tables have no client-facing policies). Payment
+screenshots live in the private `payment-proofs` Storage bucket (service-key only). Schema lives in **Supabase CLI migrations** under `supabase/migrations/` — apply
 with `supabase db push` (or paste into the dashboard SQL editor). Add a new migration with
 `supabase migration new <name>` rather than editing existing files. **Anonymous sign-ins
 must be enabled** in the Supabase dashboard (Authentication → Providers), and Google OAuth
@@ -175,6 +192,8 @@ See `.env.example`. The variables the code expects:
 - `CRON_SECRET` — bearer token for the aggregate cron.
 - `NEXT_PUBLIC_ADMIN_EMAIL` — email granted admin access (Supabase Auth / Google).
   Optional; defaults to the owner email in `src/lib/admin.ts`.
+- `NEXT_PUBLIC_PAYMENT_WALLET_NUMBER` — wallet number shown verbatim on the paywall
+  for manual InstaPay / Vodafone Cash payments.
 - `GEMINI_API_KEY` or `GEMINI_API_KEYS` (comma-separated) — only for the local audio
   generation scripts, not the app runtime.
 

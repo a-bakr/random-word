@@ -11,7 +11,7 @@ import { track, setTrackContext } from './lib/track';
 import { useSupabaseUser } from './hooks/useSupabaseUser';
 import { useEntitlement } from './hooks/useEntitlement';
 import { useSubscription } from './hooks/useSubscription';
-import type { PlanId } from './lib/billing';
+import { useSubscriptionRequest } from './hooks/useSubscriptionRequest';
 import { useLocalStorage, useLocalStorageBool, useLocalStorageStr } from './hooks/useLocalStorage';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
 import { useRecordings } from './hooks/useRecordings';
@@ -80,29 +80,11 @@ export default function App() {
   const auth = useSupabaseUser();
   const isAdmin = isAdminEmail(auth.user?.email);
   // Freemium gating: trial is derived from the signup date; `isPremium` comes from
-  // the user's active Paymob subscription.
+  // the user's active subscription (granted manually by the admin after reviewing
+  // the payment screenshot the user submits in the paywall).
   const sub = useSubscription(auth.user?.id);
+  const subRequest = useSubscriptionRequest(auth.user?.id);
   const entitlement = useEntitlement(auth.user?.created_at, sub.isPremium);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-
-  const startCheckout = async (plan: PlanId) => {
-    if (checkoutLoading) return;
-    setCheckoutLoading(true);
-    track('checkout_started', { plan });
-    try {
-      const res = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
-      });
-      if (!res.ok) throw new Error(`checkout ${res.status}`);
-      const { url } = await res.json();
-      window.location.assign(url);
-    } catch (err) {
-      console.error('[checkout]', err);
-      setCheckoutLoading(false);
-    }
-  };
 
   const openPaywall = (from: 'settings' | 'app') => { setPaywallFrom(from); setPanel('paywall'); };
   const closePaywall = () => setPanel(paywallFrom === 'settings' ? 'settings' : null);
@@ -771,6 +753,7 @@ export default function App() {
           onReplayOnboarding={() => { setPanel(null); setOnboarded(false); }}
           isPremium={sub.isPremium}
           subscriptionEnd={sub.currentPeriodEnd}
+          requestPending={subRequest.status === 'pending'}
           account={{
             isRegistered: auth.isRegistered,
             email: auth.user?.email,
@@ -790,8 +773,8 @@ export default function App() {
         {panel === 'paywall' && (
           <PaywallScreen
             onBack={closePaywall}
-            onSubscribe={startCheckout}
-            loading={checkoutLoading}
+            requestStatus={subRequest.status}
+            onSubmitted={subRequest.refresh}
           />
         )}
       </AnimatePresence>

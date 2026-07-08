@@ -21,7 +21,7 @@ import {
 } from './theme';
 
 type Win = '24h' | '7d' | '30d';
-type Section = 'overview' | 'users' | 'funnels' | 'acquisition';
+type Section = 'overview' | 'users' | 'funnels' | 'acquisition' | 'subscriptions';
 
 interface Summary {
   now: number;
@@ -76,7 +76,37 @@ interface UserDetail {
   profile: Record<string, unknown> | null;
   sessions: Record<string, unknown>[];
   events: { name: string; ts: string; language: string | null }[];
+  subscription: { provider: string; plan: string | null; status: string; current_period_end: string | null } | null;
 }
+interface SubRequest {
+  id: string;
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  plan: string;
+  amount_cents: number;
+  wallet: string | null;
+  status: string;
+  admin_note: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  screenshot_url: string | null;
+}
+interface SubRow {
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  provider: string;
+  plan: string | null;
+  status: string;
+  current_period_end: string | null;
+  updated_at: string;
+}
+interface SubsData {
+  requests: SubRequest[];
+  subscriptions: SubRow[];
+}
+type ReqStatus = 'pending' | 'approved' | 'rejected';
 
 type SortKey = 'name' | 'sessions' | 'words' | 'recordings' | 'first_seen' | 'last_seen';
 
@@ -108,6 +138,20 @@ async function getJSON<T>(url: string): Promise<T | null> {
     return (await r.json()) as T;
   } catch {
     return null;
+  }
+}
+
+/** POST JSON, returning whether the request succeeded (never throws). */
+async function postJSON(url: string, body: unknown): Promise<boolean> {
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return r.ok;
+  } catch {
+    return false;
   }
 }
 
@@ -182,6 +226,11 @@ export function Dashboard({
   const [usersData, setUsersData] = useState<UsersData | null>(null);
   const [funnels, setFunnels] = useState<Funnels | null>(null);
   const [userDetail, setUserDetail] = useState<UserDetail | null>(null);
+  const [subsData, setSubsData] = useState<SubsData | null>(null);
+  const [reqStatus, setReqStatus] = useState<ReqStatus>('pending');
+  // id (request or user) with an in-flight approve/reject/grant/revoke call
+  const [subBusy, setSubBusy] = useState<string | null>(null);
+  const [detailTick, setDetailTick] = useState(0);
 
   // Hydrate from the last cached payload so a window/section switch paints
   // instantly, then the fetch below overwrites it with fresh data.
@@ -220,13 +269,39 @@ export function Dashboard({
     setLoadError(fn ? null : 'Funnels failed to load — retrying on next refresh.');
     setRefreshedAt(Date.now());
   }, []);
+  const loadSubs = useCallback(async (status: ReqStatus) => {
+    const c = readCache<SubsData>(`admin_subs_${status}`);
+    if (c) setSubsData(c);
+    const d = await getJSON<SubsData>(`/api/admin/subscriptions?status=${status}`);
+    if (d) { setSubsData(d); writeCache(`admin_subs_${status}`, d); }
+    setLoadError(d ? null : 'Subscriptions failed to load — retrying on next refresh.');
+    setRefreshedAt(Date.now());
+  }, []);
 
   const refresh = useCallback(() => {
     if (!isAdmin) return;
     if (section === 'overview' || section === 'acquisition') load(win);
     if (section === 'users') loadUsers(win);
     if (section === 'funnels') loadFunnels(win);
-  }, [isAdmin, section, win, load, loadUsers, loadFunnels]);
+    if (section === 'subscriptions') loadSubs(reqStatus);
+  }, [isAdmin, section, win, reqStatus, load, loadUsers, loadFunnels, loadSubs]);
+
+  const reviewRequest = useCallback(async (id: string, action: 'approve' | 'reject') => {
+    setSubBusy(id);
+    const ok = await postJSON('/api/admin/subscriptions/review', { requestId: id, action });
+    if (!ok) setLoadError('Review action failed — try again.');
+    await loadSubs(reqStatus);
+    setSubBusy(null);
+  }, [loadSubs, reqStatus]);
+
+  const manageSub = useCallback(async (userId: string, action: 'grant' | 'revoke', plan?: 'monthly' | 'yearly') => {
+    setSubBusy(userId);
+    const ok = await postJSON('/api/admin/subscriptions/manage', { userId, action, plan });
+    if (!ok) setLoadError('Subscription update failed — try again.');
+    if (section === 'subscriptions') await loadSubs(reqStatus);
+    setDetailTick(t => t + 1); // refresh the user detail panel's subscription block
+    setSubBusy(null);
+  }, [section, loadSubs, reqStatus]);
 
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => {
@@ -242,7 +317,7 @@ export function Dashboard({
       if (active && d) setUserDetail(d);
     });
     return () => { active = false; };
-  }, [selectedUser]);
+  }, [selectedUser, detailTick]);
 
   const root = useMemo(
     () => ({
@@ -352,21 +427,26 @@ export function Dashboard({
   ): BarItem[] =>
     mkBars((list ?? []).map(r => ({ label: String((r as Record<string, unknown>)[key] ?? '—'), n: r.n })));
 
+  const pendingCount = subsData && reqStatus === 'pending' ? subsData.requests.length : null;
+
   const navDef: { k: Section; label: string; count?: string }[] = [
     { k: 'overview', label: 'Overview' },
     { k: 'users', label: 'Users', count: tot ? fmt(tot.total) : undefined },
+    { k: 'subscriptions', label: 'Subscriptions', count: pendingCount ? String(pendingCount) : undefined },
     { k: 'funnels', label: 'Funnels' },
     { k: 'acquisition', label: 'Acquisition' },
   ];
   const titleMap: Record<Section, string> = {
     overview: 'Overview',
     users: 'Users',
+    subscriptions: 'Subscriptions',
     funnels: 'Funnels',
     acquisition: 'Acquisition',
   };
   const capMap: Record<Section, string> = {
     overview: `live pulse · ${win}`,
     users: tot ? `${fmt(tot.total)} users · ${fmt(tot.registered)} registered` : '',
+    subscriptions: 'manual payments · InstaPay / Vodafone Cash',
     funnels: `window ${win}`,
     acquisition: `window ${win}`,
   };
@@ -686,6 +766,36 @@ export function Dashboard({
                         </div>
                       ))}
                     </div>
+                    <div style={detailSectionLabel}>subscription</div>
+                    {(() => {
+                      const ds = userDetail?.subscription ?? null;
+                      const active = !!ds && ds.status === 'active' && !!ds.current_period_end && new Date(ds.current_period_end) > new Date();
+                      const busy = subBusy === selectedUser;
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 11.5, color: active ? 'var(--accent)' : 'var(--dim)' }}>
+                            {!userDetail
+                              ? 'loading…'
+                              : ds
+                                ? `${active ? 'active' : ds.status}${ds.plan ? ' · ' + ds.plan : ''}${ds.current_period_end ? ' · until ' + new Date(ds.current_period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}`
+                                : 'none'}
+                          </span>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button disabled={busy} onClick={() => selectedUser && manageSub(selectedUser, 'grant', 'monthly')} style={actionBtn('approve', busy)}>
+                              +1 mo
+                            </button>
+                            <button disabled={busy} onClick={() => selectedUser && manageSub(selectedUser, 'grant', 'yearly')} style={actionBtn('approve', busy)}>
+                              +1 yr
+                            </button>
+                            {active && (
+                              <button disabled={busy} onClick={() => selectedUser && manageSub(selectedUser, 'revoke')} style={actionBtn('reject', busy)}>
+                                revoke
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div style={detailSectionLabel}>session history</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                       {(userDetail?.sessions ?? []).slice(0, 8).map((h, i) => (
@@ -714,6 +824,134 @@ export function Dashboard({
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* ---------- SUBSCRIPTIONS ---------- */}
+          {section === 'subscriptions' && (
+            <div>
+              <div style={{ ...panel, padding: 0, overflow: 'hidden', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+                  <span style={kicker}>payment requests</span>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {(['pending', 'approved', 'rejected'] as ReqStatus[]).map(st => (
+                      <button key={st} onClick={() => { setReqStatus(st); loadSubs(st); }} style={seriesChip(reqStatus === st)}>
+                        {st}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <div style={{ minWidth: 760 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: REQ_COLS, gap: 10, padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                      {['user', 'plan', 'wallet', 'requested', 'proof', ''].map((h, i) => (
+                        <span key={i} style={{ fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>{h}</span>
+                      ))}
+                    </div>
+                    {(subsData?.requests ?? []).map(r => {
+                      const busy = subBusy === r.id;
+                      return (
+                        <div key={r.id} style={{ display: 'grid', gridTemplateColumns: REQ_COLS, gap: 10, padding: '11px 18px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {r.email ?? 'anonymous · ' + r.user_id.slice(0, 8)}
+                            </div>
+                            {r.display_name ? (
+                              <div style={{ fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.display_name}</div>
+                            ) : null}
+                          </div>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)' }}>
+                            {r.plan}
+                            <span style={{ color: 'var(--faint)' }}> · EGP {Math.round(r.amount_cents / 100)}</span>
+                          </span>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 11.5, color: 'var(--dim)' }}>
+                            {r.wallet === 'instapay' ? 'InstaPay' : r.wallet === 'vodafone_cash' ? 'Vodafone Cash' : '—'}
+                          </span>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 11.5, color: 'var(--faint)' }}>{relTs(r.created_at)} ago</span>
+                          {r.screenshot_url ? (
+                            <a href={r.screenshot_url} target="_blank" rel="noreferrer" title="Open screenshot">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={r.screenshot_url} alt="payment proof" style={{ height: 38, width: 58, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border)', display: 'block' }} />
+                            </a>
+                          ) : (
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--faint)' }}>—</span>
+                          )}
+                          {r.status === 'pending' ? (
+                            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                              <button disabled={busy} onClick={() => reviewRequest(r.id, 'approve')} style={actionBtn('approve', busy)}>
+                                {busy ? '…' : 'approve'}
+                              </button>
+                              <button disabled={busy} onClick={() => reviewRequest(r.id, 'reject')} style={actionBtn('reject', busy)}>
+                                reject
+                              </button>
+                            </div>
+                          ) : (
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: r.status === 'approved' ? 'var(--accent)' : '#ef4444', textAlign: 'right' }}>
+                              {r.status}{r.reviewed_at ? ' · ' + relTs(r.reviewed_at) + ' ago' : ''}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {subsData && subsData.requests.length === 0 && (
+                      <div style={{ padding: 18, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--faint)' }}>no {reqStatus} requests</div>
+                    )}
+                    {!subsData && (
+                      <div style={{ padding: 18, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--faint)' }}>loading…</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ ...panel, padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+                  <span style={kicker}>subscriptions</span>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <div style={{ minWidth: 720 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: SUB_COLS, gap: 10, padding: '10px 18px', borderBottom: '1px solid var(--border)' }}>
+                      {['user', 'plan', 'status', 'ends', 'provider', ''].map((h, i) => (
+                        <span key={i} style={{ fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>{h}</span>
+                      ))}
+                    </div>
+                    {(subsData?.subscriptions ?? []).map(s => {
+                      const busy = subBusy === s.user_id;
+                      const active = s.status === 'active' && !!s.current_period_end && new Date(s.current_period_end) > new Date();
+                      return (
+                        <div key={s.user_id} style={{ display: 'grid', gridTemplateColumns: SUB_COLS, gap: 10, padding: '11px 18px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {s.email ?? 'anonymous · ' + s.user_id.slice(0, 8)}
+                          </span>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--dim)' }}>{s.plan ?? '—'}</span>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 11.5, color: active ? 'var(--accent)' : 'var(--faint)' }}>
+                            {active ? 'active' : s.status}
+                          </span>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 11.5, color: 'var(--dim)' }}>
+                            {s.current_period_end
+                              ? new Date(s.current_period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                              : '—'}
+                          </span>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 11.5, color: 'var(--faint)' }}>{s.provider}</span>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                            {active ? (
+                              <button disabled={busy} onClick={() => manageSub(s.user_id, 'revoke')} style={actionBtn('reject', busy)}>
+                                {busy ? '…' : 'revoke'}
+                              </button>
+                            ) : (
+                              <button disabled={busy} onClick={() => manageSub(s.user_id, 'grant', s.plan === 'yearly' ? 'yearly' : 'monthly')} style={actionBtn('approve', busy)}>
+                                {busy ? '…' : 'grant'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {subsData && subsData.subscriptions.length === 0 && (
+                      <div style={{ padding: 18, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--faint)' }}>no subscriptions yet</div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -779,6 +1017,25 @@ export function Dashboard({
 }
 
 const ROW_COLS = '2.2fr .8fr .8fr .7fr 1fr 1fr';
+const REQ_COLS = '1.8fr 1fr .9fr .8fr .7fr 1.2fr';
+const SUB_COLS = '1.8fr .8fr .8fr 1fr .8fr .8fr';
+
+function actionBtn(kind: 'approve' | 'reject', disabled: boolean): CSSProperties {
+  const danger = kind === 'reject';
+  return {
+    fontFamily: 'var(--mono)',
+    fontSize: 11,
+    padding: '5px 10px',
+    borderRadius: 7,
+    border: `1px solid ${danger ? 'rgba(239,68,68,.4)' : 'var(--accent)'}`,
+    background: danger ? 'transparent' : 'var(--accent-dim)',
+    color: danger ? '#ef4444' : 'var(--accent)',
+    cursor: disabled ? 'default' : 'pointer',
+    opacity: disabled ? 0.5 : 1,
+    whiteSpace: 'nowrap',
+    flex: 'none',
+  };
+}
 
 function KpiTile({
   label,
