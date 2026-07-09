@@ -16,6 +16,40 @@ function fail(code: string, status: number) {
 }
 
 /**
+ * Self-heal for a database the subscription_requests migration never reached:
+ * mirrors supabase/migrations/20260708135229_subscription_requests.sql (minus
+ * the storage bucket, which the upload step below creates via the Storage API).
+ * `sql` connects as the postgres owner, so DDL is permitted; everything is
+ * idempotent, so a later `supabase db push` still applies cleanly.
+ */
+async function createSubscriptionRequestsTable() {
+  await sql.unsafe(`
+    create table if not exists public.subscription_requests (
+      id              uuid        primary key default gen_random_uuid(),
+      user_id         uuid        not null references auth.users (id) on delete cascade,
+      plan            text        not null,
+      amount_cents    int,
+      wallet          text,
+      screenshot_path text        not null,
+      status          text        not null default 'pending',
+      admin_note      text,
+      reviewed_at     timestamptz,
+      created_at      timestamptz not null default now(),
+      updated_at      timestamptz not null default now()
+    );
+
+    create index if not exists subscription_requests_user_id on public.subscription_requests (user_id);
+    create index if not exists subscription_requests_status  on public.subscription_requests (status, created_at desc);
+
+    alter table public.subscription_requests enable row level security;
+
+    drop policy if exists "subscription_requests_select_own" on public.subscription_requests;
+    create policy "subscription_requests_select_own" on public.subscription_requests
+      for select using (auth.uid() = user_id);
+  `);
+}
+
+/**
  * Submits a manual subscription request: the signed-in user picked a plan, paid
  * the owner's wallet directly, and attaches a screenshot as proof. Stores the
  * screenshot in the private payment-proofs bucket and inserts a `pending`
@@ -39,16 +73,28 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return fail('unauthorized', 401);
 
+    const pendingQuery = () => sql`
+      SELECT 1 FROM subscription_requests WHERE user_id = ${user.id}::uuid AND status = 'pending' LIMIT 1
+    `;
     let pending;
     try {
-      pending = await sql`
-        SELECT 1 FROM subscription_requests WHERE user_id = ${user.id}::uuid AND status = 'pending' LIMIT 1
-      `;
+      pending = await pendingQuery();
     } catch (err) {
-      console.error('[subscription-request] db failed:', err);
       // 42P01 = relation does not exist — the subscription_requests migration
-      // hasn't been applied to this database yet (`supabase db push`).
-      return fail((err as { code?: string })?.code === '42P01' ? 'db_not_migrated' : 'db_error', 500);
+      // hasn't been applied to this database yet. Create the table and retry.
+      if ((err as { code?: string })?.code !== '42P01') {
+        console.error('[subscription-request] db failed:', err);
+        return fail('db_error', 500);
+      }
+      try {
+        await createSubscriptionRequestsTable();
+        pending = await pendingQuery();
+      } catch (err2) {
+        console.error('[subscription-request] table self-heal failed:', err2);
+        // Distinct from db_not_migrated so the on-screen code shows the DDL
+        // failed (with the Postgres error code) rather than never running.
+        return fail(`db_selfheal_${(err2 as { code?: string })?.code ?? 'failed'}`, 500);
+      }
     }
     if (pending.length) return fail('already_pending', 409);
 
