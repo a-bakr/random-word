@@ -9,15 +9,41 @@ export function isSchemaMissing(err: unknown): boolean {
   return code === '42P01' || code === '42703';
 }
 
-/** Runs `run`, self-healing the billing schema once if it hits a missing table/column. */
+// Connection-level failures a fresh attempt usually survives: a warm lambda
+// reused a socket the pooler/NAT had silently dropped, or the connect raced a
+// pooler slot. Distinct from Postgres errors, which always carry SQLSTATEs.
+const TRANSIENT_CODES = new Set([
+  'ETIMEDOUT',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'EPIPE',
+  'CONNECT_TIMEOUT',
+  'CONNECTION_CLOSED',
+  'CONNECTION_ENDED',
+]);
+
+function isTransient(err: unknown): boolean {
+  return TRANSIENT_CODES.has((err as { code?: string })?.code ?? '');
+}
+
+/**
+ * Runs `run`, retrying once when it hits either a missing billing table/column
+ * (self-healing the schema first) or a transient connection failure.
+ */
 export async function withSchemaRetry<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run();
   } catch (err) {
-    if (!isSchemaMissing(err)) throw err;
-    console.warn('[billingSchema] missing table/column — applying billing schema inline');
-    await ensureBillingSchema();
-    return run();
+    if (isSchemaMissing(err)) {
+      console.warn('[billingSchema] missing table/column — applying billing schema inline');
+      await ensureBillingSchema();
+      return run();
+    }
+    if (isTransient(err)) {
+      console.warn('[billingSchema] transient connection error — retrying once:', (err as Error).message);
+      return run();
+    }
+    throw err;
   }
 }
 
