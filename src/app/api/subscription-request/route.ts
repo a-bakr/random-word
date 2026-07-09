@@ -4,8 +4,11 @@ import { createClient } from '@/utils/supabase/server';
 import { sql } from '@/lib/db';
 import { PLANS, isPlanId } from '@/lib/billing';
 import { supabaseAdmin, PAYMENT_PROOFS_BUCKET } from '@/lib/supabaseAdmin';
+import { withTimeout } from '@/lib/utils';
 
 export const runtime = 'nodejs';
+
+const AUTH_TIMEOUT_MS = 5000;
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024; // client compresses first; Vercel body cap is ~4.5 MB
 const WALLETS = new Set(['instapay', 'vodafone_cash', 'other']);
@@ -31,7 +34,17 @@ export async function POST(req: NextRequest) {
     if (file.size > MAX_FILE_BYTES) return new Response('file too large', { status: 413 });
 
     const supabase = createClient(await cookies());
-    const { data: { user } } = await supabase.auth.getUser();
+    let user;
+    try {
+      const { data, error } = await withTimeout(supabase.auth.getUser(), AUTH_TIMEOUT_MS);
+      // A network/timeout failure surfaces as an `error` with a null user — that
+      // is a transient outage, not a genuine "not signed in", so don't mislabel
+      // it 401 (which would tell the user to sign in when they already are).
+      if (error) return new Response('auth unavailable', { status: 503 });
+      user = data.user;
+    } catch {
+      return new Response('auth unavailable', { status: 503 });
+    }
     if (!user) return new Response('unauthorized', { status: 401 });
 
     const pending = await sql`

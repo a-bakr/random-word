@@ -1,6 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
+import { withTimeout } from '@/lib/utils';
+
+// If Supabase auth is unreachable, don't block every navigation for the fetch
+// driver's full ~10s timeout — fail fast and treat the visitor as signed out.
+const AUTH_TIMEOUT_MS = 3000;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
@@ -30,6 +35,13 @@ export async function getSession(
     },
   });
 
-  const { data } = await supabase.auth.getUser();
-  return { response, user: data.user };
+  try {
+    const { data } = await withTimeout(supabase.auth.getUser(), AUTH_TIMEOUT_MS);
+    return { response, user: data.user };
+  } catch (err) {
+    // Network/timeout reaching Supabase auth: proceed without a session rather
+    // than hanging. Admin gating in proxy.ts fails closed (user is null → 403).
+    console.error('[middleware] getUser failed:', (err as Error)?.message ?? err);
+    return { response, user: null };
+  }
 }

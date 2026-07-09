@@ -1,7 +1,14 @@
 import { NextRequest } from 'next/server';
 import { sql } from '@/lib/db';
+import { withTimeout } from '@/lib/utils';
 
 export const runtime = 'nodejs';
+
+// Analytics is best-effort: cap the DB writes so an unreachable Postgres can't
+// hang the request for the driver's default (~30s) and surface a 500 in the
+// client console. On failure we log and return 202 — the client fires this with
+// `keepalive` and doesn't need the write to succeed.
+const DB_TIMEOUT_MS = 4000;
 
 function parseUA(ua: string) {
   const device =
@@ -38,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const safeProps = typeof props === 'object' && props !== null ? props : {};
 
-    await Promise.all([
+    await withTimeout(Promise.all([
       sql`
         INSERT INTO events
           (session_id, user_id, name, path, referrer, utm_source, utm_medium, utm_campaign,
@@ -64,11 +71,12 @@ export async function POST(req: NextRequest) {
           recordings   = sessions.recordings   + CASE WHEN ${name} = 'recording_stopped' THEN 1 ELSE 0 END,
           mode_changes = sessions.mode_changes + CASE WHEN ${name} = 'mode_changed'      THEN 1 ELSE 0 END
       `,
-    ]);
+    ]), DB_TIMEOUT_MS);
 
     return new Response('ok');
   } catch (err) {
-    console.error('[track]', err);
-    return new Response('error', { status: 500 });
+    // Best-effort: swallow DB/network errors so analytics never errors the app.
+    console.error('[track]', (err as Error)?.message ?? err);
+    return new Response('accepted', { status: 202 });
   }
 }
