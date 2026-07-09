@@ -51,7 +51,8 @@ export function PaywallScreen({
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(false);
+  /** null = no error; otherwise a diagnostic code from the API (or `http_<status>` / 'network'). */
+  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,7 +75,7 @@ export function PaywallScreen({
   const submit = async () => {
     if (!plan || !file || submitting) return;
     setSubmitting(true);
-    setError(false);
+    setError(null);
     try {
       const compressed = await compressImage(file);
       const form = new FormData();
@@ -82,12 +83,18 @@ export function PaywallScreen({
       form.append('wallet', wallet);
       form.append('file', compressed);
       const res = await fetch('/api/subscription-request', { method: 'POST', body: form });
-      if (!res.ok && res.status !== 409) throw new Error(`submit ${res.status}`);
+      if (!res.ok && res.status !== 409) {
+        const code = await res.json().then(b => b?.error).catch(() => null);
+        console.error('[subscription-request]', res.status, code);
+        setError(typeof code === 'string' ? code : `http_${res.status}`);
+        setSubmitting(false);
+        return;
+      }
       track('subscription_request_submitted', { plan, wallet });
       onSubmitted();
     } catch (err) {
       console.error('[subscription-request]', err);
-      setError(true);
+      setError('network');
       setSubmitting(false);
     }
   };
@@ -271,7 +278,10 @@ export function PaywallScreen({
           </button>
 
           {error && (
-            <p className="mb-4 text-center text-xs text-rose-500">{m.submitError}</p>
+            <p className="mb-4 text-center text-xs text-rose-500">
+              {m.submitError}
+              <span dir="ltr" className="mt-1 block text-[10px] text-rose-400">({error})</span>
+            </p>
           )}
 
           <button

@@ -10,6 +10,11 @@ export const runtime = 'nodejs';
 const MAX_FILE_BYTES = 4 * 1024 * 1024; // client compresses first; Vercel body cap is ~4.5 MB
 const WALLETS = new Set(['instapay', 'vodafone_cash', 'other']);
 
+/** Error body the paywall can show verbatim as a diagnostic code. */
+function fail(code: string, status: number) {
+  return Response.json({ error: code }, { status });
+}
+
 /**
  * Submits a manual subscription request: the signed-in user picked a plan, paid
  * the owner's wallet directly, and attaches a screenshot as proof. Stores the
@@ -23,30 +28,52 @@ export async function POST(req: NextRequest) {
     const walletRaw = form.get('wallet');
     const file = form.get('file');
 
-    if (!isPlanId(plan)) return new Response('bad request', { status: 400 });
+    if (!isPlanId(plan)) return fail('bad_request', 400);
     const wallet = typeof walletRaw === 'string' && WALLETS.has(walletRaw) ? walletRaw : 'other';
     if (!(file instanceof File) || !file.type.startsWith('image/') || file.size === 0) {
-      return new Response('screenshot required', { status: 400 });
+      return fail('screenshot_required', 400);
     }
-    if (file.size > MAX_FILE_BYTES) return new Response('file too large', { status: 413 });
+    if (file.size > MAX_FILE_BYTES) return fail('file_too_large', 413);
 
     const supabase = createClient(await cookies());
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return new Response('unauthorized', { status: 401 });
+    if (!user) return fail('unauthorized', 401);
 
-    const pending = await sql`
-      SELECT 1 FROM subscription_requests WHERE user_id = ${user.id}::uuid AND status = 'pending' LIMIT 1
-    `;
-    if (pending.length) return Response.json({ error: 'already_pending' }, { status: 409 });
+    let pending;
+    try {
+      pending = await sql`
+        SELECT 1 FROM subscription_requests WHERE user_id = ${user.id}::uuid AND status = 'pending' LIMIT 1
+      `;
+    } catch (err) {
+      console.error('[subscription-request] db failed:', err);
+      // 42P01 = relation does not exist — the subscription_requests migration
+      // hasn't been applied to this database yet (`supabase db push`).
+      return fail((err as { code?: string })?.code === '42P01' ? 'db_not_migrated' : 'db_error', 500);
+    }
+    if (pending.length) return fail('already_pending', 409);
+
+    let admin;
+    try {
+      admin = supabaseAdmin();
+    } catch (err) {
+      console.error('[subscription-request] admin client:', err);
+      return fail('storage_not_configured', 500); // SUPABASE_SECRET_KEY / URL missing in this deploy
+    }
 
     const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
     const path = `${user.id}/${Date.now()}.${ext}`;
-    const { error: uploadError } = await supabaseAdmin()
-      .storage.from(PAYMENT_PROOFS_BUCKET)
-      .upload(path, file, { contentType: file.type });
+    const doUpload = () =>
+      admin.storage.from(PAYMENT_PROOFS_BUCKET).upload(path, file, { contentType: file.type });
+
+    let { error: uploadError } = await doUpload();
+    if (uploadError && /bucket not found/i.test(uploadError.message)) {
+      // The migration's bucket insert wasn't applied — create it and retry once.
+      await admin.storage.createBucket(PAYMENT_PROOFS_BUCKET, { public: false });
+      ({ error: uploadError } = await doUpload());
+    }
     if (uploadError) {
       console.error('[subscription-request] upload failed:', uploadError);
-      return new Response('upload failed', { status: 502 });
+      return fail('upload_failed', 502);
     }
 
     const rows = await sql`
@@ -58,6 +85,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ request: rows[0] });
   } catch (err) {
     console.error('[subscription-request]', err);
-    return new Response('error', { status: 500 });
+    return fail('server_error', 500);
   }
 }
