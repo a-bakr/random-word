@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { sql } from '@/lib/db';
-import { supabaseAdmin, PAYMENT_PROOFS_BUCKET } from '@/lib/supabaseAdmin';
+import { withSchemaRetry } from '@/lib/billingSchema';
+import { supabaseAdmin, isStorageConfigured, PAYMENT_PROOFS_BUCKET } from '@/lib/supabaseAdmin';
 
 export const runtime = 'nodejs';
 
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
   const status = STATUSES.has(statusParam) ? statusParam : 'pending';
 
   try {
-    const [requestRows, subRows] = await Promise.all([
+    const [requestRows, subRows] = await withSchemaRetry(() => Promise.all([
       sql`
         SELECT r.id, r.user_id, r.plan, r.amount_cents, r.wallet, r.screenshot_path,
                r.status, r.admin_note, r.reviewed_at, r.created_at,
@@ -30,12 +31,21 @@ export async function GET(req: NextRequest) {
         ORDER BY s.updated_at DESC
         LIMIT 100
       `,
-    ]);
+    ]));
 
-    const storage = supabaseAdmin().storage.from(PAYMENT_PROOFS_BUCKET);
+    // Bucket-stored proofs get a short-lived signed URL; db-stored ones (`db:`
+    // prefix — deploy had no service key) are served by the screenshot route.
+    const storage = isStorageConfigured() ? supabaseAdmin().storage.from(PAYMENT_PROOFS_BUCKET) : null;
     const requests = await Promise.all(
       requestRows.map(async r => {
-        const { data } = await storage.createSignedUrl(r.screenshot_path as string, 3600);
+        const path = r.screenshot_path as string;
+        let screenshotUrl: string | null = null;
+        if (path.startsWith('db:')) {
+          screenshotUrl = `/api/admin/subscriptions/screenshot/${r.id}`;
+        } else if (storage) {
+          const { data } = await storage.createSignedUrl(path, 3600);
+          screenshotUrl = data?.signedUrl ?? null;
+        }
         return {
           id: r.id as string,
           user_id: r.user_id as string,
@@ -48,7 +58,7 @@ export async function GET(req: NextRequest) {
           admin_note: (r.admin_note as string | null) ?? null,
           reviewed_at: r.reviewed_at,
           created_at: r.created_at,
-          screenshot_url: data?.signedUrl ?? null,
+          screenshot_url: screenshotUrl,
         };
       }),
     );
