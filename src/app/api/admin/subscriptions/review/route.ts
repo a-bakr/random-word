@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { sql } from '@/lib/db';
 import { PLANS, isPlanId } from '@/lib/billing';
+import { withSchemaRetry } from '@/lib/billingSchema';
 
 export const runtime = 'nodejs';
 
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Idempotent claim: only a still-pending request can be reviewed.
-    const claimed = await sql`
+    const claimed = await withSchemaRetry(() => sql`
       UPDATE subscription_requests
       SET status = ${action === 'approve' ? 'approved' : 'rejected'},
           admin_note = ${typeof note === 'string' && note ? note : null},
@@ -25,13 +26,13 @@ export async function POST(req: NextRequest) {
           updated_at = now()
       WHERE id = ${requestId}::uuid AND status = 'pending'
       RETURNING user_id, plan
-    `;
+    `);
     if (!claimed.length) return Response.json({ error: 'not_pending' }, { status: 409 });
 
     if (action === 'approve') {
       const { user_id, plan } = claimed[0];
       const months = isPlanId(plan) ? PLANS[plan].months : 1;
-      await sql`
+      await withSchemaRetry(() => sql`
         INSERT INTO subscriptions (user_id, provider, plan, status, current_period_end, external_ref, updated_at)
         VALUES (
           ${user_id}::uuid, 'manual', ${plan}, 'active',
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
                                + make_interval(months => ${months}),
           external_ref       = EXCLUDED.external_ref,
           updated_at         = now()
-      `;
+      `);
     }
 
     return Response.json({ ok: true });

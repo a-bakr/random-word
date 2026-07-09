@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { sql } from '@/lib/db';
 import { PLANS, isPlanId } from '@/lib/billing';
+import { withSchemaRetry } from '@/lib/billingSchema';
 
 export const runtime = 'nodejs';
 
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (action === 'grant') {
       if (!isPlanId(plan)) return new Response('bad request', { status: 400 });
       const months = PLANS[plan].months;
-      await sql`
+      await withSchemaRetry(() => sql`
         INSERT INTO subscriptions (user_id, provider, plan, status, current_period_end, external_ref, updated_at)
         VALUES (
           ${userId}::uuid, 'manual', ${plan}, 'active',
@@ -33,13 +34,13 @@ export async function POST(req: NextRequest) {
                                + make_interval(months => ${months}),
           external_ref       = 'manual:grant',
           updated_at         = now()
-      `;
+      `);
     } else {
-      await sql`
+      await withSchemaRetry(() => sql`
         UPDATE subscriptions
         SET status = 'inactive', current_period_end = now(), updated_at = now()
         WHERE user_id = ${userId}::uuid
-      `;
+      `);
     }
 
     return Response.json({ ok: true });
