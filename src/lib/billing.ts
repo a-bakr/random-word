@@ -13,7 +13,7 @@
 // aren't enforced, and the plan/upgrade UI is hidden. Payments are collected
 // manually (InstaPay / Vodafone Cash + screenshot proof) and approved by the
 // admin from /admin; automatic checkout (Paymob) stays dormant.
-export const BILLING_ENABLED = true;
+export const BILLING_ENABLED = false;
 
 export type Tier = 'trial' | 'free' | 'premium';
 
