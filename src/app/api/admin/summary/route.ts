@@ -6,6 +6,7 @@ export const runtime = 'nodejs';
 function intervalFor(window: string) {
   if (window === '24h') return '24 hours';
   if (window === '30d') return '30 days';
+  if (window === 'all') return '100 years';
   return '7 days';
 }
 

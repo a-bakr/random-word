@@ -20,7 +20,7 @@ import {
   type ThemeMode,
 } from './theme';
 
-type Win = '24h' | '7d' | '30d';
+type Win = '24h' | '7d' | '30d' | 'all';
 type Section = 'overview' | 'users' | 'funnels' | 'acquisition' | 'subscriptions';
 
 interface Summary {
@@ -54,6 +54,7 @@ interface UserRow {
   user_id: string;
   is_anonymous: boolean;
   email: string | null;
+  display_name: string | null;
   sessions: number;
   words: number;
   recordings: number;
@@ -110,7 +111,7 @@ type ReqStatus = 'pending' | 'approved' | 'rejected';
 
 type SortKey = 'name' | 'sessions' | 'words' | 'recordings' | 'first_seen' | 'last_seen';
 
-const WIN_LABEL: Record<Win, string> = { '24h': '24 hours', '7d': '7 days', '30d': '30 days' };
+const WIN_LABEL: Record<Win, string> = { '24h': '24 hours', '7d': '7 days', '30d': '30 days', 'all': 'all time' };
 
 function useIsNarrow(maxWidth = 860): boolean {
   const [narrow, setNarrow] = useState(false);
@@ -128,6 +129,11 @@ function fmtBucket(ts: string, win: Win): string {
   const d = new Date(ts);
   if (win === '24h') return String(d.getHours()).padStart(2, '0') + ':00';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/** Best display label for a user: name, then email, then a short anonymous id. */
+function userLabel(u: { display_name?: string | null; email?: string | null; user_id: string }): string {
+  return u.display_name || u.email || 'anonymous · ' + u.user_id.slice(0, 8);
 }
 
 /** Fetch JSON, returning null on network error or non-OK response (never throws). */
@@ -402,8 +408,8 @@ export function Dashboard({
   const sortedUsers = (usersData?.users ?? []).slice().sort((a, b) => {
     const dir = sort.dir === 'desc' ? -1 : 1;
     if (sort.key === 'name') {
-      const av = a.email ?? 'z' + a.user_id;
-      const bv = b.email ?? 'z' + b.user_id;
+      const av = a.display_name ?? a.email ?? 'z' + a.user_id;
+      const bv = b.display_name ?? b.email ?? 'z' + b.user_id;
       return dir * av.localeCompare(bv);
     }
     if (sort.key === 'first_seen' || sort.key === 'last_seen') {
@@ -477,7 +483,7 @@ export function Dashboard({
         </div>
         <div style={{ flex: 1 }} />
         <div style={winSelectorStyle}>
-          {(['24h', '7d', '30d'] as Win[]).map(k => {
+          {(['24h', '7d', '30d', 'all'] as Win[]).map(k => {
             const active = win === k;
             return (
               <button key={k} onClick={() => setWin(k)} style={winBtn(active)}>
@@ -729,8 +735,15 @@ export function Dashboard({
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
                             <span style={{ width: 7, height: 7, borderRadius: '50%', flex: 'none', background: u.is_anonymous ? 'var(--bar)' : 'var(--accent)' }} />
-                            <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {u.email ?? 'anonymous · ' + u.user_id.slice(0, 8)}
+                            <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {userLabel(u)}
+                              </span>
+                              {u.display_name && u.email ? (
+                                <span style={{ fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {u.email}
+                                </span>
+                              ) : null}
                             </span>
                             {u.returning ? <span style={returnBadge}>return</span> : null}
                           </div>
@@ -755,9 +768,12 @@ export function Dashboard({
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span style={{ width: 8, height: 8, borderRadius: '50%', flex: 'none', background: selRow && !selRow.is_anonymous ? 'var(--accent)' : 'var(--bar)' }} />
                           <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {selRow?.email ?? 'anonymous user'}
+                            {selRow ? userLabel(selRow) : 'anonymous user'}
                           </span>
                         </div>
+                        {selRow?.display_name && selRow?.email ? (
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--dim)', marginTop: 5, wordBreak: 'break-all' }}>{selRow.email}</div>
+                        ) : null}
                         <div style={{ fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--faint)', marginTop: 5, wordBreak: 'break-all' }}>{selectedUser}</div>
                       </div>
                       <button onClick={() => setSelectedUser(null)} style={closeBtn}>close</button>

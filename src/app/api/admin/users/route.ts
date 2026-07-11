@@ -6,6 +6,7 @@ export const runtime = 'nodejs';
 function intervalFor(window: string) {
   if (window === '24h') return '24 hours';
   if (window === '30d') return '30 days';
+  if (window === 'all') return '100 years';
   return '7 days';
 }
 
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest) {
         e.user_id,
         p.is_anonymous,
         p.email,
+        p.display_name,
         count(distinct e.session_id)                            AS sessions,
         count(*) FILTER (WHERE e.name = 'word_generated')       AS words,
         count(*) FILTER (WHERE e.name = 'recording_stopped')    AS recordings,
@@ -36,7 +38,7 @@ export async function GET(req: NextRequest) {
       FROM events e
       LEFT JOIN profiles p ON p.id = e.user_id
       WHERE e.user_id IS NOT NULL AND e.ts > now() - ${interval}::interval
-      GROUP BY e.user_id, p.is_anonymous, p.email
+      GROUP BY e.user_id, p.is_anonymous, p.email, p.display_name
       ORDER BY last_seen DESC
       LIMIT 100
     `,
@@ -47,6 +49,7 @@ export async function GET(req: NextRequest) {
     user_id: r.user_id as string,
     is_anonymous: r.is_anonymous !== false,
     email: (r.email as string | null) ?? null,
+    display_name: (r.display_name as string | null) ?? null,
     sessions: Number(r.sessions),
     words: Number(r.words),
     recordings: Number(r.recordings),
