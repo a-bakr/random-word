@@ -112,6 +112,14 @@ export default function App() {
   const wordHistoryRef = useRef<WordEntry[]>([]);
   const historyPosRef = useRef<number>(-1);
 
+  // Per-language cache of the *currently displayed* word/twister. Switching language
+  // re-renders the current slot in the new language, but must not mint unlimited fresh
+  // practice content (a free user could otherwise toggle en↔ar to bypass the daily
+  // quota). We remember what each language showed for the current slot and reuse it on
+  // toggle-back; a genuinely new generation (doGenerate) clears the cache.
+  const langWordCacheRef = useRef<Record<string, string>>({});
+  const langTwisterCacheRef = useRef<Record<string, string>>({});
+
   const sessionStartRef = useRef<number>(Date.now());
   const countersRef = useRef({ words: 0, twisters: 0, recordings: 0, mode_toggles: 0 });
   const sessionEndedRef = useRef(false);
@@ -167,11 +175,16 @@ export default function App() {
   useEffect(() => {
     if (isTwisterMode && lastTwisterId) {
       const entry = activeTwisters.find(t => t.id === lastTwisterId);
-      if (entry) { setTwister({ entry, key: 0 }); setHasClicked(true); }
+      if (entry) { langTwisterCacheRef.current = { [lang.code]: entry.id }; setTwister({ entry, key: 0 }); setHasClicked(true); }
       else {
         // Last twister was from a different language — pick one from current language
         const list = activeTwisters;
-        if (list.length) { setTwister({ entry: list[Math.floor(Math.random() * list.length)], key: 0 }); setHasClicked(true); }
+        if (list.length) {
+          const entry = list[Math.floor(Math.random() * list.length)];
+          langTwisterCacheRef.current = { [lang.code]: entry.id };
+          setTwister({ entry, key: 0 });
+          setHasClicked(true);
+        }
       }
     } else if (!isTwisterMode && !isWarmupMode && lastWordText) {
       const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -182,6 +195,7 @@ export default function App() {
         id: Date.now(),
         color: getRandomColor(dark),
       };
+      langWordCacheRef.current = { [lang.code]: entry.text };
       wordHistoryRef.current = [entry];
       historyPosRef.current = 0;
       setWords([entry]);
@@ -219,10 +233,16 @@ export default function App() {
 
     if (contentMode === 'words' && words.length > 0) {
       const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setWords(prev => prev.map(w => ({ ...w, text: lang.generateWord(), color: getRandomColor(dark) })));
+      // Reuse the word this language previously showed for the current slot so that
+      // toggling languages can't hand a quota-exhausted free user endless new words.
+      const cached = langWordCacheRef.current[lang.code] ?? lang.generateWord();
+      langWordCacheRef.current[lang.code] = cached;
+      setWords(prev => prev.map(w => ({ ...w, text: cached, color: getRandomColor(dark) })));
     } else if (contentMode === 'twisters' && twister !== null) {
       const list = activeTwisters;
-      const next = list[Math.floor(Math.random() * list.length)];
+      const cachedId = langTwisterCacheRef.current[lang.code];
+      const next = (cachedId && list.find(t => t.id === cachedId)) || list[Math.floor(Math.random() * list.length)];
+      langTwisterCacheRef.current[lang.code] = next.id;
       setLastTwisterId(next.id);
       setTwister({ entry: next, key: Date.now() });
     }
@@ -282,6 +302,7 @@ export default function App() {
       if (!next) return;
       track('twister_generated', { id: next.id, mode: 'twisters', language: lang.code });
       countersRef.current.twisters++;
+      langTwisterCacheRef.current = { [lang.code]: next.id };
       setLastTwisterId(next.id);
       setTwister({ entry: next, key: Date.now() });
       playTwister(next.id);
@@ -298,6 +319,7 @@ export default function App() {
       const displayStart = Math.max(0, newPos - maxWords + 1);
       setWords(history.slice(displayStart, newPos + 1));
       setLastWordText(history[newPos].text);
+      langWordCacheRef.current = { [lang.code]: history[newPos].text };
       rotateTips();
       return;
     }
@@ -314,6 +336,7 @@ export default function App() {
     historyPosRef.current = updatedHistory.length - 1;
 
     setLastWordText(word);
+    langWordCacheRef.current = { [lang.code]: word };
     track('word_generated', { word, mode: 'words', language: lang.code });
     countersRef.current.words++;
     rotateTips();
@@ -338,6 +361,7 @@ export default function App() {
       if (!prev) return;
       if (isSoundEnabled) playPopSound();
       stopTwister();
+      langTwisterCacheRef.current = { [lang.code]: prev.id };
       setLastTwisterId(prev.id);
       setTwister({ entry: prev, key: Date.now() });
       return;
@@ -352,6 +376,7 @@ export default function App() {
     const displayStart = Math.max(0, newPos - maxWords + 1);
     setWords(history.slice(displayStart, newPos + 1));
     setLastWordText(history[newPos].text);
+    langWordCacheRef.current = { [lang.code]: history[newPos].text };
   };
 
   const handleScreenClick = (e: React.MouseEvent) => {
