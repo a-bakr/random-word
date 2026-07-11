@@ -68,7 +68,14 @@ export async function POST(req: NextRequest) {
       let { error: uploadError } = await doUpload();
       if (uploadError && /bucket not found/i.test(uploadError.message)) {
         // The migration's bucket insert wasn't applied — create it and retry once.
-        await admin.storage.createBucket(PAYMENT_PROOFS_BUCKET, { public: false });
+        // Surface createBucket's own failure (e.g. a non-service key hitting RLS)
+        // instead of letting it read as a second "bucket not found".
+        const { error: createError } = await admin.storage.createBucket(PAYMENT_PROOFS_BUCKET, {
+          public: false,
+        });
+        if (createError) {
+          console.error('[subscription-request] createBucket failed:', createError.message);
+        }
         ({ error: uploadError } = await doUpload());
       }
       if (uploadError) console.error('[subscription-request] upload failed, storing in db:', uploadError);

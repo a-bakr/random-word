@@ -5,6 +5,12 @@ import type { User } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
+// getUser() calls the Supabase Auth API over the network. If it is slow or
+// unreachable the client's own timeout is ~10s, which would stall EVERY matched
+// navigation for that long. Cap it well below that and fail open (no user):
+// pages self-gate client-side, and /api/admin/* then 403s (fail-closed, safe).
+const AUTH_REFRESH_TIMEOUT_MS = 4000;
+
 /**
  * Refreshes the Supabase auth session on every request and returns a response
  * with updated session cookies, plus the current user (for admin gating).
@@ -30,6 +36,18 @@ export async function getSession(
     },
   });
 
-  const { data } = await supabase.auth.getUser();
-  return { response, user: data.user };
+  let user: User | null = null;
+  try {
+    const { data } = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('auth getUser timed out')), AUTH_REFRESH_TIMEOUT_MS),
+      ),
+    ]);
+    user = data.user;
+  } catch (err) {
+    // Network blip / auth API down: don't hang the request. Continue unauthenticated.
+    console.warn('[auth] session refresh failed, continuing without user:', (err as Error).message);
+  }
+  return { response, user };
 }
