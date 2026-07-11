@@ -1067,8 +1067,7 @@ export function Dashboard({
           <img
             src={proofUrl}
             alt="payment proof"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8, cursor: 'default', boxShadow: '0 20px 60px rgba(0,0,0,.5)' }}
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8, cursor: 'zoom-out', boxShadow: '0 20px 60px rgba(0,0,0,.5)' }}
           />
         </div>
       )}
