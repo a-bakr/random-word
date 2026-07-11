@@ -28,15 +28,21 @@ export async function GET(req: NextRequest) {
         e.user_id,
         p.is_anonymous,
         p.email,
+        coalesce(
+          nullif(p.display_name, ''),
+          nullif(u.raw_user_meta_data->>'full_name', ''),
+          nullif(u.raw_user_meta_data->>'name', '')
+        )                                                       AS name,
         count(distinct e.session_id)                            AS sessions,
         count(*) FILTER (WHERE e.name = 'word_generated')       AS words,
         count(*) FILTER (WHERE e.name = 'recording_stopped')    AS recordings,
         min(e.ts)                                               AS first_seen,
         max(e.ts)                                               AS last_seen
       FROM events e
-      LEFT JOIN profiles p ON p.id = e.user_id
+      LEFT JOIN profiles p   ON p.id = e.user_id
+      LEFT JOIN auth.users u ON u.id = e.user_id
       WHERE e.user_id IS NOT NULL AND e.ts > now() - ${interval}::interval
-      GROUP BY e.user_id, p.is_anonymous, p.email
+      GROUP BY e.user_id, p.is_anonymous, p.email, p.display_name, u.raw_user_meta_data
       ORDER BY last_seen DESC
       LIMIT 100
     `,
@@ -47,6 +53,7 @@ export async function GET(req: NextRequest) {
     user_id: r.user_id as string,
     is_anonymous: r.is_anonymous !== false,
     email: (r.email as string | null) ?? null,
+    name: (r.name as string | null) ?? null,
     sessions: Number(r.sessions),
     words: Number(r.words),
     recordings: Number(r.recordings),

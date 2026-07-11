@@ -54,6 +54,7 @@ interface UserRow {
   user_id: string;
   is_anonymous: boolean;
   email: string | null;
+  name: string | null;
   sessions: number;
   words: number;
   recordings: number;
@@ -402,8 +403,8 @@ export function Dashboard({
   const sortedUsers = (usersData?.users ?? []).slice().sort((a, b) => {
     const dir = sort.dir === 'desc' ? -1 : 1;
     if (sort.key === 'name') {
-      const av = a.email ?? 'z' + a.user_id;
-      const bv = b.email ?? 'z' + b.user_id;
+      const av = a.name ?? a.email ?? 'z' + a.user_id;
+      const bv = b.name ?? b.email ?? 'z' + b.user_id;
       return dir * av.localeCompare(bv);
     }
     if (sort.key === 'first_seen' || sort.key === 'last_seen') {
@@ -729,9 +730,16 @@ export function Dashboard({
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
                             <span style={{ width: 7, height: 7, borderRadius: '50%', flex: 'none', background: u.is_anonymous ? 'var(--bar)' : 'var(--accent)' }} />
-                            <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {u.email ?? 'anonymous · ' + u.user_id.slice(0, 8)}
-                            </span>
+                            <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                              <span style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {u.name ?? u.email ?? 'anonymous · ' + u.user_id.slice(0, 8)}
+                              </span>
+                              {u.name && u.email ? (
+                                <span style={{ fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {u.email}
+                                </span>
+                              ) : null}
+                            </div>
                             {u.returning ? <span style={returnBadge}>return</span> : null}
                           </div>
                           <span style={numCell('var(--text)')}>{u.sessions}</span>
@@ -755,9 +763,12 @@ export function Dashboard({
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span style={{ width: 8, height: 8, borderRadius: '50%', flex: 'none', background: selRow && !selRow.is_anonymous ? 'var(--accent)' : 'var(--bar)' }} />
                           <span style={{ fontSize: 15, fontWeight: 600, letterSpacing: '-.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {selRow?.email ?? 'anonymous user'}
+                            {selRow?.name ?? selRow?.email ?? 'anonymous user'}
                           </span>
                         </div>
+                        {selRow?.name && selRow?.email ? (
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--dim)', marginTop: 4, wordBreak: 'break-all' }}>{selRow.email}</div>
+                        ) : null}
                         <div style={{ fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--faint)', marginTop: 5, wordBreak: 'break-all' }}>{selectedUser}</div>
                       </div>
                       <button onClick={() => setSelectedUser(null)} style={closeBtn}>close</button>
