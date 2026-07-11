@@ -231,6 +231,14 @@ export function Dashboard({
   // id (request or user) with an in-flight approve/reject/grant/revoke call
   const [subBusy, setSubBusy] = useState<string | null>(null);
   const [detailTick, setDetailTick] = useState(0);
+  // screenshot shown in the in-page lightbox (null = closed)
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!proofUrl) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setProofUrl(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [proofUrl]);
 
   // Hydrate from the last cached payload so a window/section switch paints
   // instantly, then the fetch below overwrites it with fresh data.
@@ -870,10 +878,15 @@ export function Dashboard({
                           </span>
                           <span style={{ fontFamily: 'var(--mono)', fontSize: 11.5, color: 'var(--faint)' }}>{relTs(r.created_at)} ago</span>
                           {r.screenshot_url ? (
-                            <a href={r.screenshot_url} target="_blank" rel="noreferrer" title="Open screenshot">
+                            <button
+                              type="button"
+                              onClick={() => setProofUrl(r.screenshot_url)}
+                              title="View screenshot"
+                              style={{ padding: 0, border: 'none', background: 'none', cursor: 'zoom-in', display: 'block', lineHeight: 0 }}
+                            >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={r.screenshot_url} alt="payment proof" style={{ height: 38, width: 58, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border)', display: 'block' }} />
-                            </a>
+                            </button>
                           ) : (
                             <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--faint)' }}>—</span>
                           )}
@@ -1012,6 +1025,53 @@ export function Dashboard({
         </main>
       </div>
       </div>
+
+      {proofUrl && (
+        <div
+          onClick={() => setProofUrl(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+            background: 'rgba(0,0,0,.8)',
+            backdropFilter: 'blur(2px)',
+            cursor: 'zoom-out',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setProofUrl(null)}
+            aria-label="Close"
+            style={{
+              position: 'absolute',
+              top: 18,
+              right: 20,
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              border: '1px solid var(--border)',
+              background: 'rgba(0,0,0,.4)',
+              color: 'var(--text)',
+              cursor: 'pointer',
+              fontSize: 18,
+              lineHeight: 1,
+            }}
+          >
+            ×
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={proofUrl}
+            alt="payment proof"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 8, cursor: 'default', boxShadow: '0 20px 60px rgba(0,0,0,.5)' }}
+          />
+        </div>
+      )}
     </div>
   );
 }
