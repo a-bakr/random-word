@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export async function GET(req: NextRequest) {
   const window = req.nextUrl.searchParams.get('window') ?? '7d';
   const trunc    = window === '24h' ? 'hour' : 'day';
-  const interval = window === '24h' ? '24 hours' : window === '30d' ? '30 days' : '7 days';
+  const interval = window === '24h' ? '24 hours' : window === '30d' ? '30 days' : window === 'all' ? '100 years' : '7 days';
 
   try {
     const rows = await sql`
